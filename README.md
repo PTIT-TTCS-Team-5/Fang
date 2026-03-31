@@ -16,9 +16,9 @@ AI Layer cho hệ thống miCareer, xây dựng dựa trên kiến trúc RAG
 1. Tạo virtual environment: `python -m venv venv`
 2. Kích hoạt venv: `source venv/bin/activate` (Linux/Mac) hoặc `venv\Scripts\activate` (Windows)
 3. Cài đặt thư viện: `python -m pip install -r requirements.txt`
-4. Chạy `python -m pre_commit autoupdate`
-5. Cài đặt pre-commit: `python -m pre_commit install`
-
+4. Cài đặt gói pre-commit: `python -m pip install pre-commit`
+5. Chạy `python -m pre_commit autoupdate`
+6. Cài đặt pre-commit hooks: `python -m pre_commit install`
 ## Cấu hình
 Copy `.env.example` thành `.env` và điền các thông tin kết nối DB.
 
