@@ -1,6 +1,6 @@
 # Fang - AI Core (miCareer)
 
-AI Layer cho hệ thống miCareer, xây dựng dựa trên kiến trúc RAG để xử lý, băm (chunking) và nhúng (embedding) CV của ứng viên.
+AI Layer cho hệ thống miCareer, xây dựng dựa trên kiến trúc RAG
 
 ## API Contract
 - **POST** `/v1/ingestion/jobs`
@@ -27,14 +27,15 @@ Tạo cơ sở dữ liệu PostgreSQL và chạy script migration tại `migrati
 
 ## Chạy
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload.
+```
 
 ## Trick show all thay đổi
-git add -N .
+```bash
+git add -N.
 git diff
-
+```
 ## Hướng dẫn Test nhanh
-
 Hiện tại, module **CV Parser (Bóc tách CV bằng Gemini)** đã hoàn thiện. Có thể test độc lập module này mà chưa cần kết nối Database hay chạy Server FastAPI.
 
 **Bước 1: Chuẩn bị môi trường**
