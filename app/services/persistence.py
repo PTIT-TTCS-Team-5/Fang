@@ -62,16 +62,13 @@ async def save_document_chunks(
     """
     async with acquire_conn() as conn:
         async with conn.transaction():
+            records = []
             for i, (chunk, tokens, emb) in enumerate(
                 zip(chunks, token_counts, embeddings)
             ):
                 emb_str = f"[{','.join(map(str, emb))}]"
-                await conn.execute(
-                    query,
-                    job_app_id,
-                    source_type,
-                    chunk,
-                    i,
-                    tokens,
-                    emb_str,
+                records.append(
+                    (job_app_id, source_type, chunk, i, tokens, emb_str)
                 )
+            if records:
+                await conn.executemany(query, records)
