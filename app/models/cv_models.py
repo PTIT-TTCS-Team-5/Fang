@@ -40,5 +40,5 @@ class ParsedCV(CVBaseModel):
     certificates: list[str] = Field(default_factory=list)
     languages: list[str] = Field(default_factory=list)
     summary: str = ""
-    rawText: str = ""
+    rawText: str = Field(..., min_length=1)
     parserVer: str | None = None
