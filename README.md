@@ -23,7 +23,7 @@ AI Layer cho hệ thống miCareer, xây dựng dựa trên kiến trúc RAG
 Copy `.env.example` thành `.env` và điền các thông tin kết nối DB.
 
 ## Migrate DB
-Tạo cơ sở dữ liệu PostgreSQL và chạy script migration tại `migrations/001_initial_schema.sql`. Đảm bảo đã cài đặt extension `pgvector`.
+Tạo cơ sở dữ liệu PostgreSQL cho ứng dụng. Đảm bảo đã cài đặt extension `pgvector` và áp dụng các script migration SQL phù hợp theo cấu trúc thư mục hiện tại của dự án.
 
 ## Chạy
 ```bash
