@@ -51,7 +51,7 @@ async def process_ingestion_task(index_job_id: int, request: IngestionJobRequest
 
         await update_index_job_status(index_job_id, "SUCCESS")
     except Exception as e:
-        logger.error(f"Ingestion failed for indexJobId={index_job_id}: {str(e)}")
+        logger.exception(f"Ingestion failed for indexJobId={index_job_id}: {str(e)}")
         await update_index_job_status(index_job_id, "FAILED", error_msg=str(e))
 
 
