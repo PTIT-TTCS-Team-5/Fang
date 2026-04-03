@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Optional
 
 from app.core.database import acquire_conn
@@ -36,16 +37,20 @@ async def update_index_job_status(
         await conn.execute(query, index_job_id, status, error_msg)
 
 
-async def save_parsed_cv(job_app_id: int, raw_text: str, parser_ver: str):
-    """Persist parsed CV raw text."""
+async def save_parsed_cv(
+    job_app_id: int, raw_text: str, parsed_json: dict, parser_ver: str
+):
+    """Persist parsed CV raw text and structured JSON."""
     query = """
-        INSERT INTO CVPARSED (jobAppId, rawText, parserVer)
-        VALUES ($1, $2, $3)
+        INSERT INTO CVPARSED (jobAppId, rawText, parsedJson, parserVer)
+        VALUES ($1, $2, $3::jsonb, $4)
         ON CONFLICT (jobAppId) DO UPDATE
-        SET rawText = EXCLUDED.rawText, parserVer = EXCLUDED.parserVer, parseAt = CURRENT_TIMESTAMP;
+        SET rawText = EXCLUDED.rawText, parsedJson = EXCLUDED.parsedJson, parserVer = EXCLUDED.parserVer, parseAt = CURRENT_TIMESTAMP;
     """
     async with acquire_conn() as conn:
-        await conn.execute(query, job_app_id, raw_text, parser_ver)
+        await conn.execute(
+            query, job_app_id, raw_text, json.dumps(parsed_json), parser_ver
+        )
 
 
 async def save_document_chunks(
@@ -67,8 +72,6 @@ async def save_document_chunks(
                 zip(chunks, token_counts, embeddings)
             ):
                 emb_str = f"[{','.join(map(str, emb))}]"
-                records.append(
-                    (job_app_id, source_type, chunk, i, tokens, emb_str)
-                )
+                records.append((job_app_id, source_type, chunk, i, tokens, emb_str))
             if records:
                 await conn.executemany(query, records)
