@@ -6,29 +6,33 @@ Dự án Fang (AI Core)/
 ├── .pre-commit-config.yaml -> Cấu hình bộ 3 linter/formatter (black, isort, ruff) tự động format code khi git commit.
 ├── requirements.txt        -> File quản lý thư viện Python (Chạy pip install -r requirements.txt để cài đặt).
 ├── README.md               -> File tài liệu chính (API Contract, Hướng dẫn cài đặt).
-├── test_parser.py          -> Script kiểm thử độc lập cho tính năng Parse CV bằng Gemini.
+├── test_parser.py          -> (Hoàn thành) Script kiểm thử độc lập cho tính năng Parse CV bằng Gemini.
+├── test_parser_db.py       -> (Hoàn thành) Script kiểm thử luồng Parse CV và lưu kết quả vào PostgreSQL.
 ├── sample.pdf              -> File CV PDF mẫu dùng để test nội bộ.
+│
+├── docs/                   -> (Mới) Thư mục chứa tài liệu thiết kế, định hướng.
+│   └── chunking_strategy.md-> Tài liệu chiến lược Chunking & Ingestion.
 │
 ├── database/               -> Chứa các script SQL tĩnh (Ví dụ: ai_schema.sql để khởi tạo 4 bảng của AI).
 │
 └── app/                    -> Root package chứa toàn bộ mã nguồn Python của ứng dụng
-    ├── main.py             -> Entry-point của ứng dụng. Khởi tạo FastAPI, load router và các event startup/shutdown.
+    ├── main.py             -> (Hoàn thành) Entry-point của ứng dụng. Khởi tạo FastAPI, load router và các event startup/shutdown.
     │
     ├── api/                -> Tầng Routing (Controller bên Java): Chỉ nhận Request, gọi Service và trả về Response.
-    │   └── routes_ingestion.py -> Các API endpoint cho luồng Ingestion (Ví dụ: POST /v1/ingestion/jobs).
+    │   └── routes_ingestion.py -> (Chỉ có khung/TODO) Các API endpoint cho luồng Ingestion (Ví dụ: POST /v1/ingestion/jobs).
     │
     ├── core/               -> Tầng Cấu hình hệ thống dùng chung.
-    │   ├── config.py       -> Load toàn bộ biến từ .env vào class Settings (Dùng pydantic-settings).
-    │   ├── database.py     -> Quản lý Connection Pool kết nối tới PostgreSQL (asyncpg).
-    │   └── logging.py      -> Cấu hình ghi log định dạng JSON ra màn hình console.
+    │   ├── config.py       -> (Hoàn thành) Load toàn bộ biến từ .env vào class Settings.
+    │   ├── database.py     -> (Hoàn thành) Quản lý Connection Pool kết nối tới PostgreSQL (asyncpg).
+    │   └── logging.py      -> (Hoàn thành) Cấu hình ghi log định dạng JSON ra màn hình console (Hỗ trợ UTF-8).
     │
     ├── models/             -> Tầng Thực thể/DTO: Định nghĩa khuôn mẫu dữ liệu (Pydantic).
-    │   ├── cv_models.py    -> Khuôn mẫu JSON chuẩn đầu ra cho việc bóc tách CV (Structured Output).
-    │   └── ingestion.py    -> Khuôn mẫu dữ liệu In/Out cho các API Request/Response.
+    │   ├── cv_models.py    -> (Hoàn thành) Khuôn mẫu JSON chuẩn đầu ra cho việc bóc tách CV.
+    │   └── ingestion.py    -> (Hoàn thành) Khuôn mẫu dữ liệu In/Out cho các API Request/Response.
     │
     └── services/           -> Tầng Nghiệp vụ (Business Logic): Nơi chứa các thuật toán và xử lý nặng.
-        ├── chunking.py     -> Logic băm nhỏ đoạn văn bản (text splitting).
-        ├── cv_loader.py    -> Logic tải file PDF từ Cloudinary/Firebase về dạng bytes.
-        ├── cv_parser.py    -> Logic kết nối Gemini API để đọc PDF và bóc tách thành JSON (2-tier fallback).
-        ├── embedding.py    -> Logic nhúng (embedding) các chunk text thành vector.
-        └── persistence.py  -> Logic giao tiếp trực tiếp với Database (Tương đương DAO bên Java).
+        ├── chunking.py     -> (Chỉ có khung/TODO) Logic chuyển đổi JSON sang Markdown và băm nhỏ văn bản (text splitting).
+        ├── cv_loader.py    -> (Chỉ có khung/TODO) Logic tải file PDF từ Cloudinary/Firebase về dạng bytes.
+        ├── cv_parser.py    -> (Hoàn thành) Logic kết nối Gemini API để đọc PDF và bóc tách thành JSON.
+        ├── embedding.py    -> (Chỉ có khung/TODO) Logic nhúng (embedding) các chunk text thành vector.
+        └── persistence.py  -> (Hoàn thành 80%) Logic giao tiếp DB (Đã lưu CV thành công, chờ tích hợp luồng Document Chunks).

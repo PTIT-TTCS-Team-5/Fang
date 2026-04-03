@@ -30,11 +30,16 @@ Tạo cơ sở dữ liệu PostgreSQL cho ứng dụng. Đảm bảo đã cài �
 uvicorn app.main:app --reload.
 ```
 
-## Trick show all thay đổi
+## Trick Git
 ```bash
+- Show all thay đổi
 git add -N.
 git diff
+
+- Show 15 commit gần nhất
+git log -15 --oneline
 ```
+
 ## Hướng dẫn Test nhanh
 Hiện tại, module **CV Parser (Bóc tách CV bằng Gemini)** đã hoàn thiện. Có thể test độc lập module này mà chưa cần kết nối Database hay chạy Server FastAPI.
 
