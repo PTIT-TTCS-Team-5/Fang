@@ -1,3 +1,5 @@
+"""This module contains the core logic for parsing CVs using the Gemini API."""
+
 from io import BytesIO
 from typing import Any, Dict, Tuple
 
@@ -8,9 +10,12 @@ from app.core.config import settings
 from app.core.logging import logger
 from app.models.cv_models import ParsedCV
 
+# The fastest and most cost-effective model, used as the first attempt.
 TIER_1_MODEL = "gemini-3.1-flash"
+# A more powerful (and expensive) model, used as a fallback.
 TIER_2_MODEL = "gemini-3.1-pro"
 
+# The main prompt instructing the Gemini model on how to parse the CV.
 CV_PARSE_PROMPT = """
 Extract the candidate's CV from the uploaded PDF into the provided JSON schema.
 
@@ -26,9 +31,11 @@ Rules:
 
 
 class CVParsingError(Exception):
-    """Raised when both Gemini parsing tiers fail."""
+    """Custom exception raised when CV parsing fails across all fallback tiers."""
 
 
+# Defines a mapping from abstract model names to a list of specific,
+# concrete model names to try, ordered by preference.
 MODEL_CANDIDATES: dict[str, list[str]] = {
     "gemini-3.1-flash": [
         "gemini-3.1-flash",
@@ -47,10 +54,19 @@ MODEL_CANDIDATES: dict[str, list[str]] = {
     ],
 }
 
+# In-memory cache to store resolved model names and avoid repeated API calls.
 _MODEL_RESOLUTION_CACHE: dict[str, str] = {}
 
 
 async def _list_generate_content_models(client: genai.Client) -> set[str]:
+    """Lists all available Gemini models that support 'generateContent'.
+
+    Args:
+        client: An initialized `google.genai.Client` instance.
+
+    Returns:
+        A set of available model names.
+    """
     async with client.aio as aio_client:
         pager = await aio_client.models.list(config={"page_size": 100})
         available_models: set[str] = set()
@@ -64,6 +80,21 @@ async def _list_generate_content_models(client: genai.Client) -> set[str]:
 
 
 async def _resolve_model_name(requested_model: str) -> str:
+    """Finds and returns a concrete, available model name for a given abstract request.
+
+    It checks for a cached resolution first. If not found, it queries the
+    Gemini API for available models and finds the best match from the
+    `MODEL_CANDIDATES` list. The result is then cached.
+
+    Args:
+        requested_model: The abstract model name (e.g., "gemini-3.1-flash").
+
+    Returns:
+        The resolved, available, concrete model name (e.g., "gemini-3.1-flash-preview").
+
+    Raises:
+        CVParsingError: If no suitable model can be found.
+    """
     cached_model = _MODEL_RESOLUTION_CACHE.get(requested_model)
     if cached_model:
         return cached_model
@@ -96,6 +127,25 @@ async def _resolve_model_name(requested_model: str) -> str:
 
 
 async def _parse_cv_with_gemini(cv_bytes: bytes, model_name: str) -> ParsedCV:
+    """Parses a CV PDF using a specified Gemini model.
+
+    This function handles the entire interaction with the Gemini API for a single
+    parsing attempt. It uploads the CV file, sends the generation request with
+    the JSON schema, validates the response, and cleans up the uploaded file.
+
+    Args:
+        cv_bytes: The byte content of the PDF file.
+        model_name: The abstract model name (e.g., "gemini-3.1-flash") to use.
+
+    Returns:
+        A `ParsedCV` object containing the structured data from the CV.
+
+    Raises:
+        errors.APIError: If the Gemini API returns an error.
+        CVParsingError: For specific failures in the parsing logic, like an
+                        empty response from the model.
+        Exception: For other unexpected errors.
+    """
     resolved_model_name = await _resolve_model_name(model_name)
     logger.info(
         "Starting CV parse with Gemini",
@@ -110,6 +160,7 @@ async def _parse_cv_with_gemini(cv_bytes: bytes, model_name: str) -> ParsedCV:
     client = genai.Client(api_key=settings.google_api_key)
 
     try:
+        # Upload the PDF bytes to the Gemini Files API for processing.
         async with client.aio as aio_client:
             uploaded_file = await aio_client.files.upload(
                 file=BytesIO(cv_bytes),
@@ -128,16 +179,19 @@ async def _parse_cv_with_gemini(cv_bytes: bytes, model_name: str) -> ParsedCV:
                 },
             )
 
+            # Send the prompt and the uploaded file to the model.
+            # The response is configured to be JSON, matching the ParsedCV schema.
             response = await aio_client.models.generate_content(
                 model=resolved_model_name,
                 contents=[CV_PARSE_PROMPT, uploaded_file],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=ParsedCV,
-                    temperature=0,
+                    temperature=0,  # Set to 0 for deterministic, factual output.
                 ),
             )
 
+            # Validate the response and deserialize it into a ParsedCV object.
             parsed_payload = getattr(response, "parsed", None)
             if isinstance(parsed_payload, ParsedCV):
                 parsed_cv = parsed_payload
@@ -185,6 +239,7 @@ async def _parse_cv_with_gemini(cv_bytes: bytes, model_name: str) -> ParsedCV:
         )
         raise
     finally:
+        # Ensure the uploaded file is always deleted after the attempt.
         try:
             if uploaded_file is not None:
                 cleanup_client = genai.Client(api_key=settings.google_api_key)
@@ -217,6 +272,23 @@ async def _parse_cv_with_gemini(cv_bytes: bytes, model_name: str) -> ParsedCV:
 
 
 async def parse_to_raw_and_json(cv_bytes: bytes) -> Tuple[str, Dict[str, Any]]:
+    """Parses a CV using a two-tier fallback strategy.
+
+    It first attempts to parse the CV with the fast and cheap TIER_1_MODEL.
+    If that fails for any reason, it automatically falls back and retries
+    with the more powerful TIER_2_MODEL.
+
+    Args:
+        cv_bytes: The byte content of the PDF file to parse.
+
+    Returns:
+        A tuple containing:
+        - The full raw text extracted from the CV.
+        - A dictionary representing the structured, parsed CV data.
+
+    Raises:
+        CVParsingError: If parsing fails on both tiers.
+    """
     tier_1_error: Exception | None = None
 
     logger.info(
@@ -228,6 +300,7 @@ async def parse_to_raw_and_json(cv_bytes: bytes) -> Tuple[str, Dict[str, Any]]:
         },
     )
 
+    # Tier 1 Attempt
     try:
         logger.info("Running CV parser tier 1", extra={"tierModel": TIER_1_MODEL})
         parsed_cv = await _parse_cv_with_gemini(cv_bytes, TIER_1_MODEL)
@@ -240,6 +313,7 @@ async def parse_to_raw_and_json(cv_bytes: bytes) -> Tuple[str, Dict[str, Any]]:
             extra={"tierModel": TIER_1_MODEL},
         )
 
+    # Tier 2 Fallback
     try:
         logger.info("Running CV parser tier 2", extra={"tierModel": TIER_2_MODEL})
         parsed_cv = await _parse_cv_with_gemini(cv_bytes, TIER_2_MODEL)
