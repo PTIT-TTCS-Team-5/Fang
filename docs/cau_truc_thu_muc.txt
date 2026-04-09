@@ -1,0 +1,66 @@
+Dự án Fang (AI Core)/
+|-- .env.example
+|   -> Danh sách env vars cần điền. Không chứa secret value.
+|-- README.md
+|   -> Tài liệu tổng quan, quick start, hướng dẫn parser test.
+|-- requirements.txt
+|   -> Dependency list, đã bổ sung openai, anthropic, tenacity.
+|-- test_parser.py
+|   -> Smoke test parser, in parserVer và fallbackPath.
+|-- test_parser_db.py
+|   -> Smoke test parser + persistence vào CVPARSED.
+|-- test_parser_policy.py
+|   -> Unit test cho retry/fallback/quality policy bằng mock provider.
+|-- sample.pdf
+|   -> File PDF mẫu để smoke test.
+|
+|-- docs/
+|   |-- system_architecture.md
+|   |   -> Kiến trúc ingestion và parser 3-tier.
+|   |-- cv_parser_guide.md
+|   |   -> Hướng dẫn chi tiết cho parser orchestration và adapter.
+|   |-- chunking_strategy.md
+|   |   -> Tài liệu cho chunking và retrieval.
+|   `-- cau_truc_thu_muc.txt
+|       -> Tài liệu cấu trúc thư mục hiện tại.
+|
+|-- app/
+|   |-- main.py
+|   |   -> Entry point FastAPI.
+|   |
+|   |-- api/
+|   |   `-- routes_ingestion.py
+|   |       -> Endpoint ingestion và background task orchestration.
+|   |
+|   |-- core/
+|   |   |-- config.py
+|   |   |   -> Pydantic settings cho DB, parser retry, quality, API keys.
+|   |   |-- database.py
+|   |   |   -> asyncpg connection pool.
+|   |   `-- logging.py
+|   |       -> JSON structured logging.
+|   |
+|   |-- models/
+|   |   |-- cv_models.py
+|   |   |   -> Schema ParsedCV và các model con.
+|   |   `-- ingestion.py
+|   |       -> Request/response schema cho ingestion APIs.
+|   |
+|   `-- services/
+|       |-- cv_parser.py
+|       |   -> Parser orchestrator 3-tier, retry policy, quality gate, trace helper.
+|       |-- cv_parser_adapters.py
+|       |   -> Provider interface + Gemini/OpenAI/Anthropic adapters.
+|       |-- persistence.py
+|       |   -> Lưu CV parsed và document chunks vào DB.
+|       |-- cv_loader.py
+|       |   -> Tải CV từ remote URL.
+|       |-- chunking.py
+|       |   -> Chuyển raw text/json thành chunks.
+|       |-- embedding.py
+|       |   -> Embed chunks thành vectors.
+|       `-- markdown_builder.py
+|           -> Hỗ trợ flatten ParsedCV sang markdown cho chunking/retrieval.
+|
+`-- database/
+    -> SQL schema và seed data.

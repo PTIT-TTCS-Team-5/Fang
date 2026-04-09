@@ -6,7 +6,15 @@ class Settings(BaseSettings):
     embedding_dim: int = 1536
     embedding_provider: str = "openai"
     log_level: str = "INFO"
-    google_api_key: str
+    google_api_key: str | None = None
+    openai_api_key: str | None = None
+    claude_api_key: str | None = None
+    parser_retry_enabled: bool = True
+    parser_retry_attempts: int = 3
+    parser_retry_base_seconds: float = 2.0
+    parser_retry_max_seconds: float = 8.0
+    parser_quality_min_rawtext_length: int = 120
+    parser_quality_min_section_signals: int = 1
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"

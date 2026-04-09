@@ -12,7 +12,7 @@ def setup_logging():
 
     logHandler = logging.StreamHandler(sys.stdout)
     formatter = jsonlogger.JsonFormatter(
-        "%(asctime)s %(levelname)s %(name)s %(message)s"
+        "%(asctime)s %(levelname)s %(name)s %(message)s", json_ensure_ascii=False
     )
     logHandler.setFormatter(formatter)
 
