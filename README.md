@@ -12,6 +12,14 @@ AI Layer cho hệ thống miCareer, xây dựng dựa trên kiến trúc RAG
 - **GET** `/healthz`
   - Response 200: `{ "ok": true }`
 
+## Tài liệu dự án
+
+Để hiểu rõ hơn về kiến trúc và cách hoạt động của dự án, vui lòng tham khảo các tài liệu sau:
+
+1.  **[Kiến trúc hệ thống (`docs/system_architecture.md`)](./docs/system_architecture.md):** Cung cấp cái nhìn tổng quan về luồng dữ liệu và vai trò của các module cốt lõi (logging, database,...).
+2.  **[Hướng dẫn Module xử lý CV (`docs/cv_parser_guide.md`)](./docs/cv_parser_guide.md):** Giải thích chi tiết về "bộ não" của hệ thống - cách CV được phân tích bằng Gemini, bao gồm luồng hoạt động, chiến lược prompt và cơ chế xử lý lỗi.
+3.  **Tài liệu API tự động:** Sau khi chạy server, truy cập [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) để xem tài liệu API tương tác (Swagger UI). Tài liệu này được làm giàu tự động từ các mô tả trong Pydantic model (`app/models/cv_models.py`).
+
 ## Cài đặt
 1. Tạo virtual environment: `python -m venv venv`
 2. Kích hoạt venv: `source venv/bin/activate` (Linux/Mac) hoặc `venv\Scripts\activate` (Windows)

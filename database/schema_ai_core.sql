@@ -30,7 +30,7 @@ CREATE TABLE AIDOCUMENTCHUNK (
   chunkIndex INT NOT NULL,
   tokenCount INT NOT NULL,
   metadata JSONB,
-  embedding vector(1536),
+  embedding halfvec(1536),
   createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (jobAppId) REFERENCES JOBAPPLICATION(jobAppId)
 );
