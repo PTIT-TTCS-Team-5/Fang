@@ -1,66 +1,152 @@
-# Hướng dẫn Module xử lý CV (`cv_parser.py`)
+# Hướng dẫn module CV Parser
 
-Tài liệu này giải thích chi tiết về cách hoạt động của module `app/services/cv_parser.py`, "trái tim" của giai đoạn 1 trong dự án FANG. Module này chịu trách nhiệm nhận một file CV dạng PDF và biến nó thành dữ liệu có cấu trúc (JSON) bằng cách sử dụng Gemini API.
+Tài liệu này mô tả chi tiết module parser CV sau refactor multi-provider 3-tier.
 
-## 1. Luồng hoạt động (Workflow)
+## 1. Mục tiêu thiết kế
+- Giữ contract cũ: `parse_to_raw_and_json(cv_bytes) -> (raw_text, parsed_json)`.
+- Tách adapter/provider interface chung để dễ test và để thêm provider mới.
+- Retry có thể bật/tắt bằng config.
+- Fallback khi exception hoặc output quality thấp.
+- Không log secret value.
 
-Quá trình xử lý CV được thực hiện hoàn toàn tự động và có cơ chế dự phòng để tăng độ tin cậy. Dưới đây là các bước chi tiết:
+## 2. Thành phần chính
 
-1.  **Tiếp nhận file
-    :** Hàm `parse_to_raw_and_json` nhận đầu vào là `cv_bytes` (nội dung của file PDF).
-2.  **Thử nghiệm với Tier 1:**
-    *   Hệ thống bắt đầu lần xử lý đầu tiên bằng cách gọi hàm `_parse_cv_with_gemini` với model `gemini-3.1-flash` (được định nghĩa là `TIER_1_MODEL`).
-    *   **Tải file lên Gemini:** Nội dung `cv_bytes` được tải lên Gemini Files API. Thao tác này trả về một định danh file tạm thời.
-    *   **Gửi yêu cầu xử lý:** Hệ thống gửi một yêu cầu đến Gemini, bao gồm:
-        *   **Prompt:** Một chuỗi chỉ dẫn rõ ràng (`CV_PARSE_PROMPT`).
-        *   **File:** Định danh file đã tải lên.
-        *   **Schema:** Cấu trúc JSON mong muốn, được định nghĩa bởi Pydantic model `ParsedCV`.
-    *   **Nhận và xác thực kết quả:**
-        *   Gemini xử lý file PDF dựa trên prompt và trả về một đối tượng JSON.
-        *   Hệ thống sử dụng `ParsedCV.model_validate` để xác thực và ép kiểu dữ liệu nhận được. Nếu dữ liệu không tuân thủ schema, một lỗi sẽ được nêu ra.
-    *   **Dọn dẹp:** Dù thành công hay thất bại, file tạm đã tải lên Gemini Files API sẽ bị xóa để tránh lãng phí tài nguyên.
-3.  **Dự phòng với Tier 2 (Fallback):**
-    *   Nếu quá trình Tier 1 gặp bất kỳ lỗi nào (lỗi mạng, API, không phân tích được CV,...) , hệ thống sẽ tự động bắt lỗi, ghi log, và thực hiện lại toàn bộ quy trình từ Bước 2 với model `gemini-3.1-pro` (`TIER_2_MODEL`).
-4.  **Trả về kết quả hoặc Báo lỗi:**
-    *   Nếu một trong hai Tier thành công, hàm sẽ trả về `rawText` (văn bản thô) và một dictionary của `ParsedCV`.
-    *   Nếu cả hai Tier đều thất bại, một ngoại lệ `CVParsingError` sẽ được nêu ra, chứa thông tin lỗi từ cả hai lần thử.
+### `app/services/cv_parser.py`
+Chứa orchestration policy:
+- danh sách tiers
+- retry policy bằng `tenacity`
+- quality gate deterministic
+- trace `fallbackPath`
+- helper `get_last_parse_trace()`
 
-## 2. Chiến lược Prompt (`CV_PARSE_PROMPT`)
+### `app/services/cv_parser_adapters.py`
+Chứa adapter chung và 3 provider cụ thể:
+- `GeminiProviderAdapter`
+- `OpenAIProviderAdapter`
+- `AnthropicProviderAdapter`
 
-Prompt là yếu tố quyết định chất lượng của kết quả trả về. Prompt của FANG được thiết kế để:
+Adapter có nhiệm vụ:
+- kiểm tra env var cần thiết
+- gọi SDK tương ứng
+- chuẩn hóa exception thành `TransientProviderError` hoặc `NonRetryableProviderError`
+- trả về `ParsedCV` và model đã resolve
 
-*   **Rõ ràng và có quy tắc:** Cung cấp một loạt các quy tắc ngắn gọn, dễ hiểu cho AI.
-*   **Bám sát sự thật:** Yêu cầu AI chỉ sử dụng thông tin có trong CV, không tự ý suy diễn (`Do not invent values`).
-*   **Định dạng hóa dữ liệu:** Yêu cầu chuẩn hóa ngày tháng về định dạng `YYYY-MM` và sử dụng `present` cho các công việc/học vấn hiện tại.
-*   **Yêu cầu JSON:** Ra lệnh cho AI trả về kết quả dưới dạng JSON theo schema đã cung cấp.
+## 3. Workflow chi tiết
 
-```python
-CV_PARSE_PROMPT = """
-Extract the candidate's CV from the uploaded PDF into the provided JSON schema.
+1. `parse_to_raw_and_json` tạo `CVParserOrchestrator`.
+2. Orchestrator lặp qua các tier theo thứ tự:
+   - Tier 1: `google / gemini-flash`
+   - Tier 2: `openai / gpt-5.4-mini`
+   - Tier 3: `anthropic / claude-4.5-haiku`
+3. Mỗi tier được chạy qua `AsyncRetrying`.
+4. Nếu provider trả kết quả hợp lệ, quality gate được check ngay lập tức.
+5. Nếu quality gate pass:
+   - gán `parserVer = provider:model`
+   - return `rawText` và `model_dump()`
+6. Nếu quality gate fail:
+   - log `low_confidence_output`
+   - chuyển tier kế tiếp
+7. Nếu tier fail với transient error:
+   - retry theo policy
+   - hết retry thì fallback sang tier kế tiếp
+8. Nếu tất cả tiers đều fail:
+   - raise `CVParsingError`
 
-Rules:
-- Use only information explicitly present in the PDF.
-- Do not invent values. Use null for unknown scalar fields and [] for unknown lists.
-- Normalize startDate and endDate to YYYY-MM whenever a month is available.
-- Use "present" only when the CV clearly indicates an ongoing role or education entry.
-- Keep summary concise and factual.
-- Put the CV's plain extracted text into rawText.
-- Return only the structured data required by the schema.
-""".strip()
-```
+## 4. Retry policy
 
-## 3. Xử lý và Xác thực Schema (`ParsedCV`)
+Config:
+- `PARSER_RETRY_ENABLED`
+- `PARSER_RETRY_ATTEMPTS`
+- `PARSER_RETRY_BASE_SECONDS`
+- `PARSER_RETRY_MAX_SECONDS`
 
-Đây là một trong những tính năng mạnh mẽ nhất của Gemini API kết hợp với Pydantic.
+Mặc định:
+- enabled = `true`
+- attempts = `3`
+- base = `2`
+- max = `8`
 
-*   **Schema Enforcement:** Thay vì chỉ nhận text và tự parse, chúng ta khai báo `response_schema=ParsedCV` khi gọi API. Gemini sẽ cố gắng hết sức để trả về một JSON tuân thủ 100% cấu trúc của lớp `ParsedCV`.
-*   **Data Validation:** Ngay cả khi Gemini trả về đúng cấu trúc, chúng ta vẫn cẩn thận validate lại dữ liệu bằng `ParsedCV.model_validate_json(response.text)`. Điều này đảm bảo tính toàn vẹn của dữ liệu trước khi lưu vào database, đặc biệt là các quy tắc như `pattern` của `CVDate`.
-*   **An toàn:** Việc này giúp loại bỏ rất nhiều code xử lý chuỗi và kiểm tra lỗi phức tạp, làm cho module trở nên gọn gàng và dễ bảo trì hơn.
+Error được coi là transient:
+- timeout
+- rate limit
+- HTTP 408/409/429
+- HTTP 5xx
+- connection reset / transport error
 
-## 4. Cơ chế xử lý lỗi và Model Resolution
+Khi `PARSER_RETRY_ENABLED=false`:
+- mỗi tier chỉ gọi 1 lần
+- không sleep backoff
+- fallback ngay sang tier tiếp theo nếu gặp lỗi
 
-*   **`CVParsingError`:** Một exception tùy chỉnh được tạo ra để đóng gói lỗi, giúp việc bắt lỗi ở tầng service cao hơn trở nên tường minh.
-*   **Model Resolution & Caching:**
-    *   Hàm `_resolve_model_name` cho phép sử dụng một tên model "ảo" (như `gemini-3.1-flash`).
-    *   Nó sẽ tìm trong danh sách các model thực tế (`MODEL_CANDIDATES`) xem model nào đang có sẵn trên hệ thống của Google và chọn model phù hợp nhất.
-    *   Kết quả sẽ được cache lại trong `_MODEL_RESOLUTION_CACHE` để các lần gọi sau không cần thực hiện lại việc tra cứu này.
+## 5. Quality gate
+
+Quality gate không gọi thêm LLM. Toàn bộ là deterministic code path.
+
+### Rule 1: `rawText`
+- không rỗng
+- độ dài >= `PARSER_QUALITY_MIN_RAWTEXT_LENGTH`
+
+### Rule 2: `candidateInfo`
+Cần có ít nhất một signal định danh:
+- `fullName`
+- `emails`
+- `phones`
+- `location`
+
+### Rule 3: section signals
+Số section chính không rỗng phải đạt ngưỡng `PARSER_QUALITY_MIN_SECTION_SIGNALS`.
+
+Section hiện tại được tính:
+- `experience`
+- `education`
+- `skills`
+- `certificates`
+- `languages`
+- `summary`
+
+## 6. Logging và trace
+
+Mỗi invocation log:
+- `tierIndex`
+- `provider`
+- `model`
+- `durationMs`
+- `retryCount`
+- `fallbackReason`
+
+Giá trị `fallbackReason`:
+- `transient_error`
+- `non_retryable_error`
+- `low_confidence_output`
+
+`get_last_parse_trace()` trả về:
+- `parser_ver`
+- `fallback_path`
+- `selected_tier_index`
+- danh sách attempts
+
+Script `test_parser.py` và `test_parser_db.py` in `parserVer` / `fallbackPath` từ trace này.
+
+## 7. Lưu ý provider
+
+### Gemini
+- Vẫn dùng Files API + schema response của Gemini.
+- Có cơ chế resolve alias model để tìm model flash đang available.
+
+### OpenAI
+- Dùng `responses.create`.
+- Gửi PDF dạng `input_file`.
+- Parse JSON và validate lại bằng `ParsedCV`.
+
+### Anthropic
+- Dùng `messages.create`.
+- Gửi PDF dạng `document` block.
+- Ép response JSON bằng prompt + schema text, sau đó validate lại bằng `ParsedCV`.
+
+## 8. Unit tests
+
+`test_parser_policy.py` cover:
+- transient error rồi recover trong cùng tier
+- low-quality output fallback sang tier tiếp theo
+- tier 1 và 2 fail, tier 3 success
+- retry disabled thì không có backoff sleep

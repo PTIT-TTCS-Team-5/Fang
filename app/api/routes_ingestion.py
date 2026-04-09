@@ -8,7 +8,7 @@ from app.models.ingestion import (
 )
 from app.services.chunking import split_into_chunks
 from app.services.cv_loader import download_cv
-from app.services.cv_parser import parse_to_raw_and_json
+from app.services.cv_parser import get_last_parse_trace, parse_to_raw_and_json
 from app.services.embedding import embed_chunks
 from app.services.persistence import (
     create_index_job,
@@ -33,9 +33,18 @@ async def process_ingestion_task(index_job_id: int, request: IngestionJobRequest
 
         raw_cv_bytes = await download_cv(str(request.cvSnapUrl))
         raw_text, json_obj = await parse_to_raw_and_json(raw_cv_bytes)
-        parser_ver = str(json_obj.get("parserVer") or "gemini_tiered_fallback")
+        parser_ver = str(json_obj.get("parserVer") or "unknown")
+        parser_trace = get_last_parse_trace() or {}
 
-        await save_parsed_cv(request.jobAppId, raw_text, parser_ver)
+        await save_parsed_cv(request.jobAppId, raw_text, json_obj, parser_ver)
+        logger.info(
+            "CV parse persisted successfully",
+            extra={
+                "jobAppId": request.jobAppId,
+                "parserVer": parser_ver,
+                "fallbackPath": parser_trace.get("fallback_path"),
+            },
+        )
 
         chunks, token_counts = split_into_chunks(raw_text)
         vectors = await embed_chunks(chunks) if chunks else []
@@ -84,4 +93,4 @@ async def get_job_status(indexJobId: int):
     if not job_record:
         raise HTTPException(status_code=404, detail="Index Job not found")
 
-    return JobStatusResponse(status=job_record["stat"], errorMsg=job_record["errormsg"])
+    return JobStatusResponse(status=job_record["stat"], errorMsg=job_record["errorMsg"])

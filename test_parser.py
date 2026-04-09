@@ -2,40 +2,38 @@ import asyncio
 import json
 
 from app.core.logging import logger
-from app.services.cv_parser import parse_to_raw_and_json
+from app.services.cv_parser import get_last_parse_trace, parse_to_raw_and_json
 
 
 async def run_test():
     pdf_path = "sample.pdf"
 
     try:
-        # Đọc file PDF lên thành bytes
-        with open(pdf_path, "rb") as f:
-            cv_bytes = f.read()
+        with open(pdf_path, "rb") as file_obj:
+            cv_bytes = file_obj.read()
 
-        logger.info(f"Đã đọc file {pdf_path}, kích thước: {len(cv_bytes)} bytes")
-
-        # Bắn vào parser để test
-        logger.info("Bắt đầu gọi Gemini API...")
+        logger.info("Loaded sample PDF for parser test", extra={"pdfPath": pdf_path})
+        logger.info("Starting parser pipeline test")
         raw_text, parsed_json = await parse_to_raw_and_json(cv_bytes)
+        parser_trace = get_last_parse_trace() or {}
 
-        # In kết quả ra xem
         print("\n" + "=" * 50)
-        print("🎉 PARSE THÀNH CÔNG!")
+        print("PARSE THANH CONG")
         print("=" * 50)
-        print("RAW TEXT (500 ký tự đầu):")
+        print(f"parserVer: {parsed_json.get('parserVer')}")
+        print(f"fallbackPath: {parser_trace.get('fallback_path')}")
+        print("RAW TEXT (500 ky tu dau):")
         print(raw_text[:500] + "...\n")
-
         print("JSON OUTPUT:")
         print(json.dumps(parsed_json, indent=2, ensure_ascii=False))
         print("=" * 50)
-
     except FileNotFoundError:
-        logger.error(
-            f"Không tìm thấy file {pdf_path}. Hãy để một file CV vào thư mục gốc nhé!"
-        )
+        logger.error("sample.pdf was not found in the project root")
     except Exception:
-        logger.exception("Có lỗi tày đình xảy ra trong quá trình test!")
+        parser_trace = get_last_parse_trace() or {}
+        if parser_trace.get("fallback_path"):
+            print(f"fallbackPath: {parser_trace.get('fallback_path')}")
+        logger.exception("Parser smoke test failed")
 
 
 if __name__ == "__main__":

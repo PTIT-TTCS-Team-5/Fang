@@ -18,7 +18,7 @@ async def create_index_job(job_app_id: int) -> int:
 
 async def get_index_job_status(index_job_id: int) -> Optional[Dict[str, Any]]:
     """Fetch ingestion status by job id."""
-    query = "SELECT stat, errorMsg FROM AIINDEXJOB WHERE indexJobId = $1;"
+    query = 'SELECT stat, errorMsg AS "errorMsg" FROM AIINDEXJOB WHERE indexJobId = $1;'
     async with acquire_conn() as conn:
         record = await conn.fetchrow(query, index_job_id)
         return dict(record) if record else None
