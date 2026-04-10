@@ -74,8 +74,26 @@ class ChunkingTests(unittest.TestCase):
         markdown_text = convert_json_to_markdown(parsed_cv)
         chunk_payloads = process_document_to_chunks(markdown_text, global_context)
 
-        self.assertGreater(len(chunk_payloads), 1)
+        experience_chunks = [
+            payload
+            for payload in chunk_payloads
+            if repeated_bullet in payload["content"]
+        ]
+
+        self.assertGreater(len(experience_chunks), 1)
         self.assertTrue(all(payload["tokenCount"] <= 320 for payload in chunk_payloads))
+        self.assertTrue(
+            all("# Nguyen Van A" in payload["content"] for payload in experience_chunks)
+        )
+        self.assertTrue(
+            all("## Experience" in payload["content"] for payload in experience_chunks)
+        )
+        self.assertTrue(
+            all(
+                "### Senior Backend Engineer at Fang Labs" in payload["content"]
+                for payload in experience_chunks
+            )
+        )
 
 
 if __name__ == "__main__":

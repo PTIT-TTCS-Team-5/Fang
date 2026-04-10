@@ -1,0 +1,8 @@
+- `[ ]` Cập nhật `config.py`: cấu hình model `text-embedding-3-small`, OpenAI API Key, dimension = 1024.
+- `[ ]` Cấu hình `db/init.sql` (hoặc script migrate): Kích hoạt `vector` extension, tạo bảng `AIDOCUMENTCHUNK` (`halfvec(1024)`) và index HNSW.
+- `[ ]` Cập nhật `embedding.py`: import OpenAI SDK, gọi API `embeddings.create` với tham số batching (nếu cần) và dimensions.
+- `[ ]` Tích hợp `routes_ingestion.py`: Chạy `markdown_builder` flatten JSON -> gọi `process_document_to_chunks` lấy payloads -> gọi `embed_chunks` -> có vector.
+- `[ ]` Cập nhật `persistence.py`: Update hàm lưu chunk payloads truyền format SQL chuỗi mảng PGVector đúng vào khóa `embedding`.
+- `[ ]` Viết unit/smoke tests cho Chunking (`test_chunking.py`).
+- `[ ]` Viết unit/smoke tests cho Embedding API (`test_embedding.py`).
+- `[ ]` Tùy chọn: Viết test tích hợp end-to-end cho ingestion flow có vector DB.
