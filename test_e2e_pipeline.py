@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from app.core.config import settings
 from app.core.database import acquire_conn, db
 from app.core.logging import logger
 from app.models.cv_models import ParsedCV
@@ -22,6 +23,7 @@ DEFAULT_JOB_APP_ID = 9999
 DEFAULT_PDF_PATH = "sample.pdf"
 DEFAULT_PREVIEW_COUNT = 3
 SOURCE_TYPE = "CV"
+EXPECTED_EMBEDDING_DIM = 1024
 
 
 def _console_print(text: str = "") -> None:
@@ -29,6 +31,18 @@ def _console_print(text: str = "") -> None:
 
     encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
     sys.stdout.buffer.write(f"{text}\n".encode(encoding, errors="replace"))
+
+
+def _validate_runtime_embedding_config() -> None:
+    """Fail fast when runtime embedding settings drift from the current schema."""
+
+    if settings.embedding_dim != EXPECTED_EMBEDDING_DIM:
+        raise RuntimeError(
+            "Runtime EMBEDDING_DIM does not match the current database schema. "
+            f"Expected {EXPECTED_EMBEDDING_DIM}, got {settings.embedding_dim}. "
+            "Update your environment config or override EMBEDDING_DIM before "
+            "running test_e2e_pipeline.py."
+        )
 
 
 def _parse_args() -> argparse.Namespace:
@@ -172,6 +186,7 @@ async def _verify_persisted_rows(job_app_id: int) -> None:
 
 
 async def run_e2e_pipeline(args: argparse.Namespace) -> None:
+    _validate_runtime_embedding_config()
     cv_bytes, cv_source = await _load_cv_bytes(args.pdf_path, args.cv_url)
 
     raw_text, parsed_json = await parse_to_raw_and_json(cv_bytes)
