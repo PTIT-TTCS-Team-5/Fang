@@ -30,10 +30,15 @@ CREATE TABLE AIDOCUMENTCHUNK (
   chunkIndex INT NOT NULL,
   tokenCount INT NOT NULL,
   metadata JSONB,
-  embedding halfvec(1536),
+  embedding halfvec(1024),
   createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (jobAppId) REFERENCES JOBAPPLICATION(jobAppId)
 );
+
+CREATE INDEX IF NOT EXISTS idx_aidocumentchunk_hnsw_cosine
+  ON AIDOCUMENTCHUNK
+  USING hnsw (embedding halfvec_cosine_ops)
+  WITH (m = 16, ef_construction = 64);
  
 CREATE TABLE AIQUERYLOG (
   queryId SERIAL PRIMARY KEY,
