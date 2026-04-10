@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,13 @@ DEFAULT_JOB_APP_ID = 9999
 DEFAULT_PDF_PATH = "sample.pdf"
 DEFAULT_PREVIEW_COUNT = 3
 SOURCE_TYPE = "CV"
+
+
+def _console_print(text: str = "") -> None:
+    """Print text safely on Windows terminals with limited encodings."""
+
+    encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+    sys.stdout.buffer.write(f"{text}\n".encode(encoding, errors="replace"))
 
 
 def _parse_args() -> argparse.Namespace:
@@ -83,16 +91,16 @@ def _print_chunk_preview(
     preview_count: int,
 ) -> None:
     if not chunk_payloads:
-        print("Khong tao duoc chunk nao.")
+        _console_print("Khong tao duoc chunk nao.")
         return
 
-    print("\n" + "=" * 80)
-    print("CHUNK PREVIEW")
-    print("=" * 80)
+    _console_print("\n" + "=" * 80)
+    _console_print("CHUNK PREVIEW")
+    _console_print("=" * 80)
     for payload in chunk_payloads[: max(1, preview_count)]:
-        print(f"\nChunk Index : {payload['chunkIndex']}")
-        print(f"Token Count : {payload['tokenCount']}")
-        print(payload["content"][:1000])
+        _console_print(f"\nChunk Index : {payload['chunkIndex']}")
+        _console_print(f"Token Count : {payload['tokenCount']}")
+        _console_print(payload["content"][:1000])
 
 
 async def _ensure_mock_job_application(job_app_id: int, cv_source: str) -> None:
@@ -155,12 +163,12 @@ async def _verify_persisted_rows(job_app_id: int) -> None:
             SOURCE_TYPE,
         )
 
-    print("\n" + "=" * 80)
-    print("DATABASE CHECK")
-    print("=" * 80)
-    print(f"jobAppId       : {job_app_id}")
-    print(f"saved chunks   : {row['chunk_count']}")
-    print(f"saved vectors  : {row['embedded_count']}")
+    _console_print("\n" + "=" * 80)
+    _console_print("DATABASE CHECK")
+    _console_print("=" * 80)
+    _console_print(f"jobAppId       : {job_app_id}")
+    _console_print(f"saved chunks   : {row['chunk_count']}")
+    _console_print(f"saved vectors  : {row['embedded_count']}")
 
 
 async def run_e2e_pipeline(args: argparse.Namespace) -> None:
@@ -175,21 +183,21 @@ async def run_e2e_pipeline(args: argparse.Namespace) -> None:
     chunk_payloads = process_document_to_chunks(markdown_text, global_context)
     chunk_contents = [payload["content"] for payload in chunk_payloads]
 
-    print("\n" + "=" * 80)
-    print("PIPELINE SUMMARY")
-    print("=" * 80)
-    print(f"CV source      : {cv_source}")
-    print(f"parser version : {parser_ver}")
-    print(f"markdown chars : {len(markdown_text)}")
-    print(f"chunk count    : {len(chunk_payloads)}")
+    _console_print("\n" + "=" * 80)
+    _console_print("PIPELINE SUMMARY")
+    _console_print("=" * 80)
+    _console_print(f"CV source      : {cv_source}")
+    _console_print(f"parser version : {parser_ver}")
+    _console_print(f"markdown chars : {len(markdown_text)}")
+    _console_print(f"chunk count    : {len(chunk_payloads)}")
 
     _print_chunk_preview(chunk_payloads, args.preview_count)
 
     vectors = await embed_chunks(chunk_contents) if chunk_contents else []
-    print(f"embedding count: {len(vectors)}")
+    _console_print(f"embedding count: {len(vectors)}")
 
     if args.skip_db:
-        print("Bo qua buoc ghi database do co --skip-db.")
+        _console_print("Bo qua buoc ghi database do co --skip-db.")
         return
 
     await db.connect()
