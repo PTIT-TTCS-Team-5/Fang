@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from math import ceil
 from types import SimpleNamespace
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from langchain_text_splitters import (
     MarkdownHeaderTextSplitter,
@@ -61,7 +61,7 @@ def process_document_to_chunks(
 
     header_splitter = MarkdownHeaderTextSplitter(
         headers_to_split_on=HEADERS_TO_SPLIT_ON,
-        strip_headers=False,
+        strip_headers=True,
     )
     recursive_splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHILD_CHUNK_TARGET_TOKENS,
@@ -77,6 +77,7 @@ def process_document_to_chunks(
         nodes = [_build_fallback_node(normalized_markdown)]
 
     for node in nodes:
+        header_prefix = _build_header_prefix(getattr(node, "metadata", None))
         node_text = _normalize_optional_text(
             node.page_content, field_name="node.page_content"
         )
@@ -95,7 +96,8 @@ def process_document_to_chunks(
             if not normalized_child:
                 continue
 
-            content = _inject_global_context(normalized_child, normalized_context)
+            chunk_body = _inject_header_context(normalized_child, header_prefix)
+            content = _inject_global_context(chunk_body, normalized_context)
             chunk_payloads.append(
                 ChunkPayload(
                     content=content,
@@ -148,7 +150,36 @@ def _inject_global_context(content: str, global_context: str) -> str:
     return f"{global_context}\n\n{content}"
 
 
+def _inject_header_context(content: str, header_prefix: str) -> str:
+    """Prefix chunk content with reconstructed markdown headers."""
+
+    if not header_prefix:
+        return content
+    return f"{header_prefix}\n\n{content}"
+
+
+def _build_header_prefix(metadata: Any) -> str:
+    """Reconstruct markdown headers from LangChain node metadata."""
+
+    if not isinstance(metadata, dict):
+        return ""
+
+    header_lines: list[str] = []
+    for level, metadata_key in enumerate(["h1", "h2", "h3"], start=1):
+        value = metadata.get(metadata_key)
+        if not isinstance(value, str):
+            continue
+
+        normalized_value = value.strip()
+        if not normalized_value:
+            continue
+
+        header_lines.append(f"{'#' * level} {normalized_value}")
+
+    return "\n".join(header_lines)
+
+
 def _build_fallback_node(content: str) -> SimpleNamespace:
     """Create a fallback document-like object for non-markdown content."""
 
-    return SimpleNamespace(page_content=content)
+    return SimpleNamespace(page_content=content, metadata={})

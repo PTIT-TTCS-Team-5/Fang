@@ -30,10 +30,20 @@ CREATE TABLE AIDOCUMENTCHUNK (
   chunkIndex INT NOT NULL,
   tokenCount INT NOT NULL,
   metadata JSONB,
-  embedding halfvec(1536),
+  -- Mac dinh cho DEV/Test la halfvec(1024) de tiet kiem RAM/index.
+  -- Neu muon doi sang full precision, chi can sua:
+  --   1. halfvec(1024) -> vector(1024)
+  --   2. halfvec_cosine_ops -> vector_cosine_ops
+  --   3. EMBEDDING_VECTOR_TYPE=vector trong env
+  embedding halfvec(1024),
   createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (jobAppId) REFERENCES JOBAPPLICATION(jobAppId)
 );
+
+CREATE INDEX IF NOT EXISTS idx_aidocumentchunk_hnsw_cosine
+  ON AIDOCUMENTCHUNK
+  USING hnsw (embedding halfvec_cosine_ops)
+  WITH (m = 16, ef_construction = 64);
  
 CREATE TABLE AIQUERYLOG (
   queryId SERIAL PRIMARY KEY,

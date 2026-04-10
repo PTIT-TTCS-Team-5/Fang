@@ -11,6 +11,7 @@ httpx==0.28.1
 
 # AI & LangChain
 google-genai==1.69.0
+openai>=2.26.0,<3.0.0
 langchain-text-splitters>=0.3.0,<1.0.0
 
 # Utilities
