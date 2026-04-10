@@ -2,15 +2,21 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from app.core.config import settings
-from app.services.persistence import _serialize_embedding, save_chunk_payloads
+from app.services.persistence import (
+    _resolve_pgvector_type,
+    _serialize_embedding,
+    save_chunk_payloads,
+)
 
 
 class PersistenceTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.original_dim = settings.embedding_dim
+        self.original_vector_type = settings.embedding_vector_type
 
     async def asyncTearDown(self) -> None:
         settings.embedding_dim = self.original_dim
+        settings.embedding_vector_type = self.original_vector_type
 
     async def test_save_chunk_payloads_deletes_existing_rows_for_empty_replace(
         self,
@@ -39,6 +45,17 @@ class PersistenceTests(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(ValueError, "EMBEDDING_DIM"):
             _serialize_embedding([1, 2])
+
+    async def test_resolve_pgvector_type_accepts_halfvec_and_vector(self) -> None:
+        settings.embedding_vector_type = "halfvec"
+        self.assertEqual(_resolve_pgvector_type(), "halfvec")
+
+        settings.embedding_vector_type = "vector"
+        self.assertEqual(_resolve_pgvector_type(), "vector")
+
+        settings.embedding_vector_type = "invalid"
+        with self.assertRaisesRegex(ValueError, "EMBEDDING_VECTOR_TYPE"):
+            _resolve_pgvector_type()
 
 
 if __name__ == "__main__":

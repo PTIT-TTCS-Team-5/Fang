@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     embedding_provider: str = "openai"
     embedding_model: str = "text-embedding-3-small"
     embedding_batch_size: int = 32
+    embedding_vector_type: str = "halfvec"
     log_level: str = "INFO"
     google_api_key: str | None = None
     openai_api_key: str | None = None

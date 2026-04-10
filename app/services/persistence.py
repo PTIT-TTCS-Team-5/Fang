@@ -170,7 +170,8 @@ async def save_chunk_payload_records(
     if not records:
         return
 
-    query = """
+    cast_type = _resolve_pgvector_type()
+    query = f"""
         INSERT INTO AIDOCUMENTCHUNK (
             jobAppId,
             sourceType,
@@ -180,7 +181,7 @@ async def save_chunk_payload_records(
             metadata,
             embedding
         )
-        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::halfvec);
+        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::{cast_type});
     """
     async with acquire_conn() as conn:
         async with conn.transaction():
@@ -212,6 +213,15 @@ def _serialize_embedding(embedding: list[float] | None) -> str | None:
             raise ValueError(f"embedding[{index}] must be a numeric value.") from exc
 
     return f"[{','.join(serialized_values)}]"
+
+
+def _resolve_pgvector_type() -> str:
+    """Return the configured pgvector storage type after validation."""
+
+    vector_type = settings.embedding_vector_type.strip().lower()
+    if vector_type not in {"halfvec", "vector"}:
+        raise ValueError("EMBEDDING_VECTOR_TYPE must be either 'halfvec' or 'vector'.")
+    return vector_type
 
 
 async def _delete_document_chunks(conn: Any, job_app_id: int, source_type: str) -> None:

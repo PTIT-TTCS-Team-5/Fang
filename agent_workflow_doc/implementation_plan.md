@@ -1,119 +1,70 @@
-# Mục Tiêu
+# Implementation Plan: E2E Pipeline & Embedding Architecture
 
-Bản thiết kế kiến trúc và đặc tả kỹ thuật cho Phase Embedding của hệ thống AI Core (dự án FANG), nhằm chuyển hóa CV từ dạng JSON (sau parse) thành các vector embedding và lưu trữ vào pgvector. Tài liệu này đóng vai trò là bản bàn giao (handoff spec) chuyển cho Chat B (model thực thi) tiến hành gõ code.
+Kế hoạch này nhằm hoàn thiện luồng pipeline xử lý CV từ đầu đến cuối và giải quyết vấn đề mất ngữ cảnh (loss context) khi chia nhỏ tài liệu (chunking). Đồng thời, xác định mô hình và kiến trúc Embedding sẽ được sử dụng dựa trên các tài liệu nghiên cứu.
 
-## User Review Required
+## 1. Kết Luận Khảo Sát Mô Hình Embedding
 
-> [!IMPORTANT]
-> Đây là bản thiết kế kiến trúc. Người dùng cần duyệt qua các quyết định về lưu trữ (halfvec vs vector), dimension (1024), model embedding (`text-embedding-3-small`), và thứ tự triển khai trước khi agent chuyển sang phase lập trình thực tế (Chat B).
+Dựa trên báo cáo `RAG_Embedding_Research_miCareer.md`, đây là kết luận dành cho giai đoạn hiện tại:
 
-## 1. Đánh giá kiến trúc hiện tại và khoảng trống (Gap Analysis)
+- **Mô hình được chọn cho Môi trường DEV/Test (Giai đoạn này):** `text-embedding-3-small` của OpenAI.
+- **Cấu hình Dimension:** `1024` (Sử dụng tham số `dimensions=1024` trong API OpenAI theo chiến lược Matryoshka để tối ưu RAM và Storage mờ không giảm sút nhiều về accuracy).
+- **Lý do:** Rẻ, kích thước context lớn (8192 tokens), dễ tích hợp SDK trực tiếp, và tiết kiệm storage so với bản gốc 1536 chiều.
 
-**Kiến trúc hiện hành:**
-- Phase Parser đã hoàn thiện với kiến trúc 3-tier (Gemini Flash -> GPT-4o-mini -> Claude Haiku), retry policy với `tenacity` và quality gate.
-- Đầu ra của parser (`ParsedCV`) đã ổn định, chứa văn bản thô `raw_text` và structured JSON, được lưu tại bảng `CVPARSED`.
-- Luồng `POST /v1/ingestion/jobs` đã có khung nhưng mới dừng ở đoạn parse thành công. Các hàm stub cho đoạn lưu `AIDOCUMENTCHUNK` (`save_document_chunks`) đang chưa tích hợp với module chunking và embedding thực tế.
+> [!NOTE]
+> Cho môi trường **PROD** (sau này), hệ thống sẽ cần dịch chuyển sang `gemini-embedding-001` (với `output_dimensionality=768`) của Google vì chất lượng tiếng Việt tốt hơn hẳn (MTEB: 68.32). Nhưng hiện tại ở local E2E test, việc sử dụng `text-embedding-3-small` là hợp lý nhất.
 
-**Khoảng trống cần bù đắp (Gaps cho Phase Embedding):**
-1. Gọi thực tế hàm `convert_json_to_markdown` và `process_document_to_chunks` trong handler/service luồng ingestion.
-2. Tích hợp OpenAI client để gọi `text-embedding-3-small` (dimension 1024) thực tế bên trong `app/services/embedding.py` (hiện tại đang là stub trả về vector 0.0).
-3. Triển khai schema DB `AIDOCUMENTCHUNK` bao gồm setup `vector`/`halfvec` plugin trên PostgreSQL.
-4. Cập nhật `app/services/persistence.py` để xử lý insert embedding data đúng chuẩn pgvector.
+## 2. Kế Hoạch Cập Nhật Code (Giao việc cho Agent Execute)
 
-## 2. Thiết kế Kiến trúc Embedding End-to-End
+### [Component: Chunking Service]
 
-Luồng xử lý (Ingestion Pipeline) cụ thể như sau:
-1. **Ingestion Trigger**: Lấy kết quả `ParsedCV` (JSON) vừa thành công từ bước Parse.
-2. **Flatten**: Sử dụng `markdown_builder.py` để làm phẳng cấu trúc JSON thành văn bản Markdown phân cấp theo Heading, đồng thời trích xuất siêu dữ liệu (Global Context) thông qua `extract_global_metadata`.
-3. **Chunking**: Truyền nội dung Markdown và Context vào `process_document_to_chunks` (trong `chunking.py`). 
-    - Thực thi Zero-LLM chunking với `MarkdownHeaderTextSplitter`.
-    - Áp dụng cấu trúc Small-to-Big Retrieval: Block > 512 tokens sẽ bị chia đệ quy ở mức 180 tokens/chunk (overlap 36 tokens, ~20%).
-    - Tiêm Section-Pinning (Bối cảnh): Gắn Metadata vào đầu prefix mỗi child chunk.
-4. **Embed**: Gửi batch danh sách các chunk đã tiêm bối cảnh lên OpenAI API (`text-embedding-3-small`) sử dụng tham số `dimensions=1024`.
-5. **Persist**: Lưu cục bộ chunk (content, tokenCount, metadata) cùng vector vào `AIDOCUMENTCHUNK`. Cấu hình kiểu dữ liệu **`halfvec`** để tối ưu dung lượng.
-6. **Retrieve**: Khi query tìm kiếm, sử dụng Index **`HNSW`** (Cosine) trên bảng PG để trích xuất chunk liên quan.
+#### [MODIFY] [chunking.py](file:///c:/Users/os/Desktop/cur_prj/Fang/app/services/chunking.py)
+* **Goal:** Khắc phục lỗi tại Chunk 3, 4 bị mất Header `## Experience` và mất ngữ cảnh cha.
+* **Thay đổi chi tiết:**
+  - Trong hàm `process_document_to_chunks`, sửa `strip_headers=False` thành `strip_headers=True` khi gọi `MarkdownHeaderTextSplitter`.
+  - Lúc này, LangChain sẽ loại bỏ Header khỏi `node.page_content` nhưng lưu chúng trong `node.metadata` dưới dạng dictionary (ví dụ: `{"h1": "Nguyễn Hải Hưng", "h2": "Experience"}`).
+  - Trong logic chia chunk con (bằng `RecursiveCharacterTextSplitter`), trước khi phân tích, cần trích xuất tuần tự các thẻ h1, h2, h3 từ `node.metadata` để tái cấu trúc lại một chuỗi Header chuẩn (ví dụ: `# Nguyễn Hải Hưng\n## Experience`).
+  - **Header Injection:** Nối chuỗi Header này vào đầu **mỗi chunk con** trước khi lưu trữ (`ChunkPayload`). Điều này đảm bảo dù `Experience` bị xé nhỏ ra nhiều mảnh, bất cứ mảnh nào cũng vẫn có tiêu đề `## Experience` nằm ở trên để Embedding Model hiểu được bối cảnh.
 
-## 3. Chiến lược Chunking Chi Tiết
+### [Component: Luồng End-to-End Test]
 
-- **Ngưỡng an toàn block gốc (Threshold):** `PARENT_CHUNK_TOKEN_LIMIT = 512` tokens. 
-- **Độ phân giải Child Chunk:** `CHILD_CHUNK_TARGET_TOKENS = 180` tokens.
-- **Chồng chéo (Overlap):** `CHILD_CHUNK_OVERLAP_TOKENS = 36` tokens (~20%).
-- **Metadata Injection:** Prefix cho từng chunk áp dụng cấu trúc tĩnh:
-  `[Candidate: {Tên} | Total Exp: {Số năm} | Target Role: {Vị trí tiềm năng} | Core Skills: {Kỹ năng}] \n\n {Nội dung khối}`
-- **Chuẩn hóa token:** Tiếp tục sử dụng `approx_token_count` (`CHARS_PER_TOKEN = 3.5`) hiện có nhưng xác nhận log token thực tế trả về từ OpenAI API để tinh chỉnh sau.
+#### [NEW] [test_e2e_pipeline.py](file:///c:/Users/os/Desktop/cur_prj/Fang/test_e2e_pipeline.py)
+* **Goal:** Xây dựng một script test End-to-End hoàn chỉnh, bỏ qua quy trình Mock và thay bằng luồng dữ liệu thực tế.
+* **Thay đổi chi tiết:**
+  1. Trỏ đến file `sample.pdf` tại thư mục gốc, hoặc cho phép truyền URL từ Cloudinary.
+  2. **Bước 1 (Parse):** Đẩy qua mô hình Gemini (`google:gemini-3.1-flash-lite-preview` hoặc bản mới nhất theo API key) để trích xuất JSON (`ParsedCV`).
+  3. **Bước 2 (Markdown & Convert):** Lọc metadata ứng viên, chuyển JSON thành chuỗi Markdown thông qua module `markdown_builder`.
+  4. **Bước 3 (Chunking):** Chạy `process_document_to_chunks` (sau khi đã được sửa lỗi Header context như đã nêu) để lấy danh sách chunk con.
+  5. **Bước 4 (Embedding):** Khởi tạo OpenAI Client. Gửi một batch yêu cầu lên API `text-embedding-3-small` (kèm theo `dimensions=1024`) chứa toàn bộ content của chunks. (Lưu ý: API Embedding chỉ nhận Input Text, không nhận Prompt truyền thống như LLM, ta chỉ cần truyền mảng text lấy về mảng vector).
+  6. **Bước 5 (Database):** Cập nhật PostgreSQL scheme cho cột `embedding vector(1024)`:
+     - Tạo connection pool tới DB (Sử dụng file configs chuẩn trong `/core`).
+     - Lưu thông tin vào `CVPARSED` và `AIDOCUMENTCHUNK`, insert các vector trực tiếp qua kiểu `pgvector` đúng như thiết kế ở Sprint 1.
 
-## 4. Thiết kế Schema Khởi Tạo DB và Chỉ Mục
+### [Component: Database Migration (Tuỳ chọn)]
 
-### Bảng `AIDOCUMENTCHUNK`
-```sql
-CREATE EXTENSION IF NOT EXISTS vector;
+#### [MODIFY] DB Scripts hoặc hướng dẫn `psql` (Tuỳ chọn)
+* Mặc định hiện tại chọn `halfvec(1024)` cho môi trường DEV/Test để tiết kiệm RAM và chi phí index.
+* Cần ghi chú rõ trong schema/config rằng việc đổi sang `vector(1024)` là rất dễ:
+  - `embedding halfvec(1024)` -> `embedding vector(1024)`
+  - `halfvec_cosine_ops` -> `vector_cosine_ops`
+  - `EMBEDDING_VECTOR_TYPE=halfvec` -> `EMBEDDING_VECTOR_TYPE=vector`
+* Cần đảm bảo index `hnsw` với toán tử cosine tương ứng đã được áp dụng trong cơ sở dữ liệu `test_parser_db` để chuẩn bị cho vector search (Query).
 
-CREATE TABLE IF NOT EXISTS AIDOCUMENTCHUNK (
-    chunkId SERIAL PRIMARY KEY,
-    jobAppId INTEGER NOT NULL,
-    sourceType VARCHAR(50) NOT NULL, -- 'CV', 'JD', 'COVER_LETTER'
-    content TEXT NOT NULL,
-    chunkIndex INTEGER NOT NULL,
-    tokenCount INTEGER NOT NULL,
-    metadata JSONB,
-    embedding halfvec(1024), -- Lượng tử hóa vô hướng để giảm 50% RAM In-memory
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
+### [Note: Flexibility cho Vector Storage]
 
-### HNSW Index (Môi trường DEV)
-```sql
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_aidocchunk_hnsw_cosine
-ON AIDOCUMENTCHUNK
-USING hnsw (embedding halfvec_cosine_ops)
-WITH (m = 16, ef_construction = 64);
-```
+Trong giai đoạn hiện tại, `halfvec` là lựa chọn mặc định. Tuy nhiên, để tránh khóa cứng quyết định kiến trúc:
 
-> [!TIP]
-> Sử dụng `halfvec(1024)` cho môi trường DEV kết hợp model OpenAI `text-embedding-3-small` là chiến lược cực kỳ tốt theo bản R&D. Cho phép duy trì mức giá rất rẻ nhưng giữ RAM index siêu thấp, trong khi recall vẫn đảm bảo ~94%. 
+- Runtime của ứng dụng nên đọc kiểu vector từ cấu hình `EMBEDDING_VECTOR_TYPE`.
+- Schema SQL cần ghi chú trực tiếp các dòng phải đổi nếu muốn chuyển sang `vector`.
+- Mục tiêu là để dev có thể đổi chiến lược lưu trữ chỉ bằng vài chỉnh sửa nhỏ, không phải refactor lại pipeline embedding/persistence.
 
-## 5. Kế hoạch Kiểm thử (Test Plan)
+## 3. Quá trình kiểm thử (Verification Plan)
 
-### Smoke Tests
-- `test_chunking.py`: Sử dụng 1 CV dạng JSON truyền vào, theo dõi đầu ra đảm bảo list chunk có tiền tố "Candidate...", không vượt token size.
-- `test_embedding.py`: Mock test để kiểm chứng API client, config model và tham số dimensions có được load đúng từ biến môi trường.
-
-### Integration / Quality Checks
-- Viết integration test `test_ingestion_flow.py`: Đi qua từ Mock ParsedCV -> Markdown -> Chunking -> Mock Embedding -> SQLite hoặc Postgres test container. Sau khi insert, verify dòng dữ liệu trong bảng.
-- Kiểm thử cơ chế "Replace Existing": Giả lập chạy re-ingest CV cho cùng một `jobAppId` để confirm chunk cũ bị xóa và thay thế bằng tập mới hoàn toàn mà không duplicate dòng.
-
-## Proposed Changes (Đặc Tả Bàn Giao Cho Chat B)
-
-**Phạm vi File Cần Cập Nhật & Thứ tự:**
-
-### 1. File Cấu Hình & Database Schema
-#### [MODIFY] [config.py](file:///c:/Users/os/Desktop/cur_prj/Fang/app/core/config.py)
-- Khai báo mapping/struct lấy `OPENAI_API_KEY`, chuyển tham số `EMBEDDING_PROVIDER` sang `openai`, gán `EMBEDDING_DIM` mặc định là `1024`.
-#### [MODIFY] `db/init.sql` (hoặc nơi quản lý schema DB)
-- Thêm script cài extension `vector` và tạo bảng `AIDOCUMENTCHUNK` với type `halfvec(1024)`. Thêm script tạo index HNSW.
-
-### 2. Lõi Embedding
-#### [MODIFY] [embedding.py](file:///c:/Users/os/Desktop/cur_prj/Fang/app/services/embedding.py)
-- Setup SDK OpenAI (`import openai`, khởi tạo AsyncClient). 
-- Replace hàm `embed_chunks` hiện tại để gọi API `embeddings.create(model=..., input=..., dimensions=1024)`. Thêm xử lý batching nếu file PDF quá lớn (nhưng với CV ~5 chunks thì call 1 batch là đủ).
-
-### 3. Tích Hợp Luồng
-#### [MODIFY] [routes_ingestion.py](file:///c:/Users/os/Desktop/cur_prj/Fang/app/api/routes_ingestion.py)
-- Bổ sung việc trigger `convert_json_to_markdown` và `process_document_to_chunks` thay vi chỉ dừng lại ở Parse.
-- Map trả về danh sách payloads và gọi `embed_chunks`.
-#### [MODIFY] [persistence.py](file:///c:/Users/os/Desktop/cur_prj/Fang/app/services/persistence.py)
-- Cập nhật hàm `save_chunk_payloads` và format lưu mảng array vào kiểu Postgres Vector.
-
----
-
-## 6. Rủi Ro & Rollback Plan
-
-- **Rủi ro 1**: System Postgres cục bộ hiện tại chưa enable extension pgvector, tạo bảng `halfvec` gây lỗi crash luồng DB.
-  *Mitigation*: Kiểm tra kỹ requirement và script `init.sql` chạy đúng thứ tự `CREATE EXTENSION IF NOT EXISTS vector;` trước CREATE TABLE.
-- **Rủi ro 2**: Rate limit của OpenAI API (dù CV ít nhưng nếu ingest bulk lượng lớn).
-  *Mitigation*: Sử dụng cơ chế retry `tenacity` (tương tự như Phase 1 - parser) áp dụng quanh hàm `embed_chunks`.
-- **Kế hoạch Rollback**: Nhánh `feat/embedding-phase` đang biệt lập hoàn toàn. Nếu có bug rớt DB, có thể drop index/bảng `AIDOCUMENTCHUNK` và reset head không làm ảnh hưởng nhánh parser.
+- Chạy `python test_e2e_pipeline.py`.
+- Hệ thống log ra console quá trình từ PDF tải vào RAM, parsing ra JSON, số chunks con sinh ra.
+- Log ra preview 2-3 chunk xem Header đã được gắn dính liền với nội dung hay chưa.
+- Mở DBeaver/pgAdmin kiểm tra bảng `AIDOCUMENTCHUNK` phải thấy dữ liệu vector cột `embedding` không bị rỗng. Cột `tokenCount` và `content` chính xác.
+- Xác nhận cấu hình mặc định đang là `halfvec`, nhưng tài liệu/schema đã mô tả rõ cách đổi nhanh sang `vector` nếu cần.
 
 ## Open Questions
-- Hình thức setup DB Postgres hiện tại của người dùng là qua Docker Container? Nếu đúng thì cần nhắc nhở dev (Chat B hoặc User) cấu hình dùng image hỗ trợ `pgvector` (ví dụ: `pgvector/pgvector:pg16`).
-- File `init.sql` thực tế nằm ở đâu trong repo để Chat B cập nhật? (Agent B sẽ phải quét dự án để tìm file chạy init hoặc migration tool nếu có).
+- Bạn có muốn tự động upload `sample.pdf` lên Cloudinary thành thư viện test mặc định thông qua SDK không, hay chỉ cần dùng file đọc dạng binary ngay tại thư mục local là đủ?
+- Bạn có sở hữu tài khoản OpenAI có sẵn credit/billing để API Embedding hoạt động hay ta đang sử dụng model giả lập / key trung gian nào đó?
