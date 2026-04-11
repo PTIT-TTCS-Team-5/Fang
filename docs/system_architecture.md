@@ -21,12 +21,12 @@ graph TD
     
     G -->|Transient Error<br/>Retry up to 3x| G
     G -->|Success &<br/>High Quality| H
-    G -->|All Fail| ERROR[raise CVParsingError<br/>update_index_job_status=FAILED]
+    G -->|All Fail| ERROR[raise CVParsingError<br/>update_index_job_status<br/>=FAILED]
     
     H --> I[split_into_chunks]
     I --> J[embed_chunks]
     J --> K[save_document_chunks]
-    K --> L[update_index_job_status=SUCCESS]
+    K --> L[update_index_job_status<br/>=SUCCESS]
     
     style E fill:#fff4e6
     style F fill:#fff4e6
