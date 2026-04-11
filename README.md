@@ -67,6 +67,11 @@ uvicorn app.main:app --reload
 python test_parser.py
 ```
 
+### Chunking smoke test (in ket qua tren console)
+```bash
+python test_chunking.py
+```
+
 Script sẽ in:
 - `parserVer`
 - `fallbackPath`
@@ -88,7 +93,7 @@ Script sẽ:
 
 ## Unit test policy
 ```bash
-python -m unittest test_parser_policy.py
+python -m unittest discover -s tests/unit -p "unit_test_*.py"
 ```
 
 Test cover:
