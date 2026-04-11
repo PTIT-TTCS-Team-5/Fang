@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict, Optional
 
+from app.core.config import settings
 from app.core.database import acquire_conn
 
 
@@ -39,16 +40,17 @@ async def update_index_job_status(
 
 async def save_parsed_cv(
     job_app_id: int, raw_text: str, parsed_json: dict, parser_ver: str
-):
+) -> int:
     """Persist parsed CV raw text and structured JSON."""
     query = """
         INSERT INTO CVPARSED (jobAppId, rawText, parsedJson, parserVer)
         VALUES ($1, $2, $3::jsonb, $4)
         ON CONFLICT (jobAppId) DO UPDATE
-        SET rawText = EXCLUDED.rawText, parsedJson = EXCLUDED.parsedJson, parserVer = EXCLUDED.parserVer, parseAt = CURRENT_TIMESTAMP;
+        SET rawText = EXCLUDED.rawText, parsedJson = EXCLUDED.parsedJson, parserVer = EXCLUDED.parserVer, parseAt = CURRENT_TIMESTAMP
+        RETURNING cvParsedId;
     """
     async with acquire_conn() as conn:
-        await conn.execute(
+        return await conn.fetchval(
             query, job_app_id, raw_text, json.dumps(parsed_json), parser_ver
         )
 
@@ -77,9 +79,7 @@ async def save_document_chunks(
     for index, chunk in enumerate(chunks):
         metadata = metadata_items[index] if metadata_items is not None else None
         embedding = embeddings[index] if embeddings is not None else None
-        embedding_value = None
-        if embedding is not None:
-            embedding_value = f"[{','.join(map(str, embedding))}]"
+        embedding_value = _serialize_embedding(embedding)
 
         records.append(
             (
@@ -92,6 +92,10 @@ async def save_document_chunks(
                 embedding_value,
             )
         )
+
+    if replace_existing and not records:
+        await delete_document_chunks(job_app_id, source_type)
+        return
 
     await save_chunk_payload_records(records, replace_existing=replace_existing)
 
@@ -129,9 +133,7 @@ async def save_chunk_payloads(
 
         metadata = metadata_items[index] if metadata_items is not None else None
         embedding = embeddings[index] if embeddings is not None else None
-        embedding_value = None
-        if embedding is not None:
-            embedding_value = f"[{','.join(map(str, embedding))}]"
+        embedding_value = _serialize_embedding(embedding)
 
         records.append(
             (
@@ -145,7 +147,18 @@ async def save_chunk_payloads(
             )
         )
 
+    if replace_existing and not records:
+        await delete_document_chunks(job_app_id, source_type)
+        return
+
     await save_chunk_payload_records(records, replace_existing=replace_existing)
+
+
+async def delete_document_chunks(job_app_id: int, source_type: str) -> None:
+    """Delete existing chunk rows for a given document source."""
+
+    async with acquire_conn() as conn:
+        await _delete_document_chunks(conn, job_app_id, source_type)
 
 
 async def save_chunk_payload_records(
@@ -157,7 +170,8 @@ async def save_chunk_payload_records(
     if not records:
         return
 
-    query = """
+    cast_type = _resolve_pgvector_type()
+    query = f"""
         INSERT INTO AIDOCUMENTCHUNK (
             jobAppId,
             sourceType,
@@ -167,19 +181,57 @@ async def save_chunk_payload_records(
             metadata,
             embedding
         )
-        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7);
+        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::{cast_type});
     """
     async with acquire_conn() as conn:
         async with conn.transaction():
             if replace_existing:
                 job_app_id = records[0][0]
                 source_type = records[0][1]
-                await conn.execute(
-                    """
-                    DELETE FROM AIDOCUMENTCHUNK
-                    WHERE jobAppId = $1 AND sourceType = $2;
-                    """,
-                    job_app_id,
-                    source_type,
-                )
+                await _delete_document_chunks(conn, job_app_id, source_type)
             await conn.executemany(query, records)
+
+
+def _serialize_embedding(embedding: list[float] | None) -> str | None:
+    """Serialize an embedding vector into pgvector text format."""
+
+    if embedding is None:
+        return None
+    if not embedding:
+        raise ValueError("embedding must not be empty.")
+    if len(embedding) != settings.embedding_dim:
+        raise ValueError(
+            "embedding length does not match configured EMBEDDING_DIM "
+            f"({settings.embedding_dim})."
+        )
+
+    serialized_values: list[str] = []
+    for index, value in enumerate(embedding):
+        try:
+            serialized_values.append(f"{float(value):.12g}")
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"embedding[{index}] must be a numeric value.") from exc
+
+    return f"[{','.join(serialized_values)}]"
+
+
+def _resolve_pgvector_type() -> str:
+    """Return the configured pgvector storage type after validation."""
+
+    vector_type = settings.embedding_vector_type.strip().lower()
+    if vector_type not in {"halfvec", "vector"}:
+        raise ValueError("EMBEDDING_VECTOR_TYPE must be either 'halfvec' or 'vector'.")
+    return vector_type
+
+
+async def _delete_document_chunks(conn: Any, job_app_id: int, source_type: str) -> None:
+    """Delete chunk rows using the provided connection context."""
+
+    await conn.execute(
+        """
+        DELETE FROM AIDOCUMENTCHUNK
+        WHERE jobAppId = $1 AND sourceType = $2;
+        """,
+        job_app_id,
+        source_type,
+    )

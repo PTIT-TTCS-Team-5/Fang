@@ -3,8 +3,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     database_url: str
-    embedding_dim: int = 1536
+    embedding_dim: int = 1024
     embedding_provider: str = "openai"
+    embedding_model: str = "text-embedding-3-small"
+    embedding_batch_size: int = 32
+    embedding_vector_type: str = "halfvec"
     log_level: str = "INFO"
     google_api_key: str | None = None
     openai_api_key: str | None = None
