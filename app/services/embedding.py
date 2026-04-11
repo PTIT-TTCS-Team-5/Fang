@@ -1,21 +1,73 @@
+from __future__ import annotations
+
 from typing import List
+
+from openai import AsyncOpenAI
 
 from app.core.config import settings
 from app.core.logging import logger
 
 
 async def embed_chunks(chunks: List[str]) -> List[List[float]]:
-    """
-    Stub embedding provider call.
-    """
-    dim = settings.embedding_dim
-    provider = settings.embedding_provider
-    logger.info(f"Embedding {len(chunks)} chunks using {provider} with dimension {dim}")
+    """Embed chunk content with the configured provider and dimensions."""
 
-    vectors = []
-    for _ in chunks:
-        stub_vector = [0.0] * dim
-        stub_vector[0] = 1.0
-        vectors.append(stub_vector)
+    if not chunks:
+        return []
 
-    return vectors
+    provider = settings.embedding_provider.strip().lower()
+    if provider != "openai":
+        raise ValueError(
+            f"Unsupported embedding provider: {settings.embedding_provider}"
+        )
+    if not settings.openai_api_key:
+        raise ValueError("OPENAI_API_KEY is required when EMBEDDING_PROVIDER=openai.")
+    if settings.embedding_batch_size <= 0:
+        raise ValueError("EMBEDDING_BATCH_SIZE must be greater than 0.")
+
+    normalized_chunks: list[str] = []
+    for index, chunk in enumerate(chunks):
+        if not isinstance(chunk, str) or not chunk.strip():
+            raise ValueError(f"chunks[{index}] must be a non-empty string.")
+        normalized_chunks.append(chunk.strip())
+
+    client = AsyncOpenAI(api_key=settings.openai_api_key)
+    vectors: list[list[float] | None] = [None] * len(normalized_chunks)
+    total_prompt_tokens = 0
+
+    try:
+        for start_index in range(
+            0, len(normalized_chunks), settings.embedding_batch_size
+        ):
+            batch = normalized_chunks[
+                start_index : start_index + settings.embedding_batch_size
+            ]
+            response = await client.embeddings.create(
+                model=settings.embedding_model,
+                input=batch,
+                dimensions=settings.embedding_dim,
+            )
+
+            for item in response.data:
+                vectors[start_index + item.index] = item.embedding
+
+            usage = getattr(response, "usage", None)
+            if usage is not None:
+                total_prompt_tokens += getattr(usage, "prompt_tokens", 0) or 0
+
+        if any(vector is None for vector in vectors):
+            raise RuntimeError("Embedding provider returned incomplete vector data.")
+
+        logger.info(
+            "Embedded chunks successfully",
+            extra={
+                "provider": provider,
+                "model": settings.embedding_model,
+                "dimension": settings.embedding_dim,
+                "chunkCount": len(normalized_chunks),
+                "batchSize": settings.embedding_batch_size,
+                "promptTokens": total_prompt_tokens,
+            },
+        )
+        return [vector for vector in vectors if vector is not None]
+    finally:
+        await client.close()
