@@ -66,13 +66,6 @@ Khi truy vấn, hệ thống không chỉ dùng Vector Search mà phải kết h
 3.  **Metadata Hard Filtering:** Lọc cứng dựa trên `metadata` (Vị trí, Kỹ năng bắt buộc) để thu hẹp không gian tìm kiếm ngay lập tức.
 4.  **Reciprocal Rank Fusion (RRF):** Thuật toán tổng hợp điểm số để chọn ra Top-K phân mảnh tốt nhất.
 
-## 5. Kế Hoạch Triển Khai Tiếp Theo
-1.  Phát triển module `services/markdown_builder.py` để mapping `ParsedCV` sang chuỗi Markdown chuẩn.
-2.  Cài đặt `langchain-text-splitters` và cấu hình `MarkdownHeaderTextSplitter` kết hợp `RecursiveCharacterTextSplitter` cho luồng Small-to-Big.
-3.  Phát triển hàm trích xuất và tiêm `Global Metadata` vào các chunk.
-4.  Thiết lập schema `AIDOCUMENTCHUNK` trên PostgreSQL với kiểu `halfvec`.
-5.  Viết file `test_chunking.py` để kiểm chứng cấu trúc đầu ra trước khi tích hợp mô hình nhúng.
-
 ### Giải thích thêm về tỷ lệ kích thước chunk và đánh giá khách quan về kiểu dữ liệu lưu trữ vector dựa trên các báo cáo nghiên cứu
 ## 1. Kích thước Parent và Child Chunk trong kiến trúc Small-to-Big
 

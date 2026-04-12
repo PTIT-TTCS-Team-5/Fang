@@ -1282,3 +1282,22 @@ Trân trọng,
 
 END $$;
 
+-- ==========================================
+-- 13. THÍ SINH ĐẶC BIỆT: NGUYỄN HẢI HƯNG
+-- Data mock riêng cho bài test AI Engineer
+-- ==========================================
+INSERT INTO "user" (userName, pwd, fName, lName, email, phone, prov, ward, street, stat, "role") VALUES
+('nguyenhaihung',  '123456', 'Hưng',    'Nguyễn Hải',  'nguyenhaihung@gmail.com',  '0909000001', 'Hà Nội', 'Phường Đại Kim',          'KĐT Đại Kim',            'ACTIVE', 'CANDIDATE') ON CONFLICT DO NOTHING;
+
+INSERT INTO CANDIDATE (userId, bio, cvUrl, dob, expyears) VALUES
+((SELECT userId FROM "user" WHERE userName = 'nguyenhaihung'),
+ 'Đam mê AI và xử lý dữ liệu lớn. Từng đạt nhiều giải thưởng nghiên cứu khoa học tại PTIT.', '/cv/nguyenhaihung_cv.pdf', '2001-12-12', 1) ON CONFLICT DO NOTHING;
+
+INSERT INTO CANDIDATESKILL (userId, skillId)
+SELECT u.userId, s.skillId FROM "user" u CROSS JOIN SKILL s
+WHERE u.userName = 'nguyenhaihung' AND s.skillName IN ('Python','NLP','Machine Learning','Git','Làm việc nhóm') ON CONFLICT DO NOTHING;
+
+INSERT INTO JOBAPPLICATION (candidateId, jobPostId, appliedAt, stat, cvSnapUrl, coverLetter)
+SELECT u.userId, jp.jobPostId, '2026-04-12 08:00:00'::timestamp, 'SUBMITTED', '/snapshots/nguyenhaihung_ai.pdf',
+'Tôi là Nguyễn Hải Hưng. Tôi rất mong muốn gia nhập vị trí AI Engineer tại quý công ty. Có kiến thức vững chắc về NLP và Python.'
+FROM "user" u, JOBPOSTING jp WHERE u.userName='nguyenhaihung' AND jp.title='AI Engineer (Python/NLP)' ON CONFLICT DO NOTHING;

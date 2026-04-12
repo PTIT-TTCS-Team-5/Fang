@@ -91,6 +91,18 @@ Script sẽ:
 - lưu vào `CVPARSED`
 - in `parserVer` và `fallbackPath`
 
+### API End-to-End (Parse -> Chunk -> Embed)
+1. Reset CSDL:
+```bash
+python scripts/reset_and_seed_db.py --reset
+Chú ý log trả về để lấy jobAppId.
+```
+2. Khởi động server (nên mở trong terminal mới):
+```bash
+uvicorn app.main:app
+```
+3. Gửi Request: mở file `test_api.http` trong VS Code/PyCharm và bấm `Send Request` trên các endpoint được định nghĩa sẵn, hoặc dùng CURL. Mọi tác vụ như parse, chunk, embed và lưu Vector DB PostgreSQL sẽ được thực thi (Cần cài extension REST client trong VS Code)
+
 ## Unit test policy
 ```bash
 python -m unittest discover -s tests/unit -p "unit_test_*.py"

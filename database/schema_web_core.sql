@@ -1,6 +1,6 @@
--- Ae muốn chạy trong PGAdmin thì phải chạy 3 khối riêng nhé, DROP - CREATE DB -  CREATE full bảng
-DROP DATABASE IF EXISTS micareer_lite_db;
-CREATE DATABASE micareer_lite_db;
+-- Ae muốn chạy trong PGAdmin thì phải chạy 3 khối riêng nhé, DROP
+-- DROP DATABASE IF EXISTS micareer_lite_db;
+-- CREATE DATABASE micareer_lite_db;
 
 CREATE TABLE "user" (
   userId SERIAL PRIMARY KEY,
