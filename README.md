@@ -16,6 +16,7 @@ AI layer cho luồng ingestion CV của miCareer, xây dựng trên FastAPI và 
 2. [docs/cv_parser_guide.md](./docs/cv_parser_guide.md)
 3. [docs/chunking_strategy.md](./docs/chunking_strategy.md)
 4. [docs/cau_truc_thu_muc.txt](./docs/cau_truc_thu_muc.txt)
+5. [docs/database_guide.md](./docs/database_guide.md)
 
 ## Parser architecture
 CV parser hiện tại dùng 3 tier:
