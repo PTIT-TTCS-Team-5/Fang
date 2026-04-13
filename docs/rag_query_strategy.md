@@ -15,12 +15,12 @@ Tài liệu này định nghĩa kiến trúc cho quy trình nhận prompt từ H
 ```mermaid
 flowchart TD
     A[HR gửi prompt + modelMode] --> B["FANG API v2\nPOST /v2/chat/query"]
-    B --> C[Chat Manager:<br/>tạo/load conversation]
-    C --> D[Embed prompt<br/>bằng embedding.py]
-    D --> E["Vector Search:<br/>cosine <=> trên<br/>AIDOCUMENTCHUNK"]
-    E --> F[Context Assembly:<br/>CV Chunks + JobPosting +<br/>Candidate Info + ATS Data]
-    F --> G[Load chat history<br/>với Token Budget]
-    G --> H[Build messages cho LLM]
+    B --> C[Chat Manager]
+    C --> D[Embed Prompt]
+    D --> E["Vector Search"]
+    E --> F[Context Assembly]
+    F --> G[Load History]
+    G --> H[Build Messages]
     H --> I{modelMode?}
     
     I -->|Model cụ thể| J[Gọi đúng 1 adapter + tenacity retry]

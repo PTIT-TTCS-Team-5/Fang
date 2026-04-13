@@ -46,19 +46,19 @@ graph TD
     B --> C[download_cv]
     C --> D[parse_to_raw_and_json]
     
-    subgraph "🟢 Lite Tiers (Fallback tuần tự)"
+    subgraph "🟢 Lite Tiers"
       E1[Tier 1: Gemini Flash]
       E2[Tier 2: GPT-5.4 mini]
-      E3[Tier 3: Claude 4.5 Haiku]
+      E3[Tier 3: Claude Haiku]
     end
     
-    subgraph "ProTierGate (Heuristic Quality Gate)"
-      G[Kiểm tra chất lượng<br/>Lite Tiers]
+    subgraph "ProTierGate"
+      G[Quality Check]
     end
     
-    subgraph "🟠 Pro Tiers (Chỉ leo khi<br/>Lite chất lượng thấp)"
-      P4[Tier 4:<br/>Gemini Pro]
-      P5[Tier 5:<br/>GPT-5.4]
+    subgraph "🟠 Pro Tiers"
+      P4[Tier 4: Gemini Pro]
+      P5[Tier 5: GPT-5.4]
     end
 
     D --> E1
