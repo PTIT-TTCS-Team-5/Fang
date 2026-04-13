@@ -1,31 +1,44 @@
-# Hướng Dẫn Quản Trị Cơ Sở Dữ Liệu (Reset & Seed DB)
+# Hướng Dẫn Quản Trị Cơ Sở Dữ Liệu (v2)
 
-Tài liệu này cung cấp hướng dẫn cách khởi tạo, làm sạch và cấp phát dữ liệu mẫu cho hệ thống cơ sở dữ liệu `miCareer_lite_db` thông qua tập lệnh. Chú ý các cảnh báo nguy hiểm khi thao tác.
+Tài liệu này mô tả các bảng dữ liệu trong PostgreSQL (pgvector) cho hệ thống FANG v2.
 
-## 1. Công cụ Khởi Tạo (`reset_and_seed_db.py`)
-Script nằm tại thư mục `scripts/reset_and_seed_db.py`, sử dụng thư viện `psycopg2` và `asyncpg`. Giải pháp này đảm nhiệm 2 vai trò cốt lõi:
-1. **Khởi tạo Cấu trúc (Schema Definition)**: Tự động tuần tự đọc và thực thi chuỗi lệnh CREATE từ các file SQL trong thư mục `database/` (`schema_web_core.sql`, sau đó là `schema_ai_core.sql`).
-2. **Nạp Dữ liệu Mẫu (Mock Seeding)**: Bơm dữ liệu từ `root_data.sql` (Master Data hệ thống như Quyền Hạn, Email template, Danh mục Skill) và `seed_data.sql` (Data giả lập mô phỏng hệ sinh thái HR, Company, Candidate, Job Postings).
+## 1. Các bảng quan trọng
 
-## 2. Cách Thực Thi Lệnh
-Vui lòng mở Terminal tại thư mục gốc của FANG và đảm bảo đã kích hoạt môi trường ảo (virtual environment).
+### Bảng `AICHATCONVERSATION`
+Lưu trữ thông tin định danh của một phiên hội thoại chat.
+- `conversationId`: UUID (Khóa chính).
+- `jobAppId`: ID của đơn ứng tuyển liên quan.
+- `hrId`: ID của nhân sự đang tham gia chat.
+- `lastMessageAt`: Thời điểm tin nhắn cuối cùng được gửi (dùng để sắp xếp danh sách chat).
 
-### Khởi chạy Tiêu Quản (Chỉ thêm Cấu trúc)
-Nếu Database trống hoặc chưa có dữ liệu, cách này đơn thuần chạy qua các file tuần tự:
-```bash
-python scripts/reset_and_seed_db.py
-```
-*(Nếu đã có bảng, script có thể báo lỗi Conflict Exception do cố gắng tạo lại quan hệ đã tốn tại)*
+### Bảng `AICHATMESSAGE`
+Lưu trữ chi tiết từng tin nhắn trong hội thoại.
+- `messageId`: Serial.
+- `role`: `user`, `assistant` hoặc `system`.
+- `content`: Nội dung tin nhắn.
+- `summarized`: Boolean (Đánh dấu message đã được gộp vào bản tóm tắt context chưa).
+- `model`: Tên model thực tế đã trả lời (ví dụ: `google:gemini-3.1-flash-lite-preview`).
+- `fallbackPath`: Trace luồng fallback nếu có.
 
-### Chế độ Dọn Dẹp Sâu (Hard Reset)
-Khuyên dùng cho khâu Development/Testing. Quá trình mô phỏng Ingestion tạo ra nhiều Chunk Rác, hãy sử dụng cờ `--reset` để đưa hệ thống về trạng thái nhà máy:
+### Bảng `AIDOCUMENTCHUNK`
+Lưu trữ các đoạn cắt từ CV và vector embedding.
+- `embedding`: halfvec(1024) - Vector không gian 1024 chiều dùng cho truy tìm ngữ nghĩa. Mặc định dùng mô hình `text-embedding-3-small`.
+
+## 2. Lưu ý về Role "system" trong Chat
+Trong FANG v2, role `system` được sử dụng với mục đích đặc biệt:
+1. **Context Summarization**: Khi hội thoại quá dài (vượt ngưỡng Token Budget), hệ thống sẽ dùng LLM tóm tắt phần cũ và lưu lại thành một message `system`. 
+2. **Context Persistence**: Giúp khôi phục ngữ cảnh nhanh chóng mà không cần gửi lại toàn bộ lịch sử tin nhắn thô lên LLM.
+
+## 3. Công cụ Khởi Tạo (`reset_and_seed_db.py`)
+Script này sẽ tự động xóa và tạo lại toàn bộ schema (bao gồm cả các bảng chat v2).
 ```bash
 python scripts/reset_and_seed_db.py --reset
 ```
-**🚨 CẢNH BÁO:** Thẻ `--reset` sẽ thực thi lệnh `DROP SCHEMA public CASCADE;`. Hệ thống sẽ bốc hơi sạch sẽ 100% dữ liệu không thể khôi phục. Cấm tuyệt đối chạy dòng lệnh này trên môi trường Production!
+*Lưu ý: Chỉ chạy lệnh này trong môi trường DEV.*
 
-## 3. Cơ Chế Bảo Vệ Kép (Safe-guard)
-Để phòng tránh rủi ro Dev trỏ nhầm `.env` vào CSDL Production, script được trang bị lớp bảo mật (Hard-coded lock).
-Hệ thống sẽ ping truy vấn mệnh đề: `SELECT current_database()` và **chỉ cấp phép Reset nếu tên database chính xác là `micareer_lite_db`**. 
+## 4. Bảo mật & Safeguard
+- Hệ thống chỉ cho phép thực thi Reset trên Database có tên `micareer_lite_db`.
+- Mọi truy vấn vector sử dụng cosine distance (`<=>`) để tìm kiếm mức độ tương đồng.
 
-Nếu chuỗi cấu hình `DATABASE_URL` trong file `.env` trỏ tới bất kì Tên Database nào khác, script sẽ lập tức văng ngoại lệ chặn đứng giao dịch (Rise Exception): `"BẢO VỆ CSDL: Không được phép drop schema trên DB..."`.
+---
+*Cập nhật ngày 13/04/2026.*

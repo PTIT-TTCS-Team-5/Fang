@@ -1,143 +1,42 @@
-# Hướng dẫn Luồng Xử Lý Dữ Liệu Đầu Vào
+# Hướng dẫn Luồng Xử Lý Dữ Liệu Đầu Vào (v2)
 
-Tài liệu này mô tả phần "Xử lý dữ liệu đầu vào" của FANG, tức toàn bộ đường đi từ một CV PDF thô cho đến khi dữ liệu đã sẵn sàng trong PostgreSQL dưới dạng:
+Tài liệu này mô tả hạ tầng xử lý dữ liệu của FANG v2, từ lúc nhận CV PDF thô cho đến khi dữ liệu được cấu trúc hóa và nhúng vector (embedding) sẵn sàng cho RAG.
 
-* `CVPARSED` cho dữ liệu đã parse
-* `AIDOCUMENTCHUNK` cho chunk và embedding
+## 1. Mục tiêu
+- **Chuyển đổi đa tầng**: Biến PDF thô thành JSON có cấu trúc qua 5-tier parser.
+- **Tối ưu truy xuất**: Phân mảnh văn bản (Chunking) giữ vững ngữ cảnh cha.
+- **Tiêu chuẩn hóa Vector**: Nhúng vector 1024 chiều dùng cho tìm kiếm ngữ nghĩa.
 
-Đây là phần giao nhau giữa Parser, Chunking, Embedding và Persistence.
+## 2. Luồng tổng quát v2
 
-## 1. Mục tiêu của Input Processing
-
-Luồng này giải quyết ba bài toán:
-
-* biến PDF thành dữ liệu có cấu trúc
-* biến dữ liệu có cấu trúc thành đơn vị truy xuất tốt
-* biến đơn vị truy xuất thành vector có thể tìm kiếm ngữ nghĩa
-
-## 2. Luồng tổng quát
-
-Hiện tại luồng xử lý đầu vào có thể tóm tắt như sau:
-
-1. **Nhận CV**
-   * đọc từ file local hoặc URL
-2. **Parse CV**
-   * PDF được gửi vào parser Gemini
-   * đầu ra là `rawText` và JSON `ParsedCV`
-3. **Chuyển sang Markdown**
-   * JSON được flatten bằng `markdown_builder.py`
-   * đồng thời trích xuất `global_context`
-4. **Chunking**
-   * Markdown được tách thành `ChunkPayload`
-   * nếu section quá dài, hệ thống sẽ băm thành nhiều child chunk nhưng vẫn giữ header cha
-5. **Embedding**
-   * từng chunk được gửi vào OpenAI Embeddings API
+1. **Nhận CV (Trigger)**
+   - API `POST /v2/ingestion/jobs` nhận `jobAppId` và `cvSnapUrl`.
+2. **Parse CV (5-Tier Fallback)**
+   - Hệ thống lặp qua các tier (Gemini Flash → GPT-5.4 mini → Claude 4.5 Haiku → Gemini Pro → GPT-5.4).
+   - Sử dụng **ProTierGate** để quyết định leo lên tầng Pro.
+3. **Chuyển sang Markdown & Global Context**
+   - Chuyển JSON về Markdown để giữ cấu trúc heading.
+   - Trích xuất thông tin chung (Tên, Năm kinh nghiệm, Kỹ năng) làm `global_context`.
+4. **Chunking (Hybrid Strategy)**
+   - Tách theo heading. Nếu đoạn quá dài (~512 tokens), băm nhỏ thành child chunks.
+   - Mỗi chunk được tiêm `global_context` ở đầu.
+5. **Embedding (v2 Standard)**
+   - Sử dụng OpenAI `text-embedding-3-small` với `dimensions=1024`.
 6. **Persistence**
-   * `CVPARSED` lưu dữ liệu parse
-   * `AIDOCUMENTCHUNK` lưu nội dung chunk, metadata và vector
+   - Lưu kết quả parse vào `CVPARSED`.
+   - Lưu chunks và vectors vào `AIDOCUMENTCHUNK`.
 
-## 3. Các thành phần tham gia
+## 3. Các điểm cải tiến trong v2
+- **API Prefix**: Toàn bộ luồng hiện tại chạy dưới đầu mục `/v2/`.
+- **ProTierGate**: Tiết kiệm chi phí bằng cách ưu tiên các model Lite, chỉ dùng model Pro cho các CV phức tạp hoặc khi chất lượng parser Lite thấp.
+- **Cấu hình tập trung**: Mọi thông số về token limit, batch size, và threshold chất lượng được quản lý trong `app/core/config.py`.
 
-### Parser Layer
+## 4. Script Kiểm chứng (E2E)
+Bạn có thể chạy toàn bộ luồng xử lý để kiểm tra tính đúng đắn:
+```bash
+python smoke_tests/test_e2e_pipeline.py
+```
+*Lưu ý: Script này sẽ thực hiện gọi API thật và yêu cầu cài đặt đầy đủ API Keys.*
 
-* file chính: `app/services/cv_parser.py`
-* nhiệm vụ: PDF -> `ParsedCV`
-
-### Markdown / Chunking Layer
-
-* file chính:
-  * `app/services/markdown_builder.py`
-  * `app/services/chunking.py`
-* nhiệm vụ: `ParsedCV` -> `ChunkPayload`
-
-### Embedding Layer
-
-* file chính: `app/services/embedding.py`
-* nhiệm vụ: `ChunkPayload.content` -> vector
-
-### Persistence Layer
-
-* file chính: `app/services/persistence.py`
-* nhiệm vụ: ghi `CVPARSED` và `AIDOCUMENTCHUNK`
-
-## 4. Dữ liệu được lưu ở đâu
-
-### Bảng `CVPARSED`
-
-Lưu:
-
-* `rawText`
-* `parsedJson`
-* `parserVer`
-
-### Bảng `AIDOCUMENTCHUNK`
-
-Lưu:
-
-* `content`
-* `chunkIndex`
-* `tokenCount`
-* `metadata`
-* `embedding`
-
-Hai bảng này tạo thành nền tảng cho các bước truy xuất và matching về sau.
-
-## 5. Điểm quan trọng của luồng hiện tại
-
-### 5.1. Không phá contract parser
-
-Parser vẫn giữ contract cũ:
-
-* nhận `cv_bytes`
-* trả về `rawText` và JSON
-
-Điều này giúp embedding phase được thêm vào mà không làm gãy giai đoạn parse đã có.
-
-### 5.2. Chunking bảo toàn ngữ cảnh cha
-
-Các child chunk dài hiện đã được gắn lại:
-
-* `#` tiêu đề tài liệu
-* `##` section cha
-* `###` mục con
-
-Điều này rất quan trọng cho chất lượng embedding.
-
-### 5.3. Storage vector đủ linh hoạt
-
-Hệ thống hiện mặc định dùng `halfvec`, nhưng cho phép chuyển sang `vector` qua cấu hình và schema với thay đổi nhỏ.
-
-## 6. Script kiểm chứng end-to-end
-
-File kiểm thử chính:
-
-* `test_e2e_pipeline.py`
-
-Script này giúp kiểm chứng toàn bộ luồng:
-
-* đọc CV
-* parse thật
-* chunking thật
-* embedding thật
-* lưu DB thật
-
-Đây là tài liệu hóa sống cho luồng input processing hiện tại.
-
-## 7. Những điều cần kiểm tra khi debug
-
-Nếu input processing fail, nên kiểm tra theo thứ tự:
-
-1. API key parser có hợp lệ không
-2. OpenAI embedding có credit không
-3. `EMBEDDING_DIM` runtime có khớp schema DB không
-4. `EMBEDDING_VECTOR_TYPE` runtime có khớp schema DB không
-5. PostgreSQL đã apply schema mới nhất chưa
-
-## 8. Tài liệu liên quan
-
-* `docs/cv_parser_guide.md`
-* `docs/chunking_strategy.md`
-* `docs/chunking_guide.md`
-* `docs/embedding_strategy.md`
-* `docs/embedding_guide.md`
-* `docs/system_architecture.md`
+---
+*Cập nhật ngày 13/04/2026 cho FANG v2.*

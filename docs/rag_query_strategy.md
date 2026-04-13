@@ -15,11 +15,11 @@ Tài liệu này định nghĩa kiến trúc cho quy trình nhận prompt từ H
 ```mermaid
 flowchart TD
     A[HR gửi prompt + modelMode] --> B["FANG API v2\nPOST /v2/chat/query"]
-    B --> C[Chat Manager: tạo/load conversation]
-    C --> D[Embed prompt bằng embedding.py]
-    D --> E["Vector Search: cosine <=> trên AIDOCUMENTCHUNK"]
+    B --> C[Chat Manager:<br/>tạo/load conversation]
+    C --> D[Embed prompt<br/>bằng embedding.py]
+    D --> E["Vector Search:<br/>cosine <=> trên<br/>AIDOCUMENTCHUNK"]
     E --> F[Context Assembly:<br/>CV Chunks + JobPosting +<br/>Candidate Info + ATS Data]
-    F --> G[Load chat history với Token Budget]
+    F --> G[Load chat history<br/>với Token Budget]
     G --> H[Build messages cho LLM]
     H --> I{modelMode?}
     
@@ -273,14 +273,14 @@ Cần thực nghiệm và benchmark để hoàn thiện:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Created: HR gửi prompt đầu tiên\n(conversationId = null)
-    Created --> Active: Message đầu tiên xử lý xong
+    [*] --> Created: HR gửi prompt đầu tiên<br/>(conversationId = null)
+    Created --> Active: Message đầu tiên<br/>xử lý xong
     Active --> Active: HR tiếp tục chat
-    Active --> NearLimit: Budget sắp cạn\n→ Cảnh báo HR
-    NearLimit --> Summarizing: HR chọn "Tóm tắt & tiếp tục"
-    NearLimit --> NewConv: HR chọn "Sang hội thoại mới"
-    Summarizing --> Active: Tóm tắt xong\n→ tiếp tục chat
-    NewConv --> Active: Hội thoại mới tạo\n(với summary làm context đầu)
+    Active --> NearLimit: Budget sắp cạn<br/>→ Cảnh báo HR
+    NearLimit --> Summarizing: HR chọn<br/>"Tóm tắt & tiếp tục"
+    NearLimit --> NewConv: HR chọn<br/>"Sang hội thoại mới"
+    Summarizing --> Active: Tóm tắt xong<br/>→ tiếp tục chat
+    NewConv --> Active: Hội thoại mới tạo<br/>(với summary làm context nền)
 ```
 
 ### 9.2 Schema Conversation

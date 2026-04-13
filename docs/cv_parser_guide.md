@@ -1,152 +1,46 @@
-# Hướng dẫn module CV Parser
+# Hướng dẫn module CV Parser (v2)
 
-Tài liệu này mô tả chi tiết module parser CV sau refactor multi-provider 3-tier.
+Tài liệu này mô tả chi tiết module parser CV trong FANG v2 với kiến trúc **5-Tier Fallback** và cơ chế **ProTierGate**.
 
 ## 1. Mục tiêu thiết kế
-- Giữ contract cũ: `parse_to_raw_and_json(cv_bytes) -> (raw_text, parsed_json)`.
-- Tách adapter/provider interface chung để dễ test và để thêm provider mới.
-- Retry có thể bật/tắt bằng config.
-- Fallback khi exception hoặc output quality thấp.
-- Không log secret value.
+- **Độ tin cậy cao**: Sử dụng 5 model từ 3 provider lớn (Google, OpenAI, Anthropic).
+- **Tối ưu chi phí**: Cơ chế ProTierGate chỉ cho phép leo lên các model Pro đắt đỏ khi các model Lite không đạt yêu cầu chất lượng.
+- **Tự động hóa**: Resolve model name tự động và retry bằng tenacity.
 
-## 2. Thành phần chính
+## 2. Các tầng Parser (5-Tier)
 
-### `app/services/cv_parser.py`
-Chứa orchestration policy:
-- danh sách tiers
-- retry policy bằng `tenacity`
-- quality gate deterministic
-- trace `fallbackPath`
-- helper `get_last_parse_trace()`
+| Tầng | Nhóm | Model định danh | Provider |
+| :--- | :--- | :--- | :--- |
+| **Tier 1** | Lite | `gemini-flash` | Google |
+| **Tier 2** | Lite | `gpt-5.4-mini` | OpenAI |
+| **Tier 3** | Lite | `claude-4.5-haiku` | Anthropic |
+| **Tier 4** | Pro | `gemini-pro` | Google |
+| **Tier 5** | Pro | `gpt-5.4` | OpenAI |
 
-### `app/services/cv_parser_adapters.py`
-Chứa adapter chung và 3 provider cụ thể:
-- `GeminiProviderAdapter`
-- `OpenAIProviderAdapter`
-- `AnthropicProviderAdapter`
+## 3. Cơ chế ProTierGate
+Đây là điểm mới quan trọng trong v2. Hệ thống không chỉ fallback khi gặp lỗi hệ thống (Transient Error), mà còn fallback dựa trên **chất lượng đầu ra**.
 
-Adapter có nhiệm vụ:
-- kiểm tra env var cần thiết
-- gọi SDK tương ứng
-- chuẩn hóa exception thành `TransientProviderError` hoặc `NonRetryableProviderError`
-- trả về `ParsedCV` và model đã resolve
+- **Lite-to-Lite Fallback**: Xảy ra khi Tier 1 hoặc 2 lỗi (timeout, rate limit) hoặc trả về JSON không hợp lệ.
+- **Lite-to-Pro Escalation (ProTierGate)**: Nếu cả 3 Tier Lite đều không vượt qua được **Quality Gate**, hệ thống mới kích hoạt Tier 4 (Pro). 
+- *Lưu ý*: Nếu Lite tiers fail do lỗi hạ tầng (ví dụ: DNS, Network toàn cục), hệ thống sẽ KHÔNG leo lên Pro để tránh lãng phí.
 
-## 3. Workflow chi tiết
+## 4. Quality Gate (Deterministic)
+Quality gate không gọi thêm LLM để đánh giá mà dùng các quy tắc cứng:
+- **`rawText` length**: Phải đạt ngưỡng tối thiểu (`PARSER_QUALITY_MIN_RAWTEXT_LENGTH`).
+- **Identity Signals**: Phải tìm thấy ít nhất 1 thông tin (Họ tên, Email, SĐT).
+- **Section Signals**: Phải nhận diện được số lượng section chính (Kinh nghiệm, Học vấn...) đạt ngưỡng quy định.
 
-1. `parse_to_raw_and_json` tạo `CVParserOrchestrator`.
-2. Orchestrator lặp qua các tier theo thứ tự:
-   - Tier 1: `google / gemini-flash`
-   - Tier 2: `openai / gpt-5.4-mini`
-   - Tier 3: `anthropic / claude-4.5-haiku`
-3. Mỗi tier được chạy qua `AsyncRetrying`.
-4. Nếu provider trả kết quả hợp lệ, quality gate được check ngay lập tức.
-5. Nếu quality gate pass:
-   - gán `parserVer = provider:model`
-   - return `rawText` và `model_dump()`
-6. Nếu quality gate fail:
-   - log `low_confidence_output`
-   - chuyển tier kế tiếp
-7. Nếu tier fail với transient error:
-   - retry theo policy
-   - hết retry thì fallback sang tier kế tiếp
-8. Nếu tất cả tiers đều fail:
-   - raise `CVParsingError`
+## 5. Workflow thực thi
+1. Gọi Tier 1 (Gemini Flash).
+2. Nếu fail/chất lượng thấp → Sang Tier 2.
+3. Nếu fail/chất lượng thấp → Sang Tier 3.
+4. Nếu cả 3 Lite fail/chất lượng thấp → **ProTierGate** quyết định có leo lên Tier 4 hay không.
+5. Nếu Tier 4 fail → Tier 5 (Last resort).
+6. Hoàn tất và trả về `parserVer` (ví dụ: `google:gemini-3.1-pro-preview`) và `fallbackPath`.
 
-## 4. Retry policy
+## 6. Cấu hình Quan trọng
+- `PARSER_RETRY_ENABLED`: Bật/tắt retry cho từng tier.
+- `PARSER_QUALITY_MIN_SECTION_SIGNALS`: Số lượng block thông tin tối thiểu để coi là parse thành công.
 
-Config:
-- `PARSER_RETRY_ENABLED`
-- `PARSER_RETRY_ATTEMPTS`
-- `PARSER_RETRY_BASE_SECONDS`
-- `PARSER_RETRY_MAX_SECONDS`
-
-Mặc định:
-- enabled = `true`
-- attempts = `3`
-- base = `2`
-- max = `8`
-
-Error được coi là transient:
-- timeout
-- rate limit
-- HTTP 408/409/429
-- HTTP 5xx
-- connection reset / transport error
-
-Khi `PARSER_RETRY_ENABLED=false`:
-- mỗi tier chỉ gọi 1 lần
-- không sleep backoff
-- fallback ngay sang tier tiếp theo nếu gặp lỗi
-
-## 5. Quality gate
-
-Quality gate không gọi thêm LLM. Toàn bộ là deterministic code path.
-
-### Rule 1: `rawText`
-- không rỗng
-- độ dài >= `PARSER_QUALITY_MIN_RAWTEXT_LENGTH`
-
-### Rule 2: `candidateInfo`
-Cần có ít nhất một signal định danh:
-- `fullName`
-- `emails`
-- `phones`
-- `location`
-
-### Rule 3: section signals
-Số section chính không rỗng phải đạt ngưỡng `PARSER_QUALITY_MIN_SECTION_SIGNALS`.
-
-Section hiện tại được tính:
-- `experience`
-- `education`
-- `skills`
-- `certificates`
-- `languages`
-- `summary`
-
-## 6. Logging và trace
-
-Mỗi invocation log:
-- `tierIndex`
-- `provider`
-- `model`
-- `durationMs`
-- `retryCount`
-- `fallbackReason`
-
-Giá trị `fallbackReason`:
-- `transient_error`
-- `non_retryable_error`
-- `low_confidence_output`
-
-`get_last_parse_trace()` trả về:
-- `parser_ver`
-- `fallback_path`
-- `selected_tier_index`
-- danh sách attempts
-
-Script `test_parser.py` và `test_parser_db.py` in `parserVer` / `fallbackPath` từ trace này.
-
-## 7. Lưu ý provider
-
-### Gemini
-- Vẫn dùng Files API + schema response của Gemini.
-- Có cơ chế resolve alias model để tìm model flash đang available.
-
-### OpenAI
-- Dùng `responses.create`.
-- Gửi PDF dạng `input_file`.
-- Parse JSON và validate lại bằng `ParsedCV`.
-
-### Anthropic
-- Dùng `messages.create`.
-- Gửi PDF dạng `document` block.
-- Ép response JSON bằng prompt + schema text, sau đó validate lại bằng `ParsedCV`.
-
-## 8. Unit tests
-
-`test_parser_policy.py` cover:
-- transient error rồi recover trong cùng tier
-- low-quality output fallback sang tier tiếp theo
-- tier 1 và 2 fail, tier 3 success
-- retry disabled thì không có backoff sleep
+---
+*Cập nhật ngày 13/04/2026 cho FANG v2.*
