@@ -1,15 +1,24 @@
-# Fang - AI Core
+# FANG - AI Core v2
 
-AI layer cho luồng ingestion CV của miCareer, xây dựng trên FastAPI và các service parser/chunking/embedding.
+AI layer cho miCareer, bao gồm ingestion CV (parse → chunk → embed) và RAG query (embed prompt → vector search → 5-tier LLM generation). Xây dựng trên FastAPI.
 
-## API contract
-- `POST /v1/ingestion/jobs`
-  Request: `{ "jobAppId": 123, "cvSnapUrl": "https://..." }`
-  Response `202`: `{ "indexJobId": 1, "status": "QUEUED" }`
-- `GET /v1/ingestion/jobs/{indexJobId}`
-  Response `200`: `{ "status": "QUEUED|PROCESSING|SUCCESS|FAILED", "errorMsg": null }`
-- `GET /healthz`
-  Response `200`: `{ "ok": true }`
+## API Contract (v2)
+
+### Chat
+- `POST /v2/chat/query` — Nhận prompt từ HR, trả response AI + conversation context
+- `GET /v2/chat/conversations?hrId=&jobAppId=` — Danh sách hội thoại
+- `GET /v2/chat/conversations/{id}/messages` — Lịch sử message
+- `POST /v2/chat/conversations/{id}/summarize` — Tóm tắt & tiếp tục
+- `POST /v2/chat/conversations/{id}/branch-new` — Sang hội thoại mới
+
+### Ingestion
+- `POST /v2/ingestion/jobs` — Request: `{ "jobAppId": 123, "cvSnapUrl": "https://..." }` — Response `202`: `{ "indexJobId": 1, "status": "QUEUED" }`
+- `GET /v2/ingestion/jobs/{indexJobId}` — Response `200`: `{ "status": "QUEUED|PROCESSING|SUCCESS|FAILED", "errorMsg": null }`
+
+### System
+- `GET /v2/healthz` — Response `200`: `{ "ok": true, "version": "2.0" }`
+
+> `/v1/` endpoints giữ lại tạm thời (deprecated). Xem API contract đầy đủ: [docs/integration_strategy.md](./docs/integration_strategy.md)
 
 ## Tài liệu nên đọc trước
 1. [docs/system_architecture.md](./docs/system_architecture.md)
@@ -17,20 +26,28 @@ AI layer cho luồng ingestion CV của miCareer, xây dựng trên FastAPI và 
 3. [docs/chunking_strategy.md](./docs/chunking_strategy.md)
 4. [docs/cau_truc_thu_muc.txt](./docs/cau_truc_thu_muc.txt)
 5. [docs/database_guide.md](./docs/database_guide.md)
+6. [docs/rag_query_strategy.md](./docs/rag_query_strategy.md)
+7. [docs/integration_strategy.md](./docs/integration_strategy.md)
 
-## Parser architecture
-CV parser hiện tại dùng 3 tier:
-- Tier 1: Gemini Flash
-- Tier 2: GPT-5.4 mini
-- Tier 3: Claude 4.5 Haiku
+## Parser Architecture (v2 — 5-Tier)
+CV parser dùng 5 tier với ProTierGate nghiêm ngặt giữa Lite và Pro:
 
-Mỗi tier dùng chung orchestration policy:
+**🟢 Lite tier (fallback tuần tự):**
+- Tier 1: Gemini Flash (`gemini-3.1-flash-lite-preview`)
+- Tier 2: GPT-5.4 mini (`gpt-5.4-mini`)
+- Tier 3: Claude 4.5 Haiku (`claude-4.5-haiku`)
+
+**🟠 Pro tier (chỉ leo khi Lite output chất lượng thấp):**
+- Tier 4: Gemini 3.1 Pro (`gemini-3.1-pro-preview`)
+- Tier 5: GPT-5.4 (`gpt-5.4`)
+
+Mọi tier dùng chung orchestration policy:
 - Retry bằng `tenacity`, có thể bật/tắt bằng config toàn cục.
-- Chỉ retry transient error: timeout, rate limit, 5xx, connection reset / transport error.
-- Fallback tier tiếp theo khi provider exception hoặc output quality thấp.
-- Quality gate là deterministic, không gọi thêm LLM.
-- `parse_to_raw_and_json` vẫn giữ contract cũ: trả về `(raw_text, parsed_json)`.
+- Chỉ retry transient error: timeout, rate limit, 5xx, connection reset.
+- Fallback tier tiếp khi exception hoặc output quality thấp.
+- Quality gate deterministic, không gọi thêm LLM.
 - `parserVer` được gán theo định dạng `provider:model`.
+- Model name resolve tự động qua `MODEL_CANDIDATES` dict (chống tên model thay đổi).
 
 ## Cài đặt
 1. Tạo virtual environment: `python -m venv venv`
@@ -41,16 +58,29 @@ Mỗi tier dùng chung orchestration policy:
 
 ## Cấu hình
 Copy `.env.example` thành `.env`, sau đó điền các biến cần thiết:
+
+**Cơ sở dữ liệu & Provider:**
 - `DATABASE_URL`
 - `GOOGLE_API_KEY`
 - `OPENAI_API_KEY`
 - `CLAUDE_API_KEY`
+
+**Parser (giữ từ v1):**
 - `PARSER_RETRY_ENABLED`
 - `PARSER_RETRY_ATTEMPTS`
 - `PARSER_RETRY_BASE_SECONDS`
 - `PARSER_RETRY_MAX_SECONDS`
 - `PARSER_QUALITY_MIN_RAWTEXT_LENGTH`
 - `PARSER_QUALITY_MIN_SECTION_SIGNALS`
+
+**RAG Query (mới trong v2):**
+- `FANG_API_URL` — URL của chính FANG (nếu cần self-reference)
+- `CORS_ALLOWED_ORIGINS` — Domain được phép gọi API (mặc định `*` cho dev)
+- `RAG_TOP_K_CHUNKS` — Số chunk trả về từ vector search (mặc định: 3)
+- `CONTEXT_BUDGET_WARNING_THRESHOLD` — Ngưỡng cảnh báo context (mặc định: 0.80)
+- `CONTEXT_SUMMARIZATION_MODEL` — Model dùng để tóm tắt (mặc định: `gemini-flash`)
+
+**Logging:**
 - `LOG_LEVEL`
 
 Lưu ý:
