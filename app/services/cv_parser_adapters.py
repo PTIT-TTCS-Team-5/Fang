@@ -37,6 +37,8 @@ ANTHROPIC_SCHEMA_PROMPT = (
 
 OPENAI_MODEL_CANDIDATES: dict[str, list[str]] = {
     "gpt-5.4-mini": ["gpt-5.4-mini", "gpt-5-mini"],
+    # Tier 5 — Pro
+    "gpt-5.4": ["gpt-5.4", "gpt-5.4-pro"],
 }
 
 ANTHROPIC_MODEL_CANDIDATES: dict[str, list[str]] = {
@@ -51,6 +53,12 @@ GEMINI_MODEL_CANDIDATES: dict[str, list[str]] = {
         "gemini-3.1-flash-lite-preview",
         "gemini-2.5-flash",
         "gemini-flash-latest",
+    ],
+    # Tier 4 — Pro
+    "gemini-pro": [
+        "gemini-3.1-pro-preview",
+        "gemini-3.1-pro",
+        "gemini-pro",
     ],
 }
 
