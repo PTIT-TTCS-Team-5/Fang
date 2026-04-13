@@ -181,7 +181,7 @@ Hiện tại FANG chỉ truy xuất CV chunks từ `AIDOCUMENTCHUNK`. Trong th�
 
 ```mermaid
 flowchart TD
-    A[jobAppId + hrId + prompt] --> B[Vector Search trên AIDOCUMENTCHUNK]
+    A[jobAppId + hrId + prompt] --> B[Vector Search trên<br/> AIDOCUMENTCHUNK]
     A --> C["Fetch JobPosting\n(title, description, requirements)"]
     A --> D["Fetch Candidate Profile\n(bio, expyears, skills)"]
     A --> E["Fetch ATS History\n(interviews, offers, feedback, emails)"]

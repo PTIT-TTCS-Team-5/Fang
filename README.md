@@ -26,8 +26,10 @@ AI layer cho miCareer, bao gồm ingestion CV (parse → chunk → embed) và RA
 3. [docs/chunking_strategy.md](./docs/chunking_strategy.md)
 4. [docs/cau_truc_thu_muc.txt](./docs/cau_truc_thu_muc.txt)
 5. [docs/database_guide.md](./docs/database_guide.md)
-6. [docs/rag_query_strategy.md](./docs/rag_query_strategy.md)
-7. [docs/integration_strategy.md](./docs/integration_strategy.md)
+6. [docs/rag_query_strategy.md](./docs/rag_query_strategy.md) — Tổng quan kiến trúc RAG v2
+7. [docs/rag_query_guide.md](./docs/rag_query_guide.md) — **Cẩm nang vận hành RAG v2**
+8. [docs/integration_strategy.md](./docs/integration_strategy.md) — Hợp đồng API v2
+9. [docs/integration_guide.md](./docs/integration_guide.md) — **Hướng dẫn tích hợp phía Frontend**
 
 ## Parser Architecture (v2 — 5-Tier)
 CV parser dùng 5 tier với ProTierGate nghiêm ngặt giữa Lite và Pro:
