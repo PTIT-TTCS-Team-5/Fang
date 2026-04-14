@@ -18,18 +18,22 @@ AI layer cho miCareer, bao gồm ingestion CV (parse → chunk → embed) và RA
 ### System
 - `GET /v2/healthz` — Response `200`: `{ "ok": true, "version": "2.0" }`
 
-> `/v1/` endpoints giữ lại tạm thời (deprecated). Xem API contract đầy đủ: [docs/integration_strategy.md](./docs/integration_strategy.md)
+> `/v1/` endpoints giữ lại tạm thời (deprecated). Xem API contract đầy đủ: [docs/strategy/integration_strategy.md](./docs/strategy/integration_strategy.md)
 
 ## Tài liệu nên đọc trước
 1. [docs/system_architecture.md](./docs/system_architecture.md)
-2. [docs/cv_parser_guide.md](./docs/cv_parser_guide.md)
-3. [docs/chunking_strategy.md](./docs/chunking_strategy.md)
-4. [docs/cau_truc_thu_muc.txt](./docs/cau_truc_thu_muc.txt)
-5. [docs/database_guide.md](./docs/database_guide.md)
-6. [docs/rag_query_strategy.md](./docs/rag_query_strategy.md) — Tổng quan kiến trúc RAG v2
-7. [docs/rag_query_guide.md](./docs/rag_query_guide.md) — **Cẩm nang vận hành RAG v2**
-8. [docs/integration_strategy.md](./docs/integration_strategy.md) — Hợp đồng API v2
-9. [docs/integration_guide.md](./docs/integration_guide.md) — **Hướng dẫn tích hợp phía Frontend**
+2. [docs/strategy/rag_query_strategy.md](./docs/strategy/rag_query_strategy.md) — Tổng quan kiến trúc RAG v2
+3. [docs/guide/rag_query_guide.md](./docs/guide/rag_query_guide.md) — **Cẩm nang vận hành RAG v2**
+4. [docs/strategy/integration_strategy.md](./docs/strategy/integration_strategy.md) — Hợp đồng API v2
+5. [docs/guide/integration_guide.md](./docs/guide/integration_guide.md) — **Hướng dẫn tích hợp phía Frontend**
+6. [docs/guide/cv_parser_guide.md](./docs/guide/cv_parser_guide.md)
+7. [docs/guide/database_guide.md](./docs/guide/database_guide.md)
+8. [docs/cau_truc_thu_muc.txt](./docs/cau_truc_thu_muc.txt)
+
+## Cấu trúc thư mục docs
+- [docs/strategy](./docs/strategy): tài liệu định hướng, quyết định kiến trúc, trade-off.
+- [docs/guide](./docs/guide): tài liệu triển khai chi tiết, cấu hình, vận hành, troubleshooting.
+- [docs/research](./docs/research): tài liệu nghiên cứu và benchmark làm căn cứ cho các quyết định kỹ thuật.
 
 ## Parser Architecture (v2 — 5-Tier)
 CV parser dùng 5 tier với ProTierGate nghiêm ngặt giữa Lite và Pro:

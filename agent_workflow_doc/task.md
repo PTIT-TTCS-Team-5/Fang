@@ -1,8 +1,8 @@
 # Task Tracker
 
 ## Pha 0 — Chiến lược (Strategy Docs) ✔️
-- [x] `FANG/docs/rag_query_strategy.md` — RAG query v2, 5-tier, 7 modelMode, ProTierGate, quality gate, context window (không sliding), context đa nguồn, system prompt
-- [x] `FANG/docs/integration_strategy.md` — API contract v2 (đầy đủ), CORS, contextWarning, summarize/branch-new
+- [x] `FANG/docs/strategy/rag_query_strategy.md` — RAG query v2, 5-tier, 7 modelMode, ProTierGate, quality gate, context window (không sliding), context đa nguồn, system prompt
+- [x] `FANG/docs/strategy/integration_strategy.md` — API contract v2 (đầy đủ), CORS, contextWarning, summarize/branch-new
 - [x] `miCareer-mini/docs/candidate_apply_strategy.md` — Luồng ứng viên, Cloudinary, FANG v2 endpoints
 - [x] Archive `rag_strategy.md` và `hr_guide.md` cũ vào `docs/archive/`
 - [x] Cập nhật README của cả 2 dự án (FANG v2, thin client)

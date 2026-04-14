@@ -34,8 +34,8 @@ Hệ thống hỗ trợ 7 chế độ lựa chọn model:
 ## 3. Quản Lý Context Window & Budget
 FANG v2 bỏ cơ chế **Sliding Window** để tránh mất ngữ cảnh. Thay vào đó, hệ thống sử dụng **Token Budget**:
 
-- **Budget Lite**: 25,000 tokens (dành cho các model Flash/Mini).
-- **Budget Pro**: 960,000 tokens (dành cho các model Pro 1M+).
+- **Nguồn chuẩn để đồng bộ budget**: tham chiếu `../strategy/rag_query_strategy.md` tại mục **10.2 Context Window Budget theo Model** và mục **10.4 Cấu hình per-model budget**.
+- **Nguyên tắc áp dụng**: ưu tiên budget **theo từng model** (per-model), không hard-code theo 2 nhóm Lite/Pro để tránh lệch tài liệu khi model/limit thay đổi.
 
 ### Cơ chế cảnh báo:
 Khi dung lượng hội thoại chiếm >80% budget của model hiện tại, response sẽ trả về:
@@ -51,7 +51,7 @@ HR cần chọn tóm tắt để giải phóng budget hoặc bắt đầu hội 
 System prompt được chia thành các block rõ rệt:
 - `[VỊ TRÍ TUYỂN DỤNG]`: Ngữ cảnh để AI biết đang tuyển cho job nào.
 - `[HỒ SƠ ỨNG VIÊN]`: Thông tin định danh và kỹ năng tổng quát.
-- `[NỘI DUNG CV]`: Các đoạn trích dẫn trực tiếp từ CV qua vector search.
+- `[NỘI DUNG CV]`: Các đoạn CV **được truy xuất (retrieved chunks)** qua vector search theo câu hỏi hiện tại, **không phải toàn bộ full CV gốc**.
 - `[LỊCH SỬ TUYỂN DỤNG]`: Ghi chú từ các vòng phỏng vấn trước.
 
 ## 5. Cấu Hình (Environment Variables)

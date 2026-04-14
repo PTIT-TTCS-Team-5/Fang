@@ -3,7 +3,7 @@
 Tài liệu này mô tả kiến trúc tổng thể của FANG sau khi nâng cấp lên v2, hỗ trợ 5-tier parser và hệ thống RAG Chat tập trung.
 
 ## 1. Mô hình "Thin Client" (FANG-Centered)
-Kiến trúc v2 định nghĩa FANG là trung tâm trí tuệ (AI Core). Các ứng dụng như `miCareer-mini` chỉ đóng vai trò là giao diện người dùng (Thin Client).
+Kiến trúc v2 định nghĩa FANG là trung tâm xử lý. Các ứng dụng như `miCareer-mini` chỉ đóng vai trò là giao diện người dùng (Thin Client).
 
 ```mermaid
 graph LR
@@ -73,7 +73,7 @@ graph TD
     H --> I[split_into_chunks]
     I --> J[embed_chunks]
     J --> K[save_document_chunks]
-    K --> L[update_index_job_status=SUCCESS]
+    K --> L[update_index_job_status<br/>=SUCCESS]
 ```
 
 ## 3. Luồng RAG Query (Chatbot)
@@ -85,6 +85,15 @@ graph TD
    - `auto-lite`: Fallback qua 3 model Lite.
    - `auto-pro`: Fallback qua 2 model Pro.
    - `Specific mode`: Chỉ gọi đúng model được chọn.
+
+### 3.1 Bảng model dùng chung (single source of truth)
+
+Để tránh lệch dữ liệu giữa các tài liệu, FANG dùng **một bảng model chuẩn duy nhất** tại:
+
+- `docs/strategy/rag_query_strategy.md` → mục **3.1 Danh sách Tier** (model catalog + candidate fallback)
+- `docs/strategy/rag_query_strategy.md` → mục **10.2 Context Window Budget theo Model** (limit/budget vận hành)
+
+Tài liệu kiến trúc này chỉ tham chiếu, không lặp lại bảng để đảm bảo đồng nhất khi cập nhật model.
 
 ## 4. Thành phần chính (Core Components)
 
@@ -100,11 +109,21 @@ graph TD
 ### `app/services/rag_model_adapters.py`
 - Adapter layer cho 5 model (Gemini, OpenAI, Anthropic).
 - Sử dụng `MODEL_CANDIDATES` để tự động resolve tên model thực tế.
+- Dùng cùng chuẩn model catalog được tham chiếu ở mục **3.1** để tránh drift giữa code và tài liệu.
 
 ## 5. Cấu hình & Bảo mật
 - **API v2**: Toàn bộ endpoint được chuyển sang tiền tố `/v2/` để đảm bảo tương thích ngược.
 - **CORS**: Cho phép tích hợp linh hoạt với các domain frontend qua `CORS_ALLOWED_ORIGINS`.
 - **Database Safeguard**: Reset script chỉ cho phép chạy trên đúng DB `micareer_lite_db`.
+
+## 6. Tài liệu liên quan
+- `docs/strategy/rag_query_strategy.md`: Chi tiết chiến lược RAG query, fallback, context assembly, token budget.
+- `docs/guide/cv_parser_guide.md`: Chi tiết parser 5-tier, policy fallback, quality gate cho CV.
+- `docs/guide/chunking_guide.md`: Quy tắc chunking, kích thước chunk, overlap, và rationale.
+- `docs/guide/embedding_guide.md`: Chuẩn embedding model, vector dimensions, và quy trình lưu vector.
+- `docs/guide/database_guide.md`: Kiến trúc schema, quan hệ bảng, và hướng dẫn migration/seed.
+- `docs/guide/integration_guide.md`: Hợp đồng tích hợp giữa client và FANG API (`/v2/*`).
+- `docs/system_architecture.md`: Bức tranh tổng thể và điểm vào để điều hướng các tài liệu chi tiết.
 
 ---
 *Tài liệu cập nhật ngày 13/04/2026 cho kiến trúc v2 Pha 1 hoàn chỉnh.*

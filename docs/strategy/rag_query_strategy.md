@@ -4,17 +4,17 @@ Tài liệu này định nghĩa kiến trúc cho quy trình nhận prompt từ H
 
 ## 1. Nguyên Tắc Cốt Lõi
 
-* **FANG là não trung tâm**: Mọi logic AI (embedding, vector search, context assembly, LLM invocation, fallback, logging) nằm ở FANG. Web client chỉ gọi JSON API.
+* **FANG là trung tâm**: Mọi logic AI (embedding, vector search, context assembly, LLM invocation, fallback, logging) nằm ở FANG. Web client chỉ gọi JSON API.
 * **Không tản mạn logic**: Client không được tự gọi LLM, tự embed, hay tự truy vấn vector DB.
 * **Tái sử dụng infrastructure**: Dùng lại `embedding.py`, adapter pattern từ `cv_parser_adapters.py`, retry policy, `MODEL_CANDIDATES` dict, `_resolve_gemini_model_name()`.
 * **Context đa nguồn**: Ngoài CV chunks, hệ thống còn truy xuất thông tin JobPosting, hồ sơ ứng viên, lịch sử ATS (interview, offer, feedback, email) để cung cấp context toàn diện cho LLM.
-* **Minh bạch với client**: Response JSON luôn chứa `model`, `fallbackPath`, `latencyMs` để client hiển thị hoặc debug.
+* **Đầy đủ thông tin**: Response JSON luôn chứa `model`, `fallbackPath`, `latencyMs` để client hiển thị hoặc debug.
 
 ## 2. Kiến Trúc Tổng Quan RAG Query
 
 ```mermaid
 flowchart TD
-    A[HR gửi prompt + modelMode] --> B["FANG API v2\nPOST /v2/chat/query"]
+    A[HR gửi prompt<br/> + modelMode] --> B["FANG API v2\nPOST /v2/chat/query"]
     B --> C[Chat Manager]
     C --> D[Embed Prompt]
     D --> E["Vector Search"]
@@ -23,15 +23,15 @@ flowchart TD
     G --> H[Build Messages]
     H --> I{modelMode?}
     
-    I -->|Model cụ thể| J[Gọi đúng 1 adapter + tenacity retry]
-    I -->|auto-lite| K["Chain: Flash → mini → Haiku"]
-    I -->|auto-pro| L["Chain: Gemini Pro → GPT 5.4"]
+    I -->|Model cụ thể| J[Gọi đúng 1 adapter<br/> + tenacity retry]
+    I -->|auto-lite| K["Chain:<br/> Gemini Flash <br/>→ GPT mini <br/>→ Claude Haiku"]
+    I -->|auto-pro| L["Chain:<br/> Gemini Pro → GPT 5.4"]
     
     J --> M[Response text + modelVer]
     K --> M
     L --> M
     
-    M --> N[Persist: AICHATMESSAGE + AIQUERYLOG]
+    M --> N[Persist: <br/>AICHATMESSAGE<br/> + AIQUERYLOG]
     N --> O[JSON response cho client]
 ```
 
@@ -92,7 +92,7 @@ Khi HR chọn model cụ thể → FANG gọi **đúng adapter đó**, retry ten
 
 | modelMode | Fallback Chain | Hành vi |
 |---|---|---|
-| `auto-lite` | Flash → mini → Haiku | 3-tier fallback, retry + ProTierGate |
+| `auto-lite` | Gemini Flash → GPT mini → Claude Haiku | 3-tier fallback, retry + ProTierGate |
 | `auto-pro` | Gemini Pro → GPT 5.4 | 2-tier fallback, retry |
 
 Khi HR chọn auto → FANG áp dụng fallback chain, `fallbackPath` trong response cho biết đường đi thực tế.
@@ -182,16 +182,16 @@ Hiện tại FANG chỉ truy xuất CV chunks từ `AIDOCUMENTCHUNK`. Trong th�
 ```mermaid
 flowchart TD
     A[jobAppId + hrId + prompt] --> B[Vector Search trên<br/> AIDOCUMENTCHUNK]
-    A --> C["Fetch JobPosting\n(title, description, requirements)"]
+    A --> C["Fetch JobPosting\n(title, description, requirements,\nsalary_range, work_location, work_mode, level)"]
     A --> D["Fetch Candidate Profile\n(bio, expyears, skills)"]
-    A --> E["Fetch ATS History\n(interviews, offers, feedback, emails)"]
+    A --> E["Fetch ATS History\n(interviews, offers,\n feedback, emails)"]
 
     B --> F[Context Assembler]
     C --> F
     D --> F
     E --> F
 
-    F --> G["System Prompt =\nCV Chunks + JD + Profile + ATS"]
+    F --> G["System Prompt =\nCV Chunks + JD\n + Profile + ATS"]
 ```
 
 ### 7.3 Cấu trúc System Prompt với Context Đa Nguồn
@@ -201,6 +201,10 @@ flowchart TD
 Vị trí: {title}
 Yêu cầu: {description}
 Kỹ năng bắt buộc: {required_skills}
+Mức lương: {salary_range}
+Địa điểm làm việc: {work_location}
+Hình thức làm việc: {work_mode}
+Cấp bậc: {level}
 
 [CANDIDATE PROFILE]
 Họ tên: {fullName} | Kinh nghiệm: {expyears} năm
@@ -246,7 +250,7 @@ Dựa trên toàn bộ thông tin trên, hãy trả lời câu hỏi sau của H
 ### 8.2 Template System Prompt (Draft)
 
 ```
-Bạn là trợ lý AI chuyên về đánh giá nhân sự (HR Co-pilot) của hệ thống miCareer.
+Bạn là trợ lý AI FANG chuyên về đánh giá nhân sự của hệ thống miCareer.
 Nhiệm vụ của bạn là giúp HR đánh giá ứng viên một cách khách quan và chuyên nghiệp.
 
 {CONTEXT_BLOCK}  ← Chèn context đa nguồn từ Section 7.3
@@ -280,7 +284,7 @@ stateDiagram-v2
     NearLimit --> Summarizing: HR chọn<br/>"Tóm tắt & tiếp tục"
     NearLimit --> NewConv: HR chọn<br/>"Sang hội thoại mới"
     Summarizing --> Active: Tóm tắt xong<br/>→ tiếp tục chat
-    NewConv --> Active: Hội thoại mới tạo<br/>(với summary làm context nền)
+    NewConv --> Active: Hội thoại mới tạo<br/>(với summary<br/> làm context nền)
 ```
 
 ### 9.2 Schema Conversation
@@ -316,13 +320,20 @@ Nếu tổng vượt model context limit → lỗi hoặc bị cắt ngầm.
 
 | Loại | Model ví dụ | Context limit | Budget cho history |
 |---|---|---|---|
-| 💚 Lite | Gemini Flash | ~32K tokens | ~25K tokens |
-| 💚 Lite | GPT-5.4 mini | ~1M tokens | ~950K tokens |
+| 💚 Lite | Gemini Flash | ~1M tokens | ~800K tokens |
+| 💚 Lite | GPT-5.4 mini | ~400K tokens | ~320K tokens |
 | 💚 Lite | Claude 4.5 Haiku | ~200K tokens | ~180K tokens |
 | 🔶 Pro | Gemini 3.1 Pro | ~1M tokens | ~960K tokens |
-| 🔶 Pro | GPT-5.4 | ~1M tokens | ~960K tokens |
+| 🔶 Pro | GPT-5.4 | ~1M tokens | ~850K tokens |
 
 → **Budget khác nhau đáng kể giữa các model.** FANG cần lấy budget theo model đang dùng, không dùng một con số cố định.
+
+Nguồn cập nhật (04/2026):
+- OpenAI Models: `gpt-5.4` context window 1M, `gpt-5.4-mini` context window 400K.
+- Anthropic Models overview: Claude Haiku 4.5 context window 200K.
+- Gemini Models docs: Gemini family có long-context lớn; cần xác nhận limit thực tế theo model alias/runtime đang bật trước khi set budget.
+
+Khuyến nghị vận hành: dùng budget khoảng 75-85% context limit để chừa headroom cho system prompt, retrieval context, và output tokens.
 
 ### 10.3 Chiến lược: Token Budget + Summarization (KHÔNG Sliding Window)
 
@@ -406,11 +417,11 @@ POST /v2/chat/conversations/{id}/branch-new
 ```python
 # app/core/config.py (mở rộng)
 context_budget_by_model: dict[str, int] = {
-    "gemini-flash": 25_000,
-    "gpt-5.4-mini": 950_000,
+    "gemini-flash": 800_000,
+    "gpt-5.4-mini": 320_000,
     "claude-4.5-haiku": 180_000,
-    "gemini-pro": 960_000,
-    "gpt-5.4": 960_000,
+    "gemini-pro": 850_000,
+    "gpt-5.4": 850_000,
 }
 context_budget_warning_threshold: float = 0.80   # Cảnh báo khi > 80%
 context_summarization_model: str = "gemini-flash" # Model dùng để tóm tắt
@@ -486,8 +497,8 @@ CREATE TABLE AICHATMESSAGE (
 
 ## 14. Tài Liệu Liên Quan
 
-- `docs/system_architecture.md` — Kiến trúc ingestion (v1)
-- `docs/cv_parser_guide.md` — Parser 3-tier (cập nhật lên 5-tier trong v2)
-- `docs/embedding_strategy.md` — Embedding pipeline (reuse cho prompt embedding)
-- `docs/chunking_strategy.md` — Chunking (dữ liệu đầu vào cho vector search)
-- `docs/integration_strategy.md` — Kiến trúc giao tiếp FANG↔client, API contract đầy đủ
+- `../system_architecture.md` — Kiến trúc ingestion (v1)
+- `../guide/cv_parser_guide.md` — Parser 3-tier (cập nhật lên 5-tier trong v2)
+- `embedding_strategy.md` — Embedding pipeline (reuse cho prompt embedding)
+- `chunking_strategy.md` — Chunking (dữ liệu đầu vào cho vector search)
+- `integration_strategy.md` — Kiến trúc giao tiếp FANG↔client, API contract đầy đủ

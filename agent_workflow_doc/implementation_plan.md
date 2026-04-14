@@ -209,8 +209,8 @@ CREATE TABLE AICHATMESSAGE (
 > Bảng `AIQUERYLOG` được **giữ nguyên** cho mục đích audit/analytics backward-compatible. RAG query mới ghi vào `AICHATMESSAGE`.
 
 #### Tài liệu sẽ tạo cho cụm này
-- `FANG/docs/rag_query_strategy.md` — Chiến lược RAG query, 5-tier model, auto mode, context window
-- `FANG/docs/rag_query_guide.md` — Hướng dẫn cài đặt module, cấu hình, chạy test
+- `FANG/docs/strategy/rag_query_strategy.md` — Chiến lược RAG query, 5-tier model, auto mode, context window
+- `FANG/docs/guide/rag_query_guide.md` — Hướng dẫn cài đặt module, cấu hình, chạy test
 
 ---
 
@@ -245,8 +245,8 @@ CREATE TABLE AICHATMESSAGE (
 > - Trade-off: chi phí summarization vs context quality
 
 #### Tài liệu
-- Tích hợp vào `FANG/docs/rag_query_strategy.md` mục "Quản lý hội thoại"
-- `FANG/docs/rag_query_guide.md` mục "Chat Manager"
+- Tích hợp vào `FANG/docs/strategy/rag_query_strategy.md` mục "Quản lý hội thoại"
+- `FANG/docs/guide/rag_query_guide.md` mục "Chat Manager"
 
 ---
 
@@ -297,8 +297,8 @@ sequenceDiagram
 ```
 
 #### Tài liệu
-- `FANG/docs/integration_strategy.md` — Kiến trúc giao tiếp, API contract, CORS
-- `FANG/docs/integration_guide.md` — Hướng dẫn tích hợp cho mọi loại client
+- `FANG/docs/strategy/integration_strategy.md` — Kiến trúc giao tiếp, API contract, CORS
+- `FANG/docs/guide/integration_guide.md` — Hướng dẫn tích hợp cho mọi loại client
 
 ---
 
@@ -379,8 +379,8 @@ graph TD
 - Cập nhật unit tests để cover 5-tier path
 
 #### Tài liệu
-- Tích hợp vào `FANG/docs/rag_query_strategy.md`
-- `FANG/docs/rag_query_guide.md`
+- Tích hợp vào `FANG/docs/strategy/rag_query_strategy.md`
+- `FANG/docs/guide/rag_query_guide.md`
 
 ---
 

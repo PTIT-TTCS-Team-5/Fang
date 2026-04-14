@@ -32,7 +32,7 @@ Tài liệu này mô tả hạ tầng xử lý dữ liệu của FANG v2, từ l
 - **Cấu hình tập trung**: Mọi thông số về token limit, batch size, và threshold chất lượng được quản lý trong `app/core/config.py`.
 
 ## 4. Script Kiểm chứng (E2E)
-Bạn có thể chạy toàn bộ luồng xử lý để kiểm tra tính đúng đắn:
+Chạy toàn bộ luồng xử lý để kiểm tra tính đúng đắn:
 ```bash
 python smoke_tests/test_e2e_pipeline.py
 ```

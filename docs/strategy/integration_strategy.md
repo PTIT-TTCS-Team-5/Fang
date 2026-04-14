@@ -276,6 +276,6 @@ Hiện tại FANG chưa có authentication layer. Trong dev/test, API mở hoàn
 
 ## 7. Tài Liệu Liên Quan
 
-- `docs/rag_query_strategy.md` — Chiến lược xử lý RAG query bên trong FANG
-- `docs/system_architecture.md` — Kiến trúc ingestion hiện tại
+- `rag_query_strategy.md` — Chiến lược xử lý RAG query bên trong FANG
+- `../system_architecture.md` — Kiến trúc ingestion hiện tại
 - `README.md` — Quick start

@@ -36,9 +36,9 @@ Agent mới cần chuyển sang repo `miCareer-mini` và thực hiện:
 ### Tại FANG Repo:
 - **`agent_workflow_doc/implementation_plan.md`**: Bản kế hoạch tổng thể (bản cập nhật nhất).
 - **`task.md`**: Theo dõi tiến độ chi tiết.
-- **`docs/rag_query_strategy.md`**: Chi tiết thuật toán RAG, fallback và quản lý context.
-- **`docs/integration_strategy.md`**: Hợp đồng API giữa FANG và UI.
-- **`docs/rag_query_guide.md` & `docs/integration_guide.md`**: Hướng dẫn thực hành.
+- **`docs/strategy/rag_query_strategy.md`**: Chi tiết thuật toán RAG, fallback và quản lý context.
+- **`docs/strategy/integration_strategy.md`**: Hợp đồng API giữa FANG và UI.
+- **`docs/guide/rag_query_guide.md` & `docs/guide/integration_guide.md`**: Hướng dẫn thực hành.
 - **`app/api/routes_chat.py`**: Xem API Contract thực tế đã code.
 
 ### Tại miCareer-mini Repo:
