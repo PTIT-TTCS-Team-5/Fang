@@ -8,7 +8,7 @@
 - [x] Cập nhật README của cả 2 dự án (FANG v2, thin client)
 - [x] Commit: `feature/docs-strategy-v2` trên cả 2 repo
 
-## Pha 1 — Nền tảng FANG
+## Pha 1 — Nền tảng FANG ✔️
 - [x] Cụm 5: Nâng parser 3→5 tier, mở rộng MODEL_CANDIDATES (Pro tier: gemini-pro, gpt-5.4)
 - [x] Cụm 5: ProTierGate — `_should_escalate_to_pro()` trong `cv_parser.py`
 - [x] Cụm 5: Tạo `rag_model_adapters.py` (Gemini/OpenAI/Anthropic generation adapter, MODEL_MODE_REGISTRY)
@@ -23,19 +23,19 @@
 - [x] Commit: `feature/docs-strategy-v2` FANG — Pha 1 Cụm 1
 - [x] Guide docs: `rag_query_guide.md`, `integration_guide.md` — Cẩm nang vận hành v2
 
-## Pha 2 — Tích hợp miCareer-mini
-- [ ] Cụm 3: Tạo `core/fang_client.py`
-- [ ] Cụm 3: Xóa `core/ai.py`, refactor `core/db.py`
-- [ ] Cụm 3: Refactor `app.py` chat UI → FANG API
-- [ ] Cụm 3: Cập nhật `.env` + selectbox 7 modelMode
+## Pha 2 — Tích hợp miCareer-mini ✔️
+- [x] Cụm 3: Tạo `core/fang_client.py` (chat_query, list_conversations, get_messages, summarize, branch-new, trigger_ingestion, poll)
+- [x] Cụm 3: Xóa `core/ai.py`, refactor `core/db.py` (giữ relational, thêm candidate queries, xóa vector/log)
+- [x] Cụm 3: Rewrite `app.py` — HR chat gọi FANG API, 7 modelMode selectbox, context warning + summarize/branch-new UI
+- [x] Cụm 3: Cập nhật `.env` (FANG_API_URL, Cloudinary vars) + `requirements.txt` (bỏ langchain/openai/anthropic)
 
-## Pha 3 — Luồng Candidate
-- [ ] Cụm 4: Tạo `core/cloudinary_upload.py`
-- [ ] Cụm 4: Thêm candidate login + jobs browsing
-- [ ] Cụm 4: Implement apply flow + CV upload
-- [ ] Cụm 4: Polling trạng thái ingestion
-- [ ] Cụm 4: HR xem trạng thái CV processing
-- [ ] Guide: `candidate_apply_guide.md`
+## Pha 3 — Luồng Candidate ✔️
+- [x] Cụm 4: Tạo `core/cloudinary_upload.py` (upload PDF, trả secure URL)
+- [x] Cụm 4: Thêm candidate login + jobs browsing (page_login_candidate, page_candidate_jobs)
+- [x] Cụm 4: Implement apply flow + CV upload (page_candidate_apply, check CV cũ, upload mới)
+- [x] Cụm 4: Polling trạng thái ingestion (progress bar, timeout handling)
+- [x] Cụm 4: HR xem trạng thái CV processing (ingestion badge trong app_detail)
+- [x] Guide: `candidate_apply_guide.md`
 
 ## Verification
 - [ ] Smoke test: chat API E2E
