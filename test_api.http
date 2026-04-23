@@ -10,4 +10,4 @@ Content-Type: application/json
 }
 
 ### Kiểm tra trạng thái Job (Thay thế indexJobId trả về từ request trên vào số 1)
-GET http://localhost:8000/v1/ingestion/jobs/1
+GET http://localhost:8000/v1/ingestion/jobs/2

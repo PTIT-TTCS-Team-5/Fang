@@ -26,6 +26,10 @@ Lý do chọn cấu hình này:
 * `dimensions=1024` giúp giảm tải lưu trữ so với 1536 chiều nhưng vẫn phù hợp cho thử nghiệm và phát triển.
 * `halfvec` giảm chi phí RAM/index rõ rệt cho môi trường local và DEV.
 
+**Căn cứ nghiên cứu cho quyết định trên:**
+* Tổng hợp benchmark, phương án migration và đối sánh chi phí/độ chính xác tại `../research/RAG_Embedding_Research_miCareer.md`.
+* Báo cáo nền tảng về embedding tại `../research/Nghiên cứu về mô hình embedding.pdf`.
+
 ## 3. Quy Tắc Thiết Kế
 
 ### 3.1. Embedding chỉ nhận văn bản đã chuẩn hóa
@@ -68,9 +72,11 @@ Mục tiêu là cho phép chuyển đổi chiến lược lưu trữ mà không 
 
 Hiện tại việc chuyển đổi được thiết kế để khá nhẹ:
 
-1. Đổi schema từ `embedding halfvec(1024)` sang `embedding vector(1024)`.
-2. Đổi index từ `halfvec_cosine_ops` sang `vector_cosine_ops`.
-3. Đổi cấu hình runtime `EMBEDDING_VECTOR_TYPE=vector`.
+1. Đổi schema và index trong `database/schema_ai_core.sql`:
+	- `embedding halfvec(1024)` -> `embedding vector(1024)`
+	- `halfvec_cosine_ops` -> `vector_cosine_ops`
+2. Đổi cấu hình runtime trong `.env` (hoặc biến môi trường triển khai) thành `EMBEDDING_VECTOR_TYPE=vector`.
+3. Xác nhận logic cast/validate tương thích trong `app/services/persistence.py` (hàm `_resolve_pgvector_type`) và `app/services/rag_query.py` (query cast theo `settings.embedding_vector_type`).
 
 ## 5. Cách Pipeline Tương Tác Với Embedding
 
@@ -95,6 +101,10 @@ Mục tiêu:
 
 * tối ưu truy xuất ngữ nghĩa sau này
 * giữ cấu trúc đủ đơn giản để dễ debug trong giai đoạn phát triển
+
+**Căn cứ nghiên cứu cho kiến trúc chỉ mục:**
+* Phân tích đánh đổi giữa `halfvec`/`vector`, ảnh hưởng đến RAM, tốc độ build index và recall tại `../research/RAG_Embedding_Research_miCareer.md`.
+* Tài liệu tổng hợp thực nghiệm tại `../research/Nghiên cứu về mô hình embedding.pdf`.
 
 ## 7. Nguyên Tắc Mở Rộng Sau Này
 

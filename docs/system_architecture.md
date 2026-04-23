@@ -1,111 +1,129 @@
-# Kiến trúc hệ thống FANG
+# Kiến trúc hệ thống FANG v2
 
-Tài liệu này mô tả luồng ingestion CV hiện tại sau khi nâng parser sang kiến trúc multi-provider 3-tier.
+Tài liệu này mô tả kiến trúc tổng thể của FANG sau khi nâng cấp lên v2, hỗ trợ 5-tier parser và hệ thống RAG Chat tập trung.
 
-## 1. Data flow tổng quan
+## 1. Mô hình "Thin Client" (FANG-Centered)
+Kiến trúc v2 định nghĩa FANG là trung tâm xử lý. Các ứng dụng như `miCareer-mini` chỉ đóng vai trò là giao diện người dùng (Thin Client).
+
+```mermaid
+graph LR
+    subgraph "Client Layer<br/>(miCareer-mini)"
+      UI[Streamlit UI]
+      FC[fang_client.py]
+    end
+
+    subgraph "AI Core<br/>(FANG)"
+      API[FastAPI V2]
+      PAR[5-Tier Parser]
+      RAG[RAG Orchestrator]
+      EMB[Embedding Service]
+      CHT[Chat Manager]
+    end
+
+    subgraph "Data Layer"
+      DB[(PostgreSQL + pgvector)]
+      CLD[Cloudinary Storage]
+    end
+
+    UI --> FC
+    FC -->|"JSON API /v2/"| API
+    API --> PAR
+    API --> RAG
+    RAG --> EMB
+    RAG --> CHT
+    PAR --> DB
+    EMB --> DB
+    CHT --> DB
+    FC -.->|Upload| CLD
+```
+
+## 2. Luồng Ingestion (CV Parse -> Chunk -> Embed)
+Sử dụng kiến trúc **5-Tier** với cơ chế **ProTierGate**.
 
 ```mermaid
 graph TD
-    A[POST /v1/ingestion/jobs] --> B[process_ingestion_task]
+    A[POST /v2/ingestion/jobs] --> B[process_ingestion_task]
     B --> C[download_cv]
     C --> D[parse_to_raw_and_json]
-    D --> E{Tier 1:<br/>Gemini Flash}
     
-    E -->|Transient Error<br/>Retry up to 3x| E
-    E -->|Low Quality<br/>or Non-Retryable| F{Tier 2:<br/>GPT-5.4 mini}
-    E -->|Success &<br/>High Quality| H[save_parsed_cv]
+    subgraph "🟢 Lite Tiers"
+      E1[Tier 1: Gemini Flash]
+      E2[Tier 2: GPT-5.4 mini]
+      E3[Tier 3: Claude Haiku]
+    end
     
-    F -->|Transient Error<br/>Retry up to 3x| F
-    F -->|Low Quality<br/>or Non-Retryable| G{Tier 3:<br/>Claude 4.5 Haiku}
-    F -->|Success &<br/>High Quality| H
+    subgraph "ProTierGate"
+      G[Quality Check]
+    end
     
-    G -->|Transient Error<br/>Retry up to 3x| G
-    G -->|Success &<br/>High Quality| H
-    G -->|All Fail| ERROR[raise CVParsingError<br/>update_index_job_status<br/>=FAILED]
+    subgraph "🟠 Pro Tiers"
+      P4[Tier 4: Gemini Pro]
+      P5[Tier 5: GPT-5.4]
+    end
+
+    D --> E1
+    E1 -->|Fail/Low Quality| E2
+    E2 -->|Fail/Low Quality| E3
+    E3 -->|Low Quality| G
+    G -->|Escalate| P4
+    P4 -->|Fail/Low Quality| P5
+    
+    E1 & E2 & E3 & P4 & P5 -->|Success| H[save_parsed_cv]
     
     H --> I[split_into_chunks]
     I --> J[embed_chunks]
     J --> K[save_document_chunks]
     K --> L[update_index_job_status<br/>=SUCCESS]
-    
-    style E fill:#fff4e6
-    style F fill:#fff4e6
-    style G fill:#fff4e6
-    style H fill:#e6f7ff
-    style ERROR fill:#ffe6e6
-    style L fill:#e6ffe6
 ```
 
-## 2. Parser subsystem
+## 3. Luồng RAG Query (Chatbot)
+Điều phối thông qua `rag_orchestrator.py` với 7 chế độ `modelMode`.
 
-### 2.1 Tier strategy
-- Tier 1 ưu tiên tốc độ và chi phí: Gemini Flash.
-- Tier 2 là fallback OpenAI: GPT-5.4 mini.
-- Tier 3 là fallback Anthropic: Claude 4.5 Haiku.
+1. **Context Assemble**: Kết hợp chunks từ Vector DB + JobPosting + Candidate Profile + ATS History.
+2. **Token Budget Management**: Kiểm tra dung lượng hội thoại, tự động trả về `contextWarning` (80% threshold).
+3. **Generation Orchestrator**:
+   - `auto-lite`: Fallback qua 3 model Lite.
+   - `auto-pro`: Fallback qua 2 model Pro.
+   - `Specific mode`: Chỉ gọi đúng model được chọn.
 
-Implementation chi tiết:
-- Adapter layer chung nằm trong `app/services/cv_parser_adapters.py`.
-- Orchestrator nằm trong `app/services/cv_parser.py`.
-- `parserVer` được gán theo `provider:model` để trace tier thực tế đã chọn.
+### 3.1 Bảng model dùng chung (single source of truth)
 
-### 2.2 Retry policy
-- Dùng `tenacity`.
-- Retry có thể bật/tắt bằng `PARSER_RETRY_ENABLED`.
-- Số lần retry và backoff được điều khiển bởi:
-  - `PARSER_RETRY_ATTEMPTS`
-  - `PARSER_RETRY_BASE_SECONDS`
-  - `PARSER_RETRY_MAX_SECONDS`
-- Chỉ retry transient error:
-  - timeout
-  - rate limit
-  - HTTP 5xx
-  - connection reset / transport error
+Để tránh lệch dữ liệu giữa các tài liệu, FANG dùng **một bảng model chuẩn duy nhất** tại:
 
-### 2.3 Quality fallback
-Fallback không chỉ xảy ra khi exception. Sau khi provider trả kết quả hợp lệ, hệ thống vẫn chạy quality gate deterministic:
-- `rawText` không rỗng và đạt độ dài tối thiểu
-- `candidateInfo` có ít nhất một signal định danh
-- số section chính không rỗng đạt ngưỡng `PARSER_QUALITY_MIN_SECTION_SIGNALS`
+- `docs/strategy/rag_query_strategy.md` → mục **3.1 Danh sách Tier** (model catalog + candidate fallback)
+- `docs/strategy/rag_query_strategy.md` → mục **10.2 Context Window Budget theo Model** (limit/budget vận hành)
 
-Nếu quality gate fail, tier đó bị đánh dấu `low_confidence_output` và parser chuyển sang tier tiếp theo.
+Tài liệu kiến trúc này chỉ tham chiếu, không lặp lại bảng để đảm bảo đồng nhất khi cập nhật model.
 
-### 2.4 Structured logging
-Mỗi attempt log các field:
-- `tierIndex`
-- `provider`
-- `model`
-- `durationMs`
-- `retryCount`
-- `fallbackReason`
+## 4. Thành phần chính (Core Components)
 
-Giá trị `fallbackReason` được chuẩn hóa:
-- `transient_error`
-- `non_retryable_error`
-- `low_confidence_output`
+### `app/services/rag_orchestrator.py`
+- Điều phối việc sinh phản hồi AI.
+- Quản lý Quality Gate cho phần trả lời (refusal detection).
+- Tích hợp retry tenacity.
 
-Log không in secret value.
+### `app/services/chat_persistence.py`
+- Quản lý bảng `AICHATCONVERSATION` và `AICHATMESSAGE`.
+- Duy trì lịch sử hội thoại tập trung tại FANG.
 
-## 3. Core components
+### `app/services/rag_model_adapters.py`
+- Adapter layer cho 5 model (Gemini, OpenAI, Anthropic).
+- Sử dụng `MODEL_CANDIDATES` để tự động resolve tên model thực tế.
+- Dùng cùng chuẩn model catalog được tham chiếu ở mục **3.1** để tránh drift giữa code và tài liệu.
 
-### `app/core/config.py`
-- Load env bằng Pydantic Settings.
-- Chứa config cho DB, embedding, parser retry policy, quality gate, API keys.
+## 5. Cấu hình & Bảo mật
+- **API v2**: Toàn bộ endpoint được chuyển sang tiền tố `/v2/` để đảm bảo tương thích ngược.
+- **CORS**: Cho phép tích hợp linh hoạt với các domain frontend qua `CORS_ALLOWED_ORIGINS`.
+- **Database Safeguard**: Reset script chỉ cho phép chạy trên đúng DB `micareer_lite_db`.
 
-### `app/core/logging.py`
-- JSON logging ra stdout.
-- Hỗ trợ structured metadata cho parser attempts và ingestion flow.
+## 6. Tài liệu liên quan
+- `docs/strategy/rag_query_strategy.md`: Chi tiết chiến lược RAG query, fallback, context assembly, token budget.
+- `docs/guide/cv_parser_guide.md`: Chi tiết parser 5-tier, policy fallback, quality gate cho CV.
+- `docs/guide/chunking_guide.md`: Quy tắc chunking, kích thước chunk, overlap, và rationale.
+- `docs/guide/embedding_guide.md`: Chuẩn embedding model, vector dimensions, và quy trình lưu vector.
+- `docs/guide/database_guide.md`: Kiến trúc schema, quan hệ bảng, và hướng dẫn migration/seed.
+- `docs/guide/integration_guide.md`: Hợp đồng tích hợp giữa client và FANG API (`/v2/*`).
+- `docs/system_architecture.md`: Bức tranh tổng thể và điểm vào để điều hướng các tài liệu chi tiết.
 
-### `app/core/database.py`
-- Quản lý asyncpg connection pool.
-
-### `app/services/persistence.py`
-- Lưu `CVPARSED` qua `save_parsed_cv(job_app_id, raw_text, parsed_json, parser_ver)`.
-- Lưu chunk và embedding xuống `AIDOCUMENTCHUNK`.
-
-### `app/api/routes_ingestion.py`
-- Giữ background ingestion flow.
-- Đã đồng bộ lại call signature `save_parsed_cv`.
-
-## 4. Lưu ý vận hành
-- Nếu tier 2/3 chưa có SDK hoặc chưa có env key, adapter sẽ fail theo dạng `non_retryable_error` và fallback tiếp.
-- Trong môi trường bị chặn network, script smoke test vẫn cho thấy retry/fallback path đầy đủ trong log.
+---
+*Tài liệu cập nhật ngày 13/04/2026 cho kiến trúc v2 Pha 1 hoàn chỉnh.*

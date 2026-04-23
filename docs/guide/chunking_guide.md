@@ -1,6 +1,6 @@
 # Hướng dẫn Module Chunking (`chunking.py` & `markdown_builder.py`)
 
-Tài liệu này giải thích chi tiết về cách hoạt động của Chunking Layer, nằm trước quy trình parseCV và sau nhúng Vector (Embedding)
+Tài liệu này giải thích chi tiết về cách hoạt động của Chunking Layer, nằm sau bước parseCV -> JSON và trước bước nhúng Vector (Embedding).
 
 `chunking_strategy.md` mang tính định hướng lý thuyết, tài liệu này tập trung vào cách mã nguồn thực thi các chiến lược đó.
 
