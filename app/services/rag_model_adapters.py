@@ -242,7 +242,7 @@ class OpenAIGenerationAdapter(GenerationAdapter):
                         model=candidate_model,
                         messages=messages,  # type: ignore[arg-type]
                         temperature=temperature,
-                        max_tokens=max_tokens,
+                        max_completion_tokens=max_tokens,
                     )
 
                 text = (response.choices[0].message.content or "").strip()

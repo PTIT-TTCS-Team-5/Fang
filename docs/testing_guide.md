@@ -40,7 +40,11 @@ python -m unittest discover -s tests/unit -p "unit_test_*.py"
 Khác với Unit test, Smoke Test sẽ tương tác trực tiếp với Database và gọi LLM API thực. Do đó, bạn **BẮT BUỘC** phải có `.env` đầy đủ và hợp lệ.
 
 ### Chuẩn Bị Dữ Liệu
-Trước khi chạy bất kỳ test tích hợp nào, bạn nên làm sạch và tạo dữ liệu mồi (seed data) cho database:
+
+> [!CAUTION]
+> **NÊN RESET DATABASE SAU KHI CẬP NHẬT SCHEMA**
+> Cần đọc kỹ file `database/schema_ai_core.sql` để hiểu cấu trúc, và chạy lệnh reset db để áp dụng schema mới nhất (lưu ý: lệnh này sẽ xóa toàn bộ dữ liệu hiện có):
+
 ```bash
 python scripts/reset_and_seed_db.py --reset
 ```

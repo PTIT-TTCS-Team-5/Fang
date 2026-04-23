@@ -52,7 +52,12 @@ Cả Parser và Generator đều sử dụng chung một cơ chế **5-Tier Fall
    - Các API Key: `GOOGLE_API_KEY`, `OPENAI_API_KEY`, `CLAUDE_API_KEY`.
    - `CORS_ALLOWED_ORIGINS`: Để `*` cho môi trường Dev.
 
-3. **Khởi chạy Server:**
+3. **Khởi tạo Database (nên làm mỗi khi test):**
+   ```bash
+   python scripts/reset_and_seed_db.py --reset
+   ```
+
+4. **Khởi chạy Server:**
    ```bash
    uvicorn app.main:app --reload
    ```

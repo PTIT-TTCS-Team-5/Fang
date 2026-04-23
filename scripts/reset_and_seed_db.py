@@ -40,10 +40,18 @@ async def reset_schema(conn):
 
 async def main():
     parser = argparse.ArgumentParser(description="Reset and seed DB for testing")
+    parser.set_defaults(reset=True)
     parser.add_argument(
         "--reset",
+        dest="reset",
         action="store_true",
-        help="Drop entire database schema before seeding",
+        help="Drop entire database schema before seeding (default behavior)",
+    )
+    parser.add_argument(
+        "--no-reset",
+        dest="reset",
+        action="store_false",
+        help="Do not drop schema; run SQL files as-is",
     )
     args = parser.parse_args()
 

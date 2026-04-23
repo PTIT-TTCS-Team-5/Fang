@@ -71,7 +71,7 @@ async def _vector_search(
 async def _fetch_job_posting(job_app_id: int) -> dict[str, Any] | None:
     """Lấy thông tin JobPosting liên quan đến application."""
     query = """
-        SELECT jp.title, jp.description, jp.requirements, jp.benefits
+        SELECT jp.title, jp.description
         FROM JOBPOSTING jp
         INNER JOIN JOBAPPLICATION ja ON ja.jobPostId = jp.jobPostId
         WHERE ja.jobAppId = $1;
@@ -84,8 +84,9 @@ async def _fetch_job_posting(job_app_id: int) -> dict[str, Any] | None:
 async def _fetch_candidate_profile(job_app_id: int) -> dict[str, Any] | None:
     """Lấy thông tin Candidate profile."""
     query = """
-        SELECT c.fullName, c.email, c.phone, c.bio, c.expyears, c.skills
+        SELECT u.fName || ' ' || u.lName AS fullname, u.email, u.phone, c.bio, c.expyears
         FROM CANDIDATE c
+        INNER JOIN "user" u ON c.userId = u.userId
         INNER JOIN JOBAPPLICATION ja ON ja.candidateId = c.userId
         WHERE ja.jobAppId = $1;
     """
@@ -99,10 +100,11 @@ async def _fetch_ats_history(job_app_id: int) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
 
     interview_query = """
-        SELECT interviewDate, interviewType, notes, score
-        FROM INTERVIEW
-        WHERE jobAppId = $1
-        ORDER BY interviewDate;
+        SELECT i.startAt AS interviewdate, i."mode" AS interviewtype, f.cmt AS notes, f.score
+        FROM INTERVIEW i
+        LEFT JOIN INTERVIEWFEEDBACK f ON i.intervId = f.intervId
+        WHERE i.jobAppId = $1
+        ORDER BY i.startAt;
     """
     async with acquire_conn() as conn:
         rows = await conn.fetch(interview_query, job_app_id)
@@ -149,8 +151,6 @@ def _build_system_prompt(
             c_section += f"\nHọ tên: {candidate['fullname']}"
         if candidate.get("expyears"):
             c_section += f"\nKinh nghiệm: {candidate['expyears']} năm"
-        if candidate.get("skills"):
-            c_section += f"\nKỹ năng: {candidate['skills']}"
         if candidate.get("bio"):
             c_section += f"\nBio: {candidate['bio']}"
         parts.append(c_section)

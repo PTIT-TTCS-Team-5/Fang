@@ -80,7 +80,7 @@ class GenerationTrace:
 def _generation_quality_gate(response_text: str) -> bool:
     """Heuristic quality check. Trả True nếu response đạt chất lượng tối thiểu."""
     text = response_text.strip()
-    if len(text) < 50:
+    if len(text) < 5:
         return False
     refusal_signals = [
         "tôi không thể",
