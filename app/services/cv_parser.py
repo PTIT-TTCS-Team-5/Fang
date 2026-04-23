@@ -114,11 +114,18 @@ _LAST_PARSE_TRACE: ContextVar[ParserTrace | None] = ContextVar(
 )
 
 
+LITE_TIER_MAX = 3  # Tier 1-3 là Lite; Tier 4-5 là Pro
+
+
 def _default_tiers() -> tuple[ParserTier, ...]:
     return (
+        # 🟢 Lite tier — fallback tuần tự
         ParserTier(1, "gemini-flash", GeminiProviderAdapter()),
         ParserTier(2, "gpt-5.4-mini", OpenAIProviderAdapter()),
         ParserTier(3, "claude-4.5-haiku", AnthropicProviderAdapter()),
+        # 🟠 Pro tier — chỉ leo khi ProTierGate cho phép
+        ParserTier(4, "gemini-pro", GeminiProviderAdapter()),
+        ParserTier(5, "gpt-5.4", OpenAIProviderAdapter()),
     )
 
 
@@ -196,6 +203,27 @@ def get_last_parse_trace() -> dict[str, Any] | None:
     return asdict(trace) if trace is not None else None
 
 
+def _should_escalate_to_pro(attempts: Sequence[ParserAttemptRecord]) -> bool:
+    """ProTierGate: quyết định có leo lên Pro tier không.
+
+    Mở cửa khi ≥1 Lite tier trả kết quả nhưng chất lượng thấp.
+    Nếu hầu hết là lỗi hạ tầng → không leo Pro (Pro cũng sẽ fail, lãng phí chi phí).
+    """
+    low_quality_count = sum(
+        1 for a in attempts if a.fallback_reason == FALLBACK_REASON_LOW_CONFIDENCE
+    )
+    infra_failure_count = sum(
+        1
+        for a in attempts
+        if a.status == "failed" and a.fallback_reason != FALLBACK_REASON_LOW_CONFIDENCE
+    )
+    if infra_failure_count >= 2:
+        return False
+    if low_quality_count >= 1:
+        return True
+    return False
+
+
 class CVParserOrchestrator:
     """Coordinates tiered parser execution with retry and quality fallback."""
 
@@ -233,30 +261,49 @@ class CVParserOrchestrator:
         attempts: list[ParserAttemptRecord] = []
         _LAST_PARSE_TRACE.set(_build_trace(attempts, None, None))
 
-        for tier in self.tiers:
+        lite_tiers = [t for t in self.tiers if t.tier_index <= LITE_TIER_MAX]
+        pro_tiers = [t for t in self.tiers if t.tier_index > LITE_TIER_MAX]
+
+        # ——— Phần 1: Chạy qua tất cả Lite tier ———
+        for tier in lite_tiers:
             try:
                 parsed_cv = await self._run_tier(
                     tier=tier, cv_bytes=cv_bytes, attempts=attempts
                 )
-                trace = _build_trace(
-                    attempts,
-                    selected_tier_index=tier.tier_index,
-                    parser_ver=parsed_cv.parserVer,
-                )
-                _LAST_PARSE_TRACE.set(trace)
-                logger.info(
-                    "CV parsing pipeline succeeded",
-                    extra={
-                        "parserVer": parsed_cv.parserVer,
-                        "selectedTierIndex": tier.tier_index,
-                        "fallbackPath": trace.fallback_path,
-                    },
-                )
-                return parsed_cv.rawText, parsed_cv.model_dump()
+                return self._build_success(parsed_cv, tier, attempts)
             except ProviderInvocationError:
                 continue
             except _LowQualityOutputError:
                 continue
+
+        # ——— Phần 2: ProTierGate ———
+        if pro_tiers and _should_escalate_to_pro(attempts):
+            logger.info(
+                "ProTierGate: escalating to Pro tier",
+                extra={
+                    "liteTierAttempts": len(attempts),
+                    "lowQualityCount": sum(
+                        1
+                        for a in attempts
+                        if a.fallback_reason == FALLBACK_REASON_LOW_CONFIDENCE
+                    ),
+                },
+            )
+            for tier in pro_tiers:
+                try:
+                    parsed_cv = await self._run_tier(
+                        tier=tier, cv_bytes=cv_bytes, attempts=attempts
+                    )
+                    return self._build_success(parsed_cv, tier, attempts)
+                except ProviderInvocationError:
+                    continue
+                except _LowQualityOutputError:
+                    continue
+        elif pro_tiers:
+            logger.info(
+                "ProTierGate: skipping Pro tier (infrastructure failures dominate)",
+                extra={"liteTierAttempts": len(attempts)},
+            )
 
         trace = _build_trace(attempts, selected_tier_index=None, parser_ver=None)
         _LAST_PARSE_TRACE.set(trace)
@@ -264,6 +311,28 @@ class CVParserOrchestrator:
             "CV parsing failed across all tiers. "
             f"Fallback path: {trace.fallback_path or 'no-attempts'}."
         )
+
+    def _build_success(
+        self,
+        parsed_cv: Any,
+        tier: "ParserTier",
+        attempts: list["ParserAttemptRecord"],
+    ) -> tuple[str, dict[str, Any]]:
+        trace = _build_trace(
+            attempts,
+            selected_tier_index=tier.tier_index,
+            parser_ver=parsed_cv.parserVer,
+        )
+        _LAST_PARSE_TRACE.set(trace)
+        logger.info(
+            "CV parsing pipeline succeeded",
+            extra={
+                "parserVer": parsed_cv.parserVer,
+                "selectedTierIndex": tier.tier_index,
+                "fallbackPath": trace.fallback_path,
+            },
+        )
+        return parsed_cv.rawText, parsed_cv.model_dump()
 
     async def _run_tier(
         self,

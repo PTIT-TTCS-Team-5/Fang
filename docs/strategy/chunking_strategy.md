@@ -23,6 +23,10 @@ Dữ liệu đầu vào `ParsedCV` phải được "làm phẳng" thành định
 Sử dụng bộ chia cắt phân tích cú pháp Markdown (ví dụ: `MarkdownHeaderTextSplitter`) để tách văn bản dựa trên các thẻ Heading
 * **Ưu điểm:** Đảm bảo toàn bộ mô tả của một chức danh công việc hoặc danh sách kỹ năng không bị cắt ngang giữa chừng
 
+**Căn cứ nghiên cứu:**
+* Tổng quan phương pháp chunking và tác động đến retrieval quality: `../research/Nghiên cứu về RAG Chunking (2).pdf`.
+* Đối chiếu biến thể cấu trúc/lai và trade-off precision-recall: `../research/Nghiên cứu về RAG Chunking (3).pdf`.
+
 ### Bước 2.3: Xử lý Ngoại lệ (Long-Tail Nodes) với Kiến trúc Small-to-Big
 Đối với các khối thông tin quá lớn (ví dụ: kinh nghiệm 10 năm tại một công ty), việc nhúng toàn bộ sẽ làm loãng ngữ nghĩa, trong khi cắt cứng sẽ làm mất bối cảnh. 
 
@@ -45,10 +49,14 @@ Trước khi gửi văn bản cho mô hình Embedding, cần nối chuỗi siêu
 ```
 
 ## 3. Kiến Trúc CSDL & Tối Ưu Hóa Vector Space
-Để xử lý hàng triệu vectors mà không gây sụp đổ bộ nhớ RAM, hệ thống lưu trữ PostgreSQL (`pgvector`) cần tuân thủ các thiết lập sau:
+Để hướng tới xử lý hàng triệu vectors mà không gây sụp đổ bộ nhớ RAM, hệ thống lưu trữ PostgreSQL (`pgvector`) cần tuân thủ các thiết lập sau:
 
 * **Lượng tử hóa vô hướng (Scalar Quantization):** Cột `embedding` trong bảng `AIDOCUMENTCHUNK` phải được định nghĩa cứng bằng kiểu dữ liệu **`halfvec`** (float16). Việc này giúp giảm ngay **50% dung lượng RAM** yêu cầu, tăng tốc độ xây dựng chỉ mục mà không làm suy giảm chỉ số Recall.
 * **Thuật toán Chỉ mục:** Sử dụng **HNSW** (Hierarchical Navigable Small World) kết hợp phép đo khoảng cách **Cosine Similarity** (`<=>`) để tối ưu hóa tốc độ và độ chính xác.
+
+**Căn cứ nghiên cứu cho lựa chọn `halfvec` + HNSW:**
+* Tổng hợp benchmark embedding/index và phân tích chi phí vận hành trong `../research/RAG_Embedding_Research_miCareer.md`.
+* Báo cáo đánh giá giải pháp chunking tại `../research/Đánh giá giải pháp chunking.pdf`.
 
 **Lược đồ ánh xạ `AIDOCUMENTCHUNK`:**
 * `jobAppId` (FK): Cầu nối nghiệp vụ.
@@ -65,13 +73,6 @@ Khi truy vấn, hệ thống không chỉ dùng Vector Search mà phải kết h
 2.  **Sparse Search (BM25):** Tìm kiếm từ khóa chính xác để bắt các thuật ngữ kỹ thuật ngách.
 3.  **Metadata Hard Filtering:** Lọc cứng dựa trên `metadata` (Vị trí, Kỹ năng bắt buộc) để thu hẹp không gian tìm kiếm ngay lập tức.
 4.  **Reciprocal Rank Fusion (RRF):** Thuật toán tổng hợp điểm số để chọn ra Top-K phân mảnh tốt nhất.
-
-## 5. Kế Hoạch Triển Khai Tiếp Theo
-1.  Phát triển module `services/markdown_builder.py` để mapping `ParsedCV` sang chuỗi Markdown chuẩn.
-2.  Cài đặt `langchain-text-splitters` và cấu hình `MarkdownHeaderTextSplitter` kết hợp `RecursiveCharacterTextSplitter` cho luồng Small-to-Big.
-3.  Phát triển hàm trích xuất và tiêm `Global Metadata` vào các chunk.
-4.  Thiết lập schema `AIDOCUMENTCHUNK` trên PostgreSQL với kiểu `halfvec`.
-5.  Viết file `test_chunking.py` để kiểm chứng cấu trúc đầu ra trước khi tích hợp mô hình nhúng.
 
 ### Giải thích thêm về tỷ lệ kích thước chunk và đánh giá khách quan về kiểu dữ liệu lưu trữ vector dựa trên các báo cáo nghiên cứu
 ## 1. Kích thước Parent và Child Chunk trong kiến trúc Small-to-Big
@@ -103,3 +104,4 @@ Quyết định sử dụng `vector` hay `halfvec` trong `pgvector` là sự đ�
 Tham khảo (tại prj_docs):
     1. Nghiên cứu về RAG Chunking (2)
     2. Nghiên cứu về RAG Chunking (3)
+    3. RAG_Embedding_Research_miCareer

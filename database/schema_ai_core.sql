@@ -53,7 +53,43 @@ CREATE TABLE AIQUERYLOG (
   response TEXT NOT NULL,
   topK INT NOT NULL,
   latencyMs INT NOT NULL,
+  model VARCHAR(100),
+  modelMode VARCHAR(50),
+  fallbackPath TEXT,
   createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (jobAppId) REFERENCES JOBAPPLICATION(jobAppId),
   FOREIGN KEY (hrId) REFERENCES HR(userId)
 );
+
+-- ========== Chat Management (FANG v2) ==========
+
+CREATE TABLE AICHATCONVERSATION (
+  conversationId UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  jobAppId INT NOT NULL,
+  hrId INT NOT NULL,
+  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  lastMessageAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (jobAppId) REFERENCES JOBAPPLICATION(jobAppId),
+  FOREIGN KEY (hrId) REFERENCES HR(userId)
+);
+
+CREATE INDEX IF NOT EXISTS idx_conversation_hr_jobapp
+  ON AICHATCONVERSATION (hrId, jobAppId);
+
+CREATE TABLE AICHATMESSAGE (
+  messageId SERIAL PRIMARY KEY,
+  conversationId UUID NOT NULL,
+  role VARCHAR(20) NOT NULL,           -- 'user' | 'assistant' | 'system'
+  content TEXT NOT NULL,
+  model VARCHAR(100),                  -- null cho user/system messages
+  modelMode VARCHAR(50),
+  topK INT,
+  latencyMs INT,
+  fallbackPath TEXT,
+  summarized BOOLEAN NOT NULL DEFAULT FALSE,
+  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (conversationId) REFERENCES AICHATCONVERSATION(conversationId)
+);
+
+CREATE INDEX IF NOT EXISTS idx_chatmessage_conversation
+  ON AICHATMESSAGE (conversationId, createdAt);

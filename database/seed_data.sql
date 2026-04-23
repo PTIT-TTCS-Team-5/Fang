@@ -221,33 +221,32 @@ INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workM
 VALUES ('AI Engineer (Python/NLP)',
 'CHI TIẾT CÔNG VIỆC
 1. Phân tích yêu cầu nghiệp vụ và dữ liệu:
-- Làm việc với chuyên gia, BA, Data Scientist để hiểu cấu trúc và ngữ nghĩa dữ liệu.
-- Xác định yêu cầu AI/NLP phục vụ tìm kiếm, phân loại, gợi ý, liên kết dữ liệu.
+- Làm việc với Data Scientist, Domain Expert để hiểu cấu trúc và ngữ nghĩa dữ liệu hệ thống.
+- Thiết kế hệ thống AI phục vụ truy xuất thông minh và tổng hợp tự động.
 2. Xây dựng & huấn luyện mô hình AI/NLP:
-- Phát triển mô hình xử lý tiếng Việt chuyên sâu: tokenization, NER, phân loại chủ đề.
-- Ứng dụng Deep Learning (BERT, PhoBERT, LLM) để trích xuất thông tin và phân tích ngữ nghĩa.
-- Xây dựng hệ thống gợi ý thông minh (recommendation engine).
+- Phát triển mô hình xử lý tiếng Việt chuyên sâu tích hợp LLMs (GPT, Claude, Gemini).
+- Ứng dụng mô hình RAG (Retrieval-Augmented Generation) để đưa dữ liệu nội bộ vào LLMs.
+- Xây dựng framework vận hành như LangChain / LlamaIndex linh hoạt.
 3. Xử lý dữ liệu & pipeline:
-- Làm sạch và chuẩn hóa dữ liệu từ nhiều định dạng (PDF, DOC, HTML).
-- Xây dựng pipeline xử lý dữ liệu tự động.
+- Chunking, Napping và Embedding tài liệu (PDF, Word, TXT) bằng Vector model (VD: text-embedding-3-small).
+- Vận hành Vector Database (pgvector, Milvus, Qdrant).
 4. Triển khai & tích hợp:
-- Đóng gói mô hình AI thành API/microservice.
-- Đảm bảo hiệu năng, bảo mật và tính khả dụng cao.
+- Đóng gói mô hình AI thành API bằng FastAPI/Flask.
+- Tối ưu hóa API để đảm bảo độ trễ (latency) thấp và tối ưu token cost.
 
 YÊU CẦU CÔNG VIỆC
-Tốt nghiệp ĐH/ThS chuyên ngành CNTT, AI, Khoa học dữ liệu hoặc liên quan.
-2+ năm phát triển ứng dụng AI/NLP.
-Thành thạo Python và thư viện AI/ML (TensorFlow, PyTorch, Hugging Face, spaCy).
-Kinh nghiệm xử lý tiếng Việt và NLP.
-Hiểu biết về PostgreSQL, Elasticsearch, MongoDB.
-Kinh nghiệm triển khai API bằng FastAPI, container hóa bằng Docker.
-Tiếng Anh đọc hiểu tốt tài liệu AI/NLP.
+- Tốt nghiệp ĐH chuyên ngành CNTT, Khoa học Máy Tính, Hệ Thống Thông Tin, Khoa học dữ liệu (Ưu tiên xuất thân từ PTIT, Bách Khoa, Công Nghệ).
+- Tối thiểu 1 năm phát triển ứng dụng AI/NLP thực tế hoặc Đồ án tốt nghiệp xuất sắc (điểm cao/nghiên cứu khoa học) chủ đề RAG/Chatbot.
+- Thành thạo Python, có tư duy kiến trúc phần mềm (Design Pattern, Clean Code).
+- Sử dụng tốt các LLM API (OpenAI API, Google GenAI) và Agent framework (Langchain).
+- Có hiểu biết kỹ thuật Vector Search (pgvector - distance operator <=>).
+- Tiếng Anh đọc hiểu tài liệu lưu loát (Tương đương TOEIC 650+ hoặc IELTS 6.0+).
 
 QUYỀN LỢI
-Thu nhập cạnh tranh theo năng lực. Lương tháng 13 và thưởng KPI.
-Tham gia đào tạo nâng cao chuyên môn. Tài trợ chứng chỉ quốc tế.
-15 ngày phép/năm. Bảo hiểm sức khỏe cho bản thân.
-Khám sức khỏe định kỳ hàng năm. Môi trường trẻ trung, năng động.',
+- Thu nhập đàm phán cực tốt, khởi điểm từ 18M - 30M tùy năng lực. Thưởng tháng 13 + thưởng hiệu quả dự án.
+- Môi trường Sandbox công nghệ: Quản lý chi trả toàn bộ chi phí API Key, Server AWS để thử nghiệm công nghệ genAI.
+- Cấp quyền truy cập kho học liệu nội bộ, tài trợ học và thi chứng chỉ AI.
+- Đội ngũ GenZ siêu trẻ trung, năng động.',
 18000000, 30000000, 'Tòa Keangnam, Phạm Hùng, Hà Nội', 'HYBRID', '2026-08-15 23:59:59',
 (SELECT compId FROM COMPANY WHERE compName = 'VNG Demo'));
 
@@ -1282,3 +1281,22 @@ Trân trọng,
 
 END $$;
 
+-- ==========================================
+-- 13. THÍ SINH ĐẶC BIỆT: NGUYỄN HẢI HƯNG
+-- Data mock riêng cho bài test AI Engineer
+-- ==========================================
+INSERT INTO "user" (userName, pwd, fName, lName, email, phone, prov, ward, street, stat, "role") VALUES
+('nguyenhaihung',  '123456', 'Hưng',    'Nguyễn Hải',  'nguyenhaihung@gmail.com',  '0909000001', 'Hà Nội', 'Phường Đại Kim',          'KĐT Đại Kim',            'ACTIVE', 'CANDIDATE') ON CONFLICT DO NOTHING;
+
+INSERT INTO CANDIDATE (userId, bio, cvUrl, dob, expyears) VALUES
+((SELECT userId FROM "user" WHERE userName = 'nguyenhaihung'),
+ 'Kỹ sư AI/NLP với chuyên môn vững về hệ thống RAG và mô hình LLM. Xuất thân từ sinh viên xuất sắc của Học viện Công nghệ Bưu chính Viễn thông. Thành thạo LangChain, Vector Database (pgvector), kỹ thuật Prompt Engineering nâng cao và giải quyết bài toán Document Chunking ngữ nghĩa thực tế.', '/cv/nguyenhaihung_cv.pdf', '2001-12-12', 1) ON CONFLICT DO NOTHING;
+
+INSERT INTO CANDIDATESKILL (userId, skillId)
+SELECT u.userId, s.skillId FROM "user" u CROSS JOIN SKILL s
+WHERE u.userName = 'nguyenhaihung' AND s.skillName IN ('Python','NLP','Machine Learning','Git','Làm việc nhóm','FastAPI','PostgreSQL','Docker') ON CONFLICT DO NOTHING;
+
+INSERT INTO JOBAPPLICATION (candidateId, jobPostId, appliedAt, stat, cvSnapUrl, coverLetter)
+SELECT u.userId, jp.jobPostId, '2026-04-12 08:00:00'::timestamp, 'REVIEWING', '/snapshots/nguyenhaihung_ai.pdf',
+'Kính gửi bộ phận tuyển dụng VNG Demo. Tên tôi là Nguyễn Hải Hưng. Tôi thấy JD tìm kiếm kỹ sư am hiểu về RAG, Vector Search và Langchain. Đây chính xác là những kiến thức chuyên sâu và đồ án tôi đã tập trung phát triển suốt năm vừa qua tại Học viện. Rất mong có cơ hội phỏng vấn và chứng minh năng lực để đóng góp vào platform AI của công ty.'
+FROM "user" u, JOBPOSTING jp WHERE u.userName='nguyenhaihung' AND jp.title='AI Engineer (Python/NLP)' ON CONFLICT DO NOTHING;
