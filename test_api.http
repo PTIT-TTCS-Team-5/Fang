@@ -1,13 +1,13 @@
 ### Ghi chú: Click "Send Request" phía trên tên method (nếu dùng REST Client) để gọi API
 
 ### Gửi yêu cầu Ingestion E2E (Parse -> Chunk -> Embed)
-POST http://localhost:8000/v1/ingestion/jobs
+POST http://localhost:8000/v2/ingestion/jobs
 Content-Type: application/json
 
 {
   "jobAppId": 40,
-  "cvSnapUrl": "https://res.cloudinary.com/dfwkw1guc/image/upload/v1775987977/sample_ml2jzo.pdf"
+  "cvSnapUrl": "https://res.cloudinary.com/dfwkw1guc/raw/upload/v1776871380/Home/miCareer-mini/sample"
 }
 
 ### Kiểm tra trạng thái Job (Thay thế indexJobId trả về từ request trên vào số 1)
-GET http://localhost:8000/v1/ingestion/jobs/2
+GET http://localhost:8000/v1/ingestion/jobs/40
