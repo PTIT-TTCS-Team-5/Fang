@@ -125,7 +125,7 @@ def _default_tiers() -> tuple[ParserTier, ...]:
         ParserTier(3, "claude-4.5-haiku", AnthropicProviderAdapter()),
         # 🟠 Pro tier — chỉ leo khi ProTierGate cho phép
         ParserTier(4, "gemini-pro", GeminiProviderAdapter()),
-        ParserTier(5, "gpt-5.4", OpenAIProviderAdapter()),
+        ParserTier(5, "gpt-5.5", OpenAIProviderAdapter()),
     )
 
 
