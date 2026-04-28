@@ -145,7 +145,7 @@ Dưới đây là ma trận Ablation Study được đề xuất vận hành tro
 | **Run 0 (Lower Bound)** | Trọng số \= 1.0 | Không áp dụng | Trọng số \= 0.0 | Đo lường năng lực ngữ nghĩa trần trụi. Đánh giá mức độ Semantic Hallucination. |
 | **Run 1 (Heuristic Only)** | Trọng số \= 0.0 | Có áp dụng | Trọng số \= 1.0 | Đánh giá năng lực của kiến trúc DB quan hệ cũ (micareer\_lite\_db). |
 | **Run 2 (Hybrid Basic)** | Trọng số \= 0.5 | Không áp dụng | Trọng số \= 0.5 | Kiểm tra xem sự kết hợp ngữ nghĩa và từ khóa có cải thiện NDCG không khi bỏ qua ràng buộc cứng. |
-| **Run 3 (Hybrid Full \- Đề xuất)** | Trọng số \= ![][image5] | Có áp dụng | Trọng số \= ![][image6] | Tìm ra hệ số calibration tốt nhất. Xác nhận Uplift của toàn bộ hệ thống. |
+| **Run 3 (Hybrid Full \- Đề xuất)** | Trọng số \= ![][image5] (alpha) | Có áp dụng | Trọng số \= ![][image6] (beta) | Tìm ra hệ số calibration tốt nhất. Xác nhận Uplift của toàn bộ hệ thống. |
 
 **Tiêu chí quyết định:** Nếu chênh lệch $\Delta NDCG@10$ giữa **Run 3** và **Run 1** cực kỳ thấp (ví dụ \< 2-3%), điều đó có nghĩa mô hình embedding hiện tại thực sự là Bottleneck và không mang lại khả năng nắm bắt bối cảnh nào hơn việc đếm từ khóa thông thường. Trong trường hợp này, đề xuất nâng cấp mô hình embedding hoặc huấn luyện tinh chỉnh (Fine-tuning) bằng phương pháp Contrastive Learning sẽ được kích hoạt.5
 
