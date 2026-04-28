@@ -188,70 +188,70 @@ Phần này tóm lược các quyết định kiến trúc cốt lõi dưới d�
 35. Calibrating reranker thresholds in production RAG (What worked for us) \- Reddit, truy cập vào tháng 4 23, 2026, [https://www.reddit.com/r/Rag/comments/1ojkisg/calibrating\_reranker\_thresholds\_in\_production\_rag/](https://www.reddit.com/r/Rag/comments/1ojkisg/calibrating_reranker_thresholds_in_production_rag/)  
 36. Master Advanced Search: Ranking, Fusion, and Reranking Explained \- Progress Software, truy cập vào tháng 4 23, 2026, [https://www.progress.com/blogs/master-advanced-search-ranking-fusion-and-reranking-explained](https://www.progress.com/blogs/master-advanced-search-ranking-fusion-and-reranking-explained)
 
-[image1]: images/NMAIex_th_2/image1.png
+[image1]: images/NMAIex_th_4/image1.png
 
-[image2]: images/NMAIex_th_2/image2.png
+[image2]: images/NMAIex_th_4/image2.png
 
-[image3]: images/NMAIex_th_2/image3.png
+[image3]: images/NMAIex_th_4/image3.png
 
-[image4]: images/NMAIex_th_2/image4.png
+[image4]: images/NMAIex_th_4/image4.png
 
-[image5]: images/NMAIex_th_2/image5.png
+[image5]: images/NMAIex_th_4/image5.png
 
-[image6]: images/NMAIex_th_2/image6.png
+[image6]: images/NMAIex_th_4/image6.png
 
-[image7]: images/NMAIex_th_2/image7.png
+[image7]: images/NMAIex_th_4/image7.png
 
-[image8]: images/NMAIex_th_2/image8.png
+[image8]: images/NMAIex_th_4/image8.png
 
-[image9]: images/NMAIex_th_2/image9.png
+[image9]: images/NMAIex_th_4/image9.png
 
-[image10]: images/NMAIex_th_2/image10.png
+[image10]: images/NMAIex_th_4/image10.png
 
-[image11]: images/NMAIex_th_2/image11.png
+[image11]: images/NMAIex_th_4/image11.png
 
-[image12]: images/NMAIex_th_2/image12.png
+[image12]: images/NMAIex_th_4/image12.png
 
-[image13]: images/NMAIex_th_2/image13.png
+[image13]: images/NMAIex_th_4/image13.png
 
-[image14]: images/NMAIex_th_2/image14.png
+[image14]: images/NMAIex_th_4/image14.png
 
-[image15]: images/NMAIex_th_2/image15.png
+[image15]: images/NMAIex_th_4/image15.png
 
-[image16]: images/NMAIex_th_2/image16.png
+[image16]: images/NMAIex_th_4/image16.png
 
-[image17]: images/NMAIex_th_2/image17.png
+[image17]: images/NMAIex_th_4/image17.png
 
-[image18]: images/NMAIex_th_2/image18.png
+[image18]: images/NMAIex_th_4/image18.png
 
-[image19]: images/NMAIex_th_2/image19.png
+[image19]: images/NMAIex_th_4/image19.png
 
-[image20]: images/NMAIex_th_2/image20.png
+[image20]: images/NMAIex_th_4/image20.png
 
-[image21]: images/NMAIex_th_2/image21.png
+[image21]: images/NMAIex_th_4/image21.png
 
-[image22]: images/NMAIex_th_2/image22.png
+[image22]: images/NMAIex_th_4/image22.png
 
-[image23]: images/NMAIex_th_2/image23.png
+[image23]: images/NMAIex_th_4/image23.png
 
-[image24]: images/NMAIex_th_2/image24.png
+[image24]: images/NMAIex_th_4/image24.png
 
-[image25]: images/NMAIex_th_2/image25.png
+[image25]: images/NMAIex_th_4/image25.png
 
-[image26]: images/NMAIex_th_2/image26.png
+[image26]: images/NMAIex_th_4/image26.png
 
-[image27]: images/NMAIex_th_2/image27.png
+[image27]: images/NMAIex_th_4/image27.png
 
-[image28]: images/NMAIex_th_2/image28.png
+[image28]: images/NMAIex_th_4/image28.png
 
-[image29]: images/NMAIex_th_2/image29.png
+[image29]: images/NMAIex_th_4/image29.png
 
-[image30]: images/NMAIex_th_2/image30.png
+[image30]: images/NMAIex_th_4/image30.png
 
-[image31]: images/NMAIex_th_2/image31.png
+[image31]: images/NMAIex_th_4/image31.png
 
-[image32]: images/NMAIex_th_2/image32.png
+[image32]: images/NMAIex_th_4/image32.png
 
-[image33]: images/NMAIex_th_2/image33.png
+[image33]: images/NMAIex_th_4/image33.png
 
-[image34]: images/NMAIex_th_2/image34.png
+[image34]: images/NMAIex_th_4/image34.png

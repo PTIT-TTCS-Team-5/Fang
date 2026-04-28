@@ -3,17 +3,20 @@
 
 Features:
 1) Toggle between scanning all Markdown files in a directory or explicit file list.
-2) Use short image folder names from bracket code (e.g. [NMAIex_1] -> images/NMAIex_1/).
-3) Support both reference-style and inline base64 image links.
+2) Target exactly one Markdown file by its file code, then process only that file.
+3) Use short image folder names from bracket code (e.g. [NMAIex_1] -> images/NMAIex_1/).
+4) Support both reference-style and inline base64 image links.
 
 Quick usage:
-1) Scan all markdown files with default config:
+1) Scan all markdown files with auto-detected code mode:
     python scripts/extract_markdown_base64_images.py --scan-all
-2) Scan all with NMAIex_th naming mode (files will be numbered by sorted order):
+2) Process only the report with code NMAIex_th_3 and save images under docs/research/images/NMAIex_th_3:
+    python scripts/extract_markdown_base64_images.py --file-code NMAIex_th_3 --research-dir docs/research
+3) Scan all with an explicit code naming mode:
     python scripts/extract_markdown_base64_images.py --scan-all --code-mode th
-3) Dry-run preview (no file writes):
-    python scripts/extract_markdown_base64_images.py --scan-all --dry-run
-4) Explicit targets (file/dir/glob):
+4) Dry-run preview (no file writes):
+    python scripts/extract_markdown_base64_images.py --file-code NMAIex_th_3 --dry-run
+5) Explicit targets (file/dir/glob):
     python scripts/extract_markdown_base64_images.py docs/research/*.md
 """
 
@@ -31,9 +34,10 @@ from typing import List, Tuple
 # ============================================================================
 
 # Chon format ma trong ten file:
+# - "auto":     tu dong nhan dien theo ten file
 # - "standard": [NMAIex_1], [NMAIex-2], [NMAIex]
 # - "th":       [NMAIex_th] files se duoc danh so theo thu tu tu dien
-CODE_FORMAT_MODE = "standard"
+CODE_FORMAT_MODE = "auto"
 
 # Duong dan mac dinh khi dung --scan-all va --output-root
 DEFAULT_RESEARCH_DIR = "docs/research"
@@ -56,6 +60,21 @@ INLINE_RE = re.compile(
 CODE_RE = re.compile(r"\[(?P<code>NMAIex[^\]]*)\]", re.IGNORECASE)
 STANDARD_CODE_RE = re.compile(r"(?i)^NMAIex(?:[_-]?(\d+))?$")
 TH_CODE_RE = re.compile(r"(?i)^NMAIex[_-]?th(?:[_-]?(\d+))?$")
+
+
+def _normalize_file_code(file_code: str) -> str:
+    return file_code.strip().strip("[]").strip()
+
+
+def _extract_file_code(md_path: Path) -> str | None:
+    match = CODE_RE.search(md_path.name)
+    if not match:
+        return None
+    return _normalize_file_code(match.group("code"))
+
+
+def _file_code_matches(md_path: Path, file_code: str) -> bool:
+    return _extract_file_code(md_path) == _normalize_file_code(file_code)
 
 
 def _mime_to_ext(mime: str) -> str:
@@ -108,6 +127,21 @@ def _folder_from_code(
     raw = match.group("code")
 
     normalized_mode = code_mode.strip().lower()
+    if normalized_mode == "auto":
+        if m := TH_CODE_RE.match(raw):
+            number = m.group(1)
+            if number:
+                return f"NMAIex_th_{number}"
+            return f"NMAIex_th/{_safe_stem(md_path)}"
+
+        if m := STANDARD_CODE_RE.match(raw):
+            number = m.group(1)
+            if number:
+                return f"NMAIex_{number}"
+            return f"NMAIex/{_safe_stem(md_path)}"
+
+        return _safe_stem(md_path)
+
     if normalized_mode == "th":
         m = TH_CODE_RE.match(raw)
         if not m:
@@ -260,6 +294,10 @@ def parse_args() -> argparse.Namespace:
         help="Scan all .md files under --research-dir",
     )
     parser.add_argument(
+        "--file-code",
+        help="Process only the Markdown file whose bracket code matches this value",
+    )
+    parser.add_argument(
         "--research-dir",
         default=DEFAULT_RESEARCH_DIR,
         help="Root folder used when --scan-all is enabled",
@@ -271,7 +309,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--code-mode",
-        choices=["standard", "th"],
+        choices=["auto", "standard", "th"],
         default=CODE_FORMAT_MODE,
         help="Folder naming mode based on bracket code in filename",
     )
@@ -288,11 +326,30 @@ def main() -> int:
 
     if args.scan_all:
         files = sorted(Path(args.research_dir).rglob("*.md"))
-    else:
-        if not args.targets:
-            print("No targets provided. Use explicit targets or --scan-all.")
-            return 1
+    elif args.targets:
         files = collect_markdown_files(args.targets)
+    else:
+        files = sorted(Path(args.research_dir).rglob("*.md"))
+
+    if args.file_code:
+        matched_files = [
+            file_path
+            for file_path in files
+            if _file_code_matches(file_path, args.file_code)
+        ]
+        if not matched_files:
+            print(
+                f'No markdown file found with code "{_normalize_file_code(args.file_code)}".'
+            )
+            return 1
+        if len(matched_files) > 1:
+            print(
+                f'Multiple markdown files matched code "{_normalize_file_code(args.file_code)}".'
+            )
+            for file_path in matched_files:
+                print(f"  - {file_path.as_posix()}")
+            return 1
+        files = matched_files
 
     if not files:
         print("No markdown files found.")
@@ -305,6 +362,7 @@ def main() -> int:
 
     print("=== Config ===")
     print(f"code_mode={args.code_mode}")
+    print(f"file_code={_normalize_file_code(args.file_code) if args.file_code else ''}")
     print(f"scan_all={args.scan_all}")
     print(f"research_dir={args.research_dir}")
     print(f"output_root={output_root.as_posix()}")
