@@ -49,10 +49,10 @@ Dựa trên nguyên tắc mất cân bằng lớp 180:1 để tránh hiệu ứn
 
 Công thức dung hợp RRF kết hợp kết quả từ tìm kiếm từ khóa (Lexical BM25) và tìm kiếm ngữ nghĩa (Semantic HNSW) không hề tiêu tốn API ngoại vi, do mọi phép toán được thực thi cục bộ thông qua hàm ts\_rank\_cd và các toán tử của PostgreSQL 1:
 
-![][image1]  
-với ![][image2] là hằng số làm mượt tiêu chuẩn nhằm ngăn cản các tài liệu vô tình lọt vào vị trí số 1 thống trị toàn bộ điểm số.1 Sau đó, hệ thống áp dụng một hàm tuyến tính muộn:
+$$score(d) = \sum_{r \in R} \frac{1}{k + r(d)}$$  
+với k = 60 là hằng số làm mượt tiêu chuẩn nhằm ngăn cản các tài liệu vô tình lọt vào vị trí số 1 thống trị toàn bộ điểm số.1 Sau đó, hệ thống áp dụng một hàm tuyến tính muộn:
 
-![][image3]  
+$$TotalScore = w_{RRF} \cdot Score_{RRF} + \sum w_i \cdot Feature_i - Penalty(Constraints)$$
 Các tính toán phạt lương (nếu chênh lệch vượt 20%) và phạt lệch cấp bậc cũng diễn ra ở tầng backend 1, chi phí 0 USD.
 
 Tuy nhiên, Giai đoạn 2 (Reranking) đòi hỏi một mô hình Cross-Encoder để xử lý các đặc trưng chéo phức tạp.1

@@ -8,7 +8,7 @@ Sự dịch chuyển kiến trúc của hệ thống tuyển dụng từ mô hì
 
 Việc đánh giá bất kỳ đường cơ sở (baseline) nào cũng phải bắt đầu từ việc hiểu rõ giới hạn và năng lực của hạ tầng lưu trữ và truy xuất hiện có. Hệ thống FANG đang lưu trữ các biểu diễn vector trong bảng AIDOCUMENTCHUNK của cơ sở dữ liệu PostgreSQL thông qua tiện ích mở rộng pgvector.1
 
-Đặc tả kỹ thuật hiện tại cho thấy việc nhúng dữ liệu được thực hiện bởi mô hình text-embedding-3-small của OpenAI, tạo ra các vector có số chiều là 1024\.1 Một điểm đáng chú ý trong thiết kế là hệ thống đang sử dụng kiểu dữ liệu halfvec(1024) – tức là số thực dấu phẩy động bán độ chính xác (16-bit) – làm cấu hình mặc định cho các môi trường phát triển và kiểm thử nhằm tối ưu hóa dung lượng RAM và kích thước chỉ mục.1 Chỉ mục (index) được xây dựng dựa trên thuật toán HNSW (Hierarchical Navigable Small World) với các tham số siêu liên kết ![][image1] và ![][image2], sử dụng lớp toán tử halfvec\_cosine\_ops để thực thi phép đo khoảng cách độ tương đồng Cosine (Cosine Similarity).1
+Đặc tả kỹ thuật hiện tại cho thấy việc nhúng dữ liệu được thực hiện bởi mô hình text-embedding-3-small của OpenAI, tạo ra các vector có số chiều là 1024\.1 Một điểm đáng chú ý trong thiết kế là hệ thống đang sử dụng kiểu dữ liệu halfvec(1024) – tức là số thực dấu phẩy động bán độ chính xác (16-bit) – làm cấu hình mặc định cho các môi trường phát triển và kiểm thử nhằm tối ưu hóa dung lượng RAM và kích thước chỉ mục.1 Chỉ mục (index) được xây dựng dựa trên thuật toán HNSW (Hierarchical Navigable Small World) với các tham số siêu liên kết m = 16 và ef_construction = 64, sử dụng lớp toán tử halfvec\_cosine\_ops để thực thi phép đo khoảng cách độ tương đồng Cosine (Cosine Similarity).1
 
 Bên cạnh đó, dữ liệu nghiệp vụ lõi (Web Core) cư trú tại micareer\_lite\_db chứa đựng mạng lưới dữ liệu quan hệ phong phú. Hồ sơ ứng viên (Candidate Profile) được cấu trúc hóa qua các bảng user, CANDIDATE, và CANDIDATESKILL, lưu trữ các thông tin từ văn bản tự do (bio) đến dữ liệu định lượng (expyears, dob) và dữ liệu phân loại (prov, stat).1 Tương tự, tin tuyển dụng (Job Posting) được phân giải qua các bảng JOBPOSTING, JOBREQUIREMENT, và COMPANY, mang theo các siêu dữ liệu then chốt như khoảng lương (minSalary, maxSalary), địa điểm làm việc (workLoc), và hình thức làm việc (workMode).1 Sự tồn tại song song của dữ liệu phi cấu trúc (được vector hóa) và dữ liệu có cấu trúc (truy vấn bằng SQL) định hình trực tiếp con đường xây dựng hệ thống đối khớp (matching) hiệu quả.
 
@@ -22,7 +22,7 @@ Lĩnh vực tuyển dụng trực tuyến hoạt động dưới một sự mấ
 
 ### **2.1. Tính Bất đối xứng: Candidate-to-Job và Job-to-Candidate**
 
-Hệ thống bắt buộc phải tách biệt baseline cho luồng ứng viên tìm việc (Candidate ![][image3] Job) và luồng công việc tìm ứng viên (Job ![][image3] Candidate), bởi vì bản chất của quá trình ra quyết định, bộ lọc và loại hình suy luận (reasoning types) ở hai phía là hoàn toàn khác nhau.3
+Hệ thống bắt buộc phải tách biệt baseline cho luồng ứng viên tìm việc (Candidate -> Job) và luồng công việc tìm ứng viên (Job -> Candidate), bởi vì bản chất của quá trình ra quyết định, bộ lọc và loại hình suy luận (reasoning types) ở hai phía là hoàn toàn khác nhau.3
 
 | Đặc điểm | Job → Candidate (Nhà tuyển dụng tìm Ứng viên) | Candidate → Job (Ứng viên tìm Công việc) |
 | :---- | :---- | :---- |
@@ -64,8 +64,8 @@ Dưới đây là các phương án kiến trúc Baseline được phân tích, 
 
 Khi hợp nhất hai tập kết quả từ Vector Search và Metadata Search, ngành công nghiệp thường tranh luận giữa Reciprocal Rank Fusion (RRF) và Linear Combination.17
 
-* **Reciprocal Rank Fusion (RRF):** Phương pháp này loại bỏ điểm số thô và chỉ dựa vào thứ hạng (rank). Công thức ![][image4] tạo ra sự ổn định khi kết hợp các hệ thống có thang điểm khác nhau.19 RRF rất dễ triển khai "out-of-the-box".  
-* **Linear Combination (Kết hợp Tuyến tính):** Yêu cầu chuẩn hóa điểm số (ví dụ: Min-Max scaling) trước khi nhân với trọng số ![][image5] và ![][image6]. ![][image7]. Phương pháp này tôn trọng độ lớn của điểm số (magnitude of scores).
+* **Reciprocal Rank Fusion (RRF):** Phương pháp này loại bỏ điểm số thô và chỉ dựa vào thứ hạng (rank). Công thức $$RRF(d) = \sum \frac{1}{k + rank(d)}$$ tạo ra sự ổn định khi kết hợp các hệ thống có thang điểm khác nhau.19 RRF rất dễ triển khai "out-of-the-box".  
+* **Linear Combination (Kết hợp Tuyến tính):** Yêu cầu chuẩn hóa điểm số (ví dụ: Min-Max scaling) trước khi nhân với trọng số ![][image5] (alpha) và ![][image6] (beta). $$Score = \alpha \cdot Norm(V_{cosine}) + \beta \cdot Norm(S_{heuristic})$$. Phương pháp này tôn trọng độ lớn của điểm số (magnitude of scores).
 
 **Quyết định Kỹ thuật:** Đối với bài toán tuyển dụng, **Linear Combination là phương án vượt trội hơn**.16 RRF có một điểm yếu chí mạng trong tuyển dụng: nó làm mất đi sự trừng phạt về mặt điểm số đối với các hồ sơ thiếu hụt kỹ năng trầm trọng. Nếu một JD yêu cầu 5 kỹ năng, và ứng viên chỉ có 1 kỹ năng, điểm số heuristic sẽ rất thấp, nhưng RRF có thể vẫn đẩy ứng viên này lên cao nếu vector search vô tình xếp hạng cao do văn phong tương đồng. Linear Scoring cho phép gán một trọng số phủ quyết lớn vào bộ lọc kỹ năng cứng.
 
@@ -78,7 +78,7 @@ Baseline cần xử lý các trường dữ liệu theo quy trình sau:
 1. **Làm sạch Tiêu chuẩn:** Loại bỏ các thẻ HTML, ký tự phi ASCII, stopwords không mang ý nghĩa, và chuyển đổi chữ thường (lowercase) toàn bộ hệ thống để đảm bảo tính nhất quán.23  
 2. **Chuẩn hóa Chức danh (Job Title) và Lĩnh vực (Domain):** Chức danh công việc tại Việt Nam rất đa dạng và có sự pha trộn giữa tiếng Anh và tiếng Việt (VD: "Lập trình viên Frontend", "Frontend Developer", "Nhân viên phát triển giao diện Web"). Cần xây dựng một từ điển đồng nghĩa (Taxonomy/Ontology) để ánh xạ các chức danh này về một ID chung hoặc chuỗi chuẩn trước khi đưa vào embedding.26  
 3. **Xử lý Kỹ năng (Skill):** Trích xuất kỹ năng thành một danh sách độc lập và tính toán độ tương đồng Jaccard (Jaccard Similarity) song song với việc lưu trữ nội dung mô tả kỹ năng trong vector.31 Điều này tránh việc vector bị pha loãng bởi các từ khóa không trọng tâm.  
-4. **Xử lý Kinh nghiệm (Experience) và Thâm niên (Seniority):** Thông tin định lượng như số năm kinh nghiệm (expyears) 1 không nên đưa vào khối văn bản nhúng. Khả năng hiểu các con số của các mô hình embedding rất kém. Số năm kinh nghiệm cần được chuyển thành một đặc trưng tính toán chênh lệch (Delta Feature): ![][image8].  
+4. **Xử lý Kinh nghiệm (Experience) và Thâm niên (Seniority):** Thông tin định lượng như số năm kinh nghiệm (expyears) 1 không nên đưa vào khối văn bản nhúng. Khả năng hiểu các con số của các mô hình embedding rất kém. Số năm kinh nghiệm cần được chuyển thành một đặc trưng tính toán chênh lệch (Delta Feature): $$\Delta_{exp} = Candidate_{exp} - Job_{min\_exp}$$.  
 5. **Xử lý Địa lý (Location):** Tương tự như kỹ năng, địa điểm (prov, ward) cần được chuẩn hóa qua danh mục hành chính 1 để làm bộ lọc hoặc sử dụng hàm suy hao khoảng cách (distance decay) thay vì phân tích ngữ nghĩa.  
 6. **Chiến lược Phân đoạn (Chunking):** Việc bảo toàn ngữ cảnh phân đoạn (Section-Pinning) đang có sẵn trong FANG là một phương pháp cực kỳ hiệu quả.1 Cần đảm bảo rằng các đoạn văn mô tả kinh nghiệm (Experience) không bị trộn lẫn với mục tiêu nghề nghiệp (Objective) trong quá trình tính toán khoảng cách vector.
 
@@ -147,7 +147,7 @@ Dưới đây là ma trận Ablation Study được đề xuất vận hành tro
 | **Run 2 (Hybrid Basic)** | Trọng số \= 0.5 | Không áp dụng | Trọng số \= 0.5 | Kiểm tra xem sự kết hợp ngữ nghĩa và từ khóa có cải thiện NDCG không khi bỏ qua ràng buộc cứng. |
 | **Run 3 (Hybrid Full \- Đề xuất)** | Trọng số \= ![][image5] | Có áp dụng | Trọng số \= ![][image6] | Tìm ra hệ số calibration tốt nhất. Xác nhận Uplift của toàn bộ hệ thống. |
 
-**Tiêu chí quyết định:** Nếu chênh lệch ![][image9] giữa **Run 3** và **Run 1** cực kỳ thấp (ví dụ \< 2-3%), điều đó có nghĩa mô hình embedding hiện tại thực sự là Bottleneck và không mang lại khả năng nắm bắt bối cảnh nào hơn việc đếm từ khóa thông thường. Trong trường hợp này, đề xuất nâng cấp mô hình embedding hoặc huấn luyện tinh chỉnh (Fine-tuning) bằng phương pháp Contrastive Learning sẽ được kích hoạt.5
+**Tiêu chí quyết định:** Nếu chênh lệch $\Delta NDCG@10$ giữa **Run 3** và **Run 1** cực kỳ thấp (ví dụ \< 2-3%), điều đó có nghĩa mô hình embedding hiện tại thực sự là Bottleneck và không mang lại khả năng nắm bắt bối cảnh nào hơn việc đếm từ khóa thông thường. Trong trường hợp này, đề xuất nâng cấp mô hình embedding hoặc huấn luyện tinh chỉnh (Fine-tuning) bằng phương pháp Contrastive Learning sẽ được kích hoạt.5
 
 ## **6\. Chiến lược Mở rộng Dữ liệu Tổng hợp (Synthetic ATS Data) và Quality Gates**
 
@@ -177,12 +177,12 @@ Nghiên cứu kết luận rằng cấu trúc lưu trữ và nhúng vector hiệ
 
 Dưới đây là bảng xếp hạng ưu tiên các quyết định kỹ thuật cần thực thi ngay, thỏa mãn điều kiện triển khai nhanh và kiểm chứng ngoại tuyến (Offline Evaluation) 5:
 
-1. **Thiết lập Baseline Hệ thống (Ưu tiên Cao nhất):** Triển khai ngay lập tức phương pháp **Hybrid Search kết hợp Linear Scoring**. Điểm số cuối cùng sẽ là sự kết hợp có trọng số giữa ![][image10] của halfvec(1024) 1 từ PostgreSQL và điểm Jaccard của CANDIDATESKILL / JOBREQUIREMENT 1, được lọc trước (Hard Filter) bằng SQL thông qua số năm kinh nghiệm và địa lý. Không sử dụng Reciprocal Rank Fusion (RRF) do bản chất dễ che lấp các lỗi sai kỹ năng nghiêm trọng.  
+1. **Thiết lập Baseline Hệ thống (Ưu tiên Cao nhất):** Triển khai ngay lập tức phương pháp **Hybrid Search kết hợp Linear Scoring**. Điểm số cuối cùng sẽ là sự kết hợp có trọng số giữa  $V_{cosine}$ của halfvec(1024) 1 từ PostgreSQL và điểm Jaccard của CANDIDATESKILL / JOBREQUIREMENT 1, được lọc trước (Hard Filter) bằng SQL thông qua số năm kinh nghiệm và địa lý. Không sử dụng Reciprocal Rank Fusion (RRF) do bản chất dễ che lấp các lỗi sai kỹ năng nghiêm trọng.  
 2. **Tách biệt Luồng Đối khớp (Ưu tiên Cao):** Xây dựng hai hàm Linear Scoring riêng biệt:  
    * *Candidate ![][image3] Job:* Nới lỏng các bộ lọc SQL thành điểm trừ (soft penalty) để tăng Recall và tính đa dạng.  
    * *Job ![][image3] Candidate:* Sử dụng các bộ lọc cứng khắt khe bằng SQL trước khi thực hiện Vector Search để tối đa hóa Precision.  
 3. **Khởi động Giao thức PJB (Person-Job Benchmark) Nội bộ (Ưu tiên Trung bình):** Thiết lập kịch bản Ablation Study trên một tập dữ liệu 10,000 cặp CV-JD (được trộn giữa dữ liệu thật và dữ liệu tổng hợp có kiểm soát bằng Quality Gate). Sử dụng NDCG@10 và Recall@50 làm bộ đôi chỉ số định hướng.  
-4. **Bảo toàn Hạ tầng text-embedding-3-small:** Giữ nguyên quy trình cấu trúc Parser 5 tầng, mô hình nhúng và bảng lưu trữ halfvec(1024). Việc chuyển đổi sang mô hình tinh chỉnh miền đặc thù (Domain-adapted LLMs) hay Cross-Encoders phức tạp chỉ được khởi động nếu và chỉ nếu bài kiểm tra Ablation cho thấy mô hình nhúng hiện tại không mang lại mức tăng trưởng ![][image11] so với việc chỉ dùng Metadata SQL.
+4. **Bảo toàn Hạ tầng text-embedding-3-small:** Giữ nguyên quy trình cấu trúc Parser 5 tầng, mô hình nhúng và bảng lưu trữ halfvec(1024). Việc chuyển đổi sang mô hình tinh chỉnh miền đặc thù (Domain-adapted LLMs) hay Cross-Encoders phức tạp chỉ được khởi động nếu và chỉ nếu bài kiểm tra Ablation cho thấy mô hình nhúng hiện tại không mang lại mức tăng trưởng $\Delta NDCG@10 > 2\%$ so với việc chỉ dùng Metadata SQL.
 
 Hướng đi này tối đa hóa các thành phần đã có sẵn tại AI Core FANG, đảm bảo tiết kiệm chi phí tính toán API ($0.02/1M token 34), đồng thời áp đặt một khung quản trị chất lượng cực kỳ nghiêm ngặt đối với hệ thống xếp hạng tuyển dụng. Các khuyến nghị trong báo cáo này hoàn toàn khả thi để thực hiện ngay lập tức, đóng vai trò như một cột mốc cơ sở (gold standard baseline) vững chắc, làm bệ phóng cho các cụm nghiên cứu và tinh chỉnh (tuning) tiếp theo.
 

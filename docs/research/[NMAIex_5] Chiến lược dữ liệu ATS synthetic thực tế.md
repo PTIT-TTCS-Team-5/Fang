@@ -118,7 +118,7 @@ Dựa trên các bằng chứng kỹ thuật, quyết định đề xuất là *
 
 Hàm tính điểm tổng hợp có dạng toán học:
 
-![][image2]  
+$$Score = \alpha \cdot \text{Cosine}(\vec{q}, \vec{d}) + \beta \cdot \text{Normalized}(Exp) + \gamma \cdot \text{LocationMatch} + \delta \cdot \text{SalaryFit}$$ 
 Sự thay đổi kiến trúc này mang lại lợi ích khổng lồ với rủi ro cực thấp. Vì hệ thống RAG 12 bước hiện tại trong rag\_query.py đã thực hiện quá trình Vector Search ở Bước 4 1, đội ngũ phát triển chỉ cần nâng cấp bước này thành một truy vấn Hybrid Search. Mô hình học máy hạng nhẹ (như Logistic Regression hoặc XGBoost) có thể được đặt chồng lên PostgreSQL để tính toán điểm số tổng hợp trước khi trả về tập kết quả Top K cho bộ xử lý ngữ cảnh (Context Assembly).
 
 ### **Hệ Thống Rào Chắn Chất Lượng (Data Quality Gates) Cho Dữ Liệu Tổng Hợp**

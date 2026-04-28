@@ -22,15 +22,22 @@ Bảng dưới đây quy định chi tiết công thức và cơ chế vận hà
 
 | Thuộc tính Kiến trúc | Chiều 1: Danh sách Ứng viên (Candidate) xếp theo Công việc (Job) | Chiều 2: Danh sách Công việc (Job) xếp theo Ứng viên (Candidate) | Đánh giá Đánh đổi (Trade-offs: Accuracy, Latency, Complexity) |
 | :---- | :---- | :---- | :---- |
-| **Công thức Toán học Cốt lõi** | **![][image1]** | **![][image2]** | **Trễ:** Phép tính phân tán in-memory trên mảng có độ trễ ![][image3]. **Chính xác:** RRF bảo toàn thứ hạng xuất sắc. **Phức tạp:** Yêu cầu chạy 2 retriever song song. |
-| **Cơ chế Tính toán RRF** | **![][image4]** | **![][image4]** | Sử dụng hằng số ![][image5] theo tiêu chuẩn công nghiệp nhằm cân bằng trọng số giữa các tài liệu top đầu và phần đuôi (long-tail).11 |
+| **Công thức Toán học Cốt lõi** | CT_1 | CT_2 | **Trễ:** Phép tính phân tán in-memory trên mảng có độ trễ <10ms. **Chính xác:** RRF bảo toàn thứ hạng xuất sắc. **Phức tạp:** Yêu cầu chạy 2 retriever song song. |
+| **Cơ chế Tính toán RRF** | CT_3 | CT_3 | Sử dụng hằng số k = 60 theo tiêu chuẩn công nghiệp nhằm cân bằng trọng số giữa các tài liệu top đầu và phần đuôi (long-tail).11 |
 | **Thành phần Vector (V)** | Khoảng cách Cosine giữa Vector mô tả Công việc và Vector hồ sơ Ứng viên. | Khoảng cách Cosine giữa Vector hồ sơ Ứng viên và Vector mô tả Công việc. | Giải quyết vấn đề từ đồng nghĩa và kỹ năng chuyển đổi (transferable skills). Đánh đổi: Tiêu tốn băng thông bộ nhớ của FANG Core.12 |
 | **Thành phần Từ khóa (K)** | Tính điểm BM25 dựa trên các từ khóa kỹ năng cứng, chứng chỉ bắt buộc từ JD. | Tính điểm BM25 dựa trên chức danh và mô tả kinh nghiệm làm việc trong CV. | Đảm bảo tính chính xác tuyệt đối (Precision) cho các tiêu chí không thể thương lượng. Đánh đổi: Yêu cầu Parser 5-tier phải hoạt động hoàn hảo.13 |
 | **Thành phần Siêu dữ liệu (M)** | Hàm $M\_{score} \\in $ đánh giá độ mới của CV, mức độ hoạt động và sự ổn định. | Hàm $M\_{score} \\in $ đánh giá khoảng cách địa lý, chênh lệch mức lương, độ uy tín của công ty. | Yếu tố phá vỡ thế hòa (Tie-breaker). Hoạt động độc lập với RRF, được cộng vào giai đoạn cuối để định hình lại bảng xếp hạng dựa trên logic nghiệp vụ.14 |
 
+CT_1 = $$S_{C|J} = w_v \cdot RRF(V) + w_k \cdot RRF(K) + w_m \cdot M_{score}$$
+
+CT_2 = $$S_{J|C} = w_v \cdot RRF(V) + w_k \cdot RRF(K) + w_m \cdot M_{score}$$
+
+CT_3 = $$RRF(X) = \sum \frac{1}{60 + rank_{X}(d)}$$
+
 ## **Chiến lược Khởi tạo Bộ Trọng số cho Phase 1**
 
-Triển khai một công thức điểm lai (hybrid scoring) đòi hỏi sự tinh chỉnh cẩn thận về trọng số (![][image6]) để phản ánh đúng động lực tâm lý của người dùng. Việc gán trọng số đồng đều cho tất cả các thành phần sẽ dẫn đến một trải nghiệm trung bình, không phục vụ tốt cho bất kỳ ai. Dựa trên phân tích hành vi tuyển dụng, bộ trọng số được đề xuất theo nguyên tắc bất đối xứng, điều khiển thông qua cấu hình môi trường của NMAI extension nhằm duy trì tính linh hoạt.
+
+Triển khai một công thức điểm lai (hybrid scoring) đòi hỏi sự tinh chỉnh cẩn thận về trọng số (**$w_v, w_k, w_m$**) để phản ánh đúng động lực tâm lý của người dùng. Việc gán trọng số đồng đều cho tất cả các thành phần sẽ dẫn đến một trải nghiệm trung bình, không phục vụ tốt cho bất kỳ ai. Dựa trên phân tích hành vi tuyển dụng, bộ trọng số được đề xuất theo nguyên tắc bất đối xứng, điều khiển thông qua cấu hình môi trường của NMAI extension nhằm duy trì tính linh hoạt.
 
 Đối với chiều sắp xếp danh sách Ứng viên theo Công việc (phục vụ Nhà tuyển dụng), mức độ dung sai đối với các kỹ năng không phù hợp là cực kỳ thấp. Các chuyên gia nhân sự và hệ thống quản lý ứng viên thường loại bỏ hồ sơ ngay lập tức nếu thiếu vắng các từ khóa cốt lõi (như ngôn ngữ lập trình cụ thể, hoặc chứng chỉ hành nghề).15 Do đó, tín hiệu từ khóa (Keyword/BM25) phải đóng vai trò chi phối. Đề xuất khởi tạo trọng số ![][image7] để đảm bảo các ứng viên khớp từ khóa cứng được đẩy lên top đầu. Tín hiệu ngữ nghĩa vector được gán ![][image8] nhằm đóng vai trò mở rộng tập tìm kiếm (Recall expansion), giúp nhà tuyển dụng phát hiện các ứng viên sử dụng từ ngữ thay thế nhưng có nền tảng tư duy tương đương.2 Cuối cùng, siêu dữ liệu được gán ![][image9] để ưu tiên những CV được cập nhật gần đây, giảm thiểu rủi ro nhà tuyển dụng liên hệ với các ứng viên đã ngừng tìm việc.
 
