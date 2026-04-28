@@ -11,6 +11,7 @@ Mỗi khi tôi yêu cầu khởi tạo ngữ cảnh dự án với tài liệu n
 
 ### Bước 1: Nạp Ngữ Cảnh (Context Loading)
 - Hãy đọc file `Fang/README.md` và `miCareer-mini/README.md`.
+- Đọc file `Fang/agent_workflow_doc/GIT_WORKFLOW_GUIDE.md` để nắm vững quy tắc làm việc với Git.
 - Dựa vào README, hãy tỏa ra đọc lướt các tài liệu tham chiếu (đặc biệt trong `Fang/docs/strategy` và `Fang/docs/guide`) để nắm vững kiến trúc tổng thể, quy tắc fallback, và thiết kế hệ thống.
 
 ### Bước 2: Khảo sát và Tương tác với User
