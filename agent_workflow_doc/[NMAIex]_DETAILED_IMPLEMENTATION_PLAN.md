@@ -34,9 +34,10 @@ CREATE TABLE REGION (
 );
 
 CREATE TABLE PROVINCE (
-  provId   VARCHAR(20)  PRIMARY KEY,   -- VD: HANOI, HCM, DANANG
-  provName VARCHAR(100) NOT NULL UNIQUE,
-  regId    VARCHAR(20)  NOT NULL,
+  provId      VARCHAR(20)  PRIMARY KEY,   -- Mã viết tắt: HANOI, TPHCM, DANANG, HAIPHONG...
+  provName    VARCHAR(100) NOT NULL UNIQUE,
+  regId       VARCHAR(20)  NOT NULL,
+  mergedFrom  TEXT,                        -- Ghi chú sáp nhập (VD: 'Hải Phòng + Hải Dương')
   FOREIGN KEY (regId) REFERENCES REGION(regId)
 );
 
@@ -56,7 +57,7 @@ CREATE TABLE JOBCATEGORY (
 );
 ```
 
-> **Lưu ý mã tỉnh:** Dùng tên đầy đủ viết liền không dấu: `HANOI`, `HCM`, `DANANG`, `HAIPHONG`, `BACNINH`... Đồng bộ với 34 tỉnh trong `miCareer/database/root_data.sql`.
+> **Sáp nhập tỉnh thành Việt Nam 2025:** Schema dùng **34 tỉnh/thành sau sáp nhập** theo file `[NMAIex]_PROVINCE_MERGER_GUIDE.md`. Cột `mergedFrom` lưu ghi chú sáp nhập để truy vết. Seed data tham chiếu đúng INSERT trong PROVINCE_MERGER_GUIDE.
 
 ### 1.3. Quyết Định N-N: JobLevel và JobCategory
 
@@ -102,10 +103,9 @@ ALTER TABLE JOBPOSTING ADD COLUMN provId VARCHAR(20) REFERENCES PROVINCE(provId)
 
 Tác vụ Mapping (chuyển String → ID) bản chất là một bước thuộc Parser (Ingestion Pipeline). Việc chuẩn hóa dữ liệu này giúp cho toàn bộ hệ thống TTCS (tìm kiếm, chatbot RAG) hoạt động chính xác hơn, chứ không chỉ phục vụ riêng NMAIex.
 
-**👉 Tư vấn & Quyết định (Phương án B - Linh Hoạt qua `.env` Gốc):**
-- **Đây là một ý tưởng cực kỳ thực tế và thông minh** dành cho Tech Lead/Chủ dự án.
+
 - Thay vì tách key trong code làm gãy kiến trúc, chúng ta sẽ để **2 bộ API Keys** (của TTCS và của NMAIex) ngay trong file `.env` gốc của dự án.
-- Khi làm việc ở context của NMAIex, bạn chỉ cần comment bộ key của TTCS và uncomment bộ key của NMAIex. TTCS/FANG sẽ tự động dùng key NMAIex mà không hề nhận ra sự khác biệt.
+- Khi làm việc ở context của NMAIex, chỉ cần comment bộ key của TTCS và uncomment bộ key của NMAIex. TTCS/FANG sẽ tự động dùng key NMAIex mà không hề nhận ra sự khác biệt.
 - **Mapper (Parser):** Hoàn toàn tái sử dụng `invoke_generation("auto-lite")` cực kỳ robust. Không cần code thêm một dòng LLM wrapper nào.
 - File `.env.nmaiex` giờ đây sẽ cực kỳ sạch sẽ: **chỉ chứa các tham số công thức thuật toán** (Weights, Limit, K, Storage). Không chứa LLM Keys. Mọi thứ liên quan đến LLM Keys quy về một mối là `.env`.
 
@@ -121,15 +121,34 @@ Tác vụ Mapping (chuyển String → ID) bản chất là một bước thuộ
 # LƯU Ý: KHÔNG đặt API Keys ở đây. LLM Keys được quản lý linh hoạt tại `.env` gốc
 # bằng cách comment/uncomment 2 bộ keys (TTCS vs NMAIex) khi cần test/bill riêng.
 
-# --- Cloud Storage cho CV Snapshot (cố định Cloudinary) ---
-NMAIEX_CLOUDINARY_CLOUD_NAME="..."
-NMAIEX_CLOUDINARY_API_KEY="..."
-NMAIEX_CLOUDINARY_API_SECRET="..."
+# --- Cloud Storage (Cloudinary dùng CHUNG cho TTCS và NMAIex) ---
+# Account Cloudinary là tài khoản chung. Mỗi project upload vào folder riêng.
+# Thư mục đã tạo sẵn trên Cloudinary Home: Home/ttcs và Home/nmaiex
+# CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET → đặt tại .env gốc
+# Biến dưới đây chỉ định folder đích khi upload từ NMAIex:
+NMAIEX_CLOUDINARY_UPLOAD_FOLDER="nmaiex"
+# Tương ứng, TTCS dùng folder: ttcs (đặt biến TTCS_CLOUDINARY_UPLOAD_FOLDER="ttcs" tại .env gốc)
 
 # --- Static Weights Giai Đoạn 1 (không Calibration) ---
 # LƯU Ý: Tổng w_rrf + w_skill < 1 là CÓ CHỦ Ý.
-# Khoảng trống còn lại (buffer) để hấp thụ penalty mà không đẩy final_score
-# xuống âm. final_score được clip vào [0, 1] ở cuối pipeline.
+#
+# TẠI SAO CẦN CLIP final_score VỀ [0, 1]?
+# ─────────────────────────────────────────────────────────────────────
+# Công thức: final_score = w_rrf * rrf_score + w_skill * skill_overlap - penalty
+#
+# Vấn đề phía dưới (âm): penalty = penalty_coef * gap có thể rất lớn khi ứng
+# viên lệch nhiều cấp bậc so với yêu cầu. Kết quả có thể < 0, vô nghĩa về
+# mặt điểm xếp hạng (không thể hiển thị % âm cho HR).
+#
+# Vấn đề phía trên (> 1): Dù tổng weights < 1 nhưng rrf_score và skill_overlap
+# đều ∈ [0,1] nên tổng có thể chạm 1.0. Tuy nhiên nếu về sau thêm bonus
+# (ví dụ bonus location match, bonus ATS feedback tốt) thì có thể vượt 1.
+# Clip phòng vệ tương lai mà không cần sửa code.
+#
+# Clip [0, 1] = chuẩn hóa điểm về khoảng trực quan, nhất quán với
+# cách hiển thị % trên UI (match_score: 0.87 → "87%"), đồng thời
+# giữ ngữ nghĩa: 0 = không phù hợp, 1 = khớp hoàn toàn.
+# ─────────────────────────────────────────────────────────────────────
 #
 # Luồng J->C: Nhà tuyển dụng tìm ứng viên (ưu tiên Precision/MRR)
 NMAIEX_JC_WEIGHT_RRF=0.30
@@ -157,14 +176,9 @@ NMAIEX_RANKING_MAX_LIMIT=100     # Giới hạn tối đa
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class NMAIexSettings(BaseSettings):
-    # API Keys riêng (billing tách TTCS)
-    nmaiex_openai_api_key: str | None = None
-    nmaiex_gemini_api_key: str | None = None
-    nmaiex_claude_api_key: str | None = None
-    # Cloud Storage (Cloudinary)
-    nmaiex_cloudinary_cloud_name: str | None = None
-    nmaiex_cloudinary_api_key: str | None = None
-    nmaiex_cloudinary_api_secret: str | None = None
+    # Cloud Storage — Cloudinary dùng chung, chỉ tách folder
+    # CLOUDINARY_CLOUD_NAME / API_KEY / API_SECRET đọc từ .env gốc qua FangSettings
+    nmaiex_cloudinary_upload_folder: str = "nmaiex"  # Home/nmaiex trên Cloudinary
     # Weights J->C
     nmaiex_jc_weight_rrf: float = 0.30
     nmaiex_jc_weight_skill: float = 0.40
@@ -226,13 +240,29 @@ async def map_string_to_province_id(text: str) -> str | None:
         rows = await conn.fetch("SELECT provId, provName FROM PROVINCE ORDER BY provId")
     province_list = "\n".join(f"- {r['provid']}: {r['provname']}" for r in rows)
     
+    # [NMAIex] System prompt cho Province Mapper — PHẢI chặt chẽ để tránh hallucination
+    # Nguyên tắc: (1) Chỉ được chọn trong danh sách cung cấp, (2) Trả về ĐÚNG provId,
+    # (3) Không được suy diễn hay tự ý tạo mã mới, (4) Nếu không khớp → UNKNOWN.
+    # Lưu ý: province_list phản ánh 34 tỉnh SAU SÁP NHẬP — LLM cần map cả tên cũ
+    # (ví dụ: 'Hải Dương' → HAIPHONG vì đã sáp nhập vào 'Thành phố Hải Phòng').
     messages = [
-        {"role": "system", "content": f"Bạn là AI mapping địa chỉ Việt Nam. Danh sách tỉnh hợp lệ:\n{province_list}\nChỉ trả về mã provId (VD: HANOI, TPHCM, DANANG). Nếu không xác định được, trả về: UNKNOWN"},
+        {"role": "system", "content": (
+            "Bạn là công cụ mapping địa chỉ Việt Nam. Nhiệm vụ DUY NHẤT của bạn là "
+            "xác định mã provId phù hợp nhất từ DANH SÁCH SAU ĐÂY và chỉ trả về MÃ ĐÓ.\n"
+            "DANH SÁCH TỈNH HỢP LỆ (sau sáp nhập 2025):\n"
+            f"{province_list}\n\n"
+            "QUY TẮC BẮT BUỘC:\n"
+            "1. CHỈ trả về một mã provId duy nhất từ danh sách trên. Không được thêm text khác.\n"
+            "2. Nếu địa chỉ thuộc tỉnh cũ đã sáp nhập, map sang tỉnh mới tương ứng "
+            "(VD: 'Hải Dương' → HAIPHONG; 'Bình Dương' → TPHCM).\n"
+            "3. Nếu không xác định được hoặc không khớp bất kỳ tỉnh nào → trả về: UNKNOWN\n"
+            "4. TUYỆT ĐỐI KHÔNG tự tạo mã mới, KHÔNG giải thích, KHÔNG thêm dấu câu."
+        )},
         {"role": "user", "content": f"Địa chỉ cần map: {text}"}
     ]
     
     trace = await invoke_generation(messages, "auto-lite")
-    result = trace.response.strip()
+    result = trace.response.strip().upper()
     return result if result != "UNKNOWN" else None
 
 async def map_strings_to_skill_ids(skills: list[str]) -> list[int]:
@@ -241,9 +271,21 @@ async def map_strings_to_skill_ids(skills: list[str]) -> list[int]:
         rows = await conn.fetch("SELECT skillId, skillName FROM SKILL ORDER BY skillName")
     skill_list = "\n".join(f"- {r['skillid']}: {r['skillname']}" for r in rows)
     
+    # [NMAIex] System prompt cho Skill Mapper — chặt chẽ, chỉ trả về JSON hợp lệ
     messages = [
-        {"role": "system", "content": f"Danh sách kỹ năng hệ thống:\n{skill_list}\nMap các kỹ năng người dùng cung cấp sang danh sách skillId (int). Trả về JSON array. VD: [1, 5, 12]"},
-        {"role": "user", "content": f"Kỹ năng: {', '.join(skills)}"}
+        {"role": "system", "content": (
+            "Bạn là công cụ mapping kỹ năng. Nhiệm vụ DUY NHẤT của bạn là map các kỹ năng "
+            "người dùng cung cấp sang các skillId từ DANH SÁCH SAU ĐÂY.\n"
+            "DANH SÁCH KỸ NĂNG HỆ THỐNG:\n"
+            f"{skill_list}\n\n"
+            "QUY TẮC BẮT BUỘC:\n"
+            "1. Trả về MỘT JSON array duy nhất, chứa các skillId (số nguyên). VD: [1, 5, 12]\n"
+            "2. CHỈ dùng skillId từ danh sách trên. KHÔNG được tự tạo ID mới.\n"
+            "3. Nếu một kỹ năng không khớp bất kỳ mục nào → bỏ qua (không thêm vào array).\n"
+            "4. Nếu không có kỹ năng nào khớp → trả về: []\n"
+            "5. TUYỆT ĐỐI KHÔNG giải thích, KHÔNG thêm text ngoài JSON array."
+        )},
+        {"role": "user", "content": f"Kỹ năng cần map: {', '.join(skills)}"}
     ]
     trace = await invoke_generation(messages, "auto-lite")
     # Parse JSON từ trace.response ...
@@ -363,8 +405,19 @@ Luồng CV đã thiết kế sẵn trong FANG (`cvUrl`, `cvSnapUrl` đều đã 
 
 | Phase | Mục tiêu | Chặn bởi |
 |---|---|---|
-| **Phase 1: DB & Config** | Cập nhật schema, seed data (tham khảo miCareer MySQL), tạo `.env.nmaiex`, fix TTCS break points | Không |
-| **Phase 2: Ranking Core** | Viết `nmaiex_ranking_service.py`, `nmaiex_mapper_service.py` (tái dùng auto-lite của TTCS) | Phase 1 |
+| **Phase 1: DB & Config** | Cập nhật schema (34 tỉnh sau sáp nhập), seed data, tạo `.env.nmaiex` (Cloudinary shared + folder nmaiex), fix TTCS break points | Không |
+| **Phase 2: Ranking Core** | Viết `nmaiex_ranking_service.py`, `nmaiex_mapper_service.py` (system prompt chặt, tái dùng auto-lite) | Phase 1 |
 | **Phase 3: API & Router** | Tạo endpoints, Pydantic models, include vào `main.py` | Phase 2 |
-| **Phase 4: Frontend** | Dropdown chuẩn, màn hình ranking, Dev Mode Score, quản lý CV Cloudinary | Phase 3 |
-| **Phase 5 (tương lai)** | Sinh dữ liệu Synthetic (180:1), Benchmark nDCG@10 vs MRR | Phase 4 |
+| **Phase 4: Frontend** | Dropdown chuẩn (34 tỉnh mới), màn hình ranking, Dev Mode Score, quản lý CV Cloudinary (folder nmaiex) | Phase 3 |
+| **Phase 5: Tài Liệu Hóa** | Claude viết `nmaiex_ranking_strategy.md` (docs/strategy). AI khác viết guide + cập nhật toàn bộ tài liệu hiện có theo file `[NMAIex]_DOC_UPDATE_INSTRUCTIONS.md` | Phase 3 |
+| **Phase 6 (tương lai)** | Sinh dữ liệu Synthetic (180:1), Benchmark nDCG@10 vs MRR | Phase 5 |
+
+### Phân công tài liệu hóa
+
+| Loại tài liệu | Ai làm | Thời điểm | File đích |
+|---|---|---|---|
+| Strategy NMAIex | Claude (AI dev) | Sau Phase 3 | `docs/strategy/nmaiex_ranking_strategy.md` |
+| Guide NMAIex | AI khác | Sau Phase 4 | `docs/guide/nmaiex_ranking_guide.md` |
+| Cập nhật README & tài liệu hiện có | AI khác | Sau Phase 4 | Theo `[NMAIex]_DOC_UPDATE_INSTRUCTIONS.md` |
+
+> **Quy trình:** Claude dev xong sẽ cập nhật liên tục file `agent_workflow_doc/[NMAIex]_DOC_UPDATE_INSTRUCTIONS.md` với các thay đổi cần tài liệu hóa. AI tài liệu sẽ đọc file đó và thực hiện toàn bộ sau khi dev xong.
