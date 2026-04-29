@@ -2,19 +2,54 @@
 -- DROP DATABASE IF EXISTS micareer_lite_db;
 -- CREATE DATABASE micareer_lite_db;
 
+-- ============================================================
+-- [NMAIex] MASTER DATA — Phải đặt TRƯỚC user và COMPANY (FK)
+-- ============================================================
+
+CREATE TABLE REGION (
+  regId   VARCHAR(20)  PRIMARY KEY,
+  regName VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE PROVINCE (
+  provId      VARCHAR(20)  PRIMARY KEY,   -- Mã đầy đủ: HANOI, TPHCM, DANANG...
+  provName    VARCHAR(100) NOT NULL UNIQUE,
+  regId       VARCHAR(20)  NOT NULL,
+  mergedFrom  TEXT,                        -- Ghi chú sáp nhập (VD: 'Hải Phòng + Hải Dương')
+  FOREIGN KEY (regId) REFERENCES REGION(regId)
+);
+
+CREATE TABLE JOBLEVEL (
+  levelId     SERIAL PRIMARY KEY,
+  levelName   VARCHAR(50) NOT NULL UNIQUE,  -- Intern/Fresher/Junior/Middle/Senior/Lead/Manager/Director
+  minYears    INT NOT NULL DEFAULT 0,        -- Số năm KN tối thiểu để tính Seniority Penalty
+  maxYears    INT,                           -- NULL = không giới hạn trên
+  description TEXT
+);
+
+CREATE TABLE JOBCATEGORY (
+  catId       SERIAL PRIMARY KEY,
+  catName     VARCHAR(100) NOT NULL UNIQUE,
+  description TEXT
+);
+
+-- ============================================================
+-- Core User & Account tables
+-- ============================================================
+
 CREATE TABLE "user" (
-  userId SERIAL PRIMARY KEY,
-  userName VARCHAR(255) NOT NULL UNIQUE,
-  pwd VARCHAR(255) NOT NULL,
-  fName VARCHAR(100) NOT NULL,
-  lName VARCHAR(100) NOT NULL,
-  email VARCHAR(255) NOT NULL UNIQUE,
-  phone VARCHAR(20) UNIQUE,
-  prov VARCHAR(100) NOT NULL,
-  ward VARCHAR(100) NOT NULL,
-  street VARCHAR(255) NOT NULL,
-  stat VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-  role VARCHAR(20) NOT NULL,
+  userId    SERIAL PRIMARY KEY,
+  userName  VARCHAR(255) NOT NULL UNIQUE,
+  pwd       VARCHAR(255) NOT NULL,
+  fName     VARCHAR(100) NOT NULL,
+  lName     VARCHAR(100) NOT NULL,
+  email     VARCHAR(255) NOT NULL UNIQUE,
+  phone     VARCHAR(20) UNIQUE,
+  provId    VARCHAR(20) REFERENCES PROVINCE(provId),  -- [NMAIex] FK thay thế prov string
+  ward      VARCHAR(100) NOT NULL,
+  street    VARCHAR(255) NOT NULL,
+  stat      VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+  role      VARCHAR(20) NOT NULL,
   createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
  
@@ -34,15 +69,15 @@ CREATE TABLE HRPOSITION (
 );
  
 CREATE TABLE COMPANY (
-  compId SERIAL PRIMARY KEY,
-  compName VARCHAR(255) NOT NULL,
-  taxCode VARCHAR(50) UNIQUE,
-  webUrl VARCHAR(255),
-  logoUrl VARCHAR(255),
-  contactEmail VARCHAR(255),           
-  prov VARCHAR(100) NOT NULL,
-  ward VARCHAR(100) NOT NULL,
-  street VARCHAR(255) NOT NULL
+  compId       SERIAL PRIMARY KEY,
+  compName     VARCHAR(255) NOT NULL,
+  taxCode      VARCHAR(50) UNIQUE,
+  webUrl       VARCHAR(255),
+  logoUrl      VARCHAR(255),
+  contactEmail VARCHAR(255),
+  provId       VARCHAR(20) REFERENCES PROVINCE(provId),  -- [NMAIex] FK thay thế prov string
+  ward         VARCHAR(100) NOT NULL,
+  street       VARCHAR(255) NOT NULL
 );
 CREATE TABLE HR (
   userId INT PRIMARY KEY,
@@ -86,17 +121,36 @@ CREATE TABLE HASPERM (
 --JOB & APPLICATION 
  
 CREATE TABLE JOBPOSTING (
-  jobPostId SERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
+  jobPostId   SERIAL PRIMARY KEY,
+  title       VARCHAR(255) NOT NULL,
   description TEXT NOT NULL,
-  minSalary INT,
-  maxSalary INT,
-  workLoc VARCHAR(255),
-  workMode VARCHAR(50),
-  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  expAt TIMESTAMP NOT NULL,
-  compId INT NOT NULL,
+  minSalary   INT,
+  maxSalary   INT,
+  workLoc     VARCHAR(255),              -- Giữ nguyên cho mục đích display text
+  workMode    VARCHAR(50),               -- ONSITE | HYBRID | REMOTE
+  provId      VARCHAR(20) REFERENCES PROVINCE(provId),  -- [NMAIex] FK địa lý cho hard filter
+  createdAt   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expAt       TIMESTAMP NOT NULL,
+  compId      INT NOT NULL,
   FOREIGN KEY (compId) REFERENCES COMPANY(compId)
+);
+
+-- [NMAIex] Bảng nối N-N: JobPosting ↔ JobLevel
+CREATE TABLE JOB_LEVEL_MAP (
+  jobPostId INT NOT NULL,
+  levelId   INT NOT NULL,
+  PRIMARY KEY (jobPostId, levelId),
+  FOREIGN KEY (jobPostId) REFERENCES JOBPOSTING(jobPostId) ON DELETE CASCADE,
+  FOREIGN KEY (levelId)   REFERENCES JOBLEVEL(levelId)
+);
+
+-- [NMAIex] Bảng nối N-N: JobPosting ↔ JobCategory
+CREATE TABLE JOB_CATEGORY_MAP (
+  jobPostId INT NOT NULL,
+  catId     INT NOT NULL,
+  PRIMARY KEY (jobPostId, catId),
+  FOREIGN KEY (jobPostId) REFERENCES JOBPOSTING(jobPostId) ON DELETE CASCADE,
+  FOREIGN KEY (catId)     REFERENCES JOBCATEGORY(catId)
 );
  
 CREATE TABLE SKILL (

@@ -2,7 +2,92 @@
 -- Thứ tự : schema-> root_data -> seed_data
 SET client_encoding TO 'UTF8';
 
+-- ============================================================
+-- 0. [NMAIex] REGION + PROVINCE (34 tỉnh sau sáp nhập 2025)
+-- ============================================================
+
+INSERT INTO REGION (regId, regName) VALUES
+('NORTH',   'Miền Bắc'),
+('CENTRAL', 'Miền Trung'),
+('SOUTH',   'Miền Nam');
+
+INSERT INTO PROVINCE (provId, provName, regId, mergedFrom) VALUES
+('HANOI',     'Thành phố Hà Nội',        'NORTH',   'Giữ nguyên'),
+('HUE',       'Thành phố Huế',           'CENTRAL', 'Thừa Thiên - Huế'),
+('LAICHAU',   'Tỉnh Lai Châu',           'NORTH',   'Giữ nguyên'),
+('DIENBIEN',  'Tỉnh Điện Biên',          'NORTH',   'Giữ nguyên'),
+('SONLA',     'Tỉnh Sơn La',             'NORTH',   'Giữ nguyên'),
+('LANGSON',   'Tỉnh Lạng Sơn',           'NORTH',   'Giữ nguyên'),
+('QUANGNINH', 'Tỉnh Quảng Ninh',         'NORTH',   'Giữ nguyên'),
+('THANHHOA',  'Tỉnh Thanh Hóa',          'CENTRAL', 'Giữ nguyên'),
+('NGHEAN',    'Tỉnh Nghệ An',            'CENTRAL', 'Giữ nguyên'),
+('HATINH',    'Tỉnh Hà Tĩnh',            'CENTRAL', 'Giữ nguyên'),
+('CAOBANG',   'Tỉnh Cao Bằng',           'NORTH',   'Giữ nguyên'),
+('TUYENQUANG','Tỉnh Tuyên Quang',        'NORTH',   'Tuyên Quang + Hà Giang'),
+('LAOCAI',    'Tỉnh Lào Cai',            'NORTH',   'Lào Cai + Yên Bái'),
+('THAINGUYEN','Tỉnh Thái Nguyên',        'NORTH',   'Thái Nguyên + Bắc Kạn'),
+('PHUTHO',    'Tỉnh Phú Thọ',            'NORTH',   'Phú Thọ + Hòa Bình + Vĩnh Phúc'),
+('BACNINH',   'Tỉnh Bắc Ninh',           'NORTH',   'Bắc Ninh + Bắc Giang'),
+('HUNGYEN',   'Tỉnh Hưng Yên',           'NORTH',   'Hưng Yên + Thái Bình'),
+('HAIPHONG',  'Thành phố Hải Phòng',     'NORTH',   'Hải Phòng + Hải Dương'),
+('NINHBINH',  'Tỉnh Ninh Bình',          'CENTRAL', 'Ninh Bình + Hà Nam + Nam Định'),
+('QUANGTRI',  'Tỉnh Quảng Trị',          'CENTRAL', 'Quảng Trị + Quảng Bình'),
+('DANANG',    'Thành phố Đà Nẵng',       'CENTRAL', 'Đà Nẵng + Quảng Nam'),
+('QUANGNGAI', 'Tỉnh Quảng Ngãi',         'CENTRAL', 'Quảng Ngãi + Kon Tum'),
+('GIALAI',    'Tỉnh Gia Lai',            'CENTRAL', 'Gia Lai + Bình Định'),
+('KHANHHOA',  'Tỉnh Khánh Hòa',          'CENTRAL', 'Khánh Hòa + Ninh Thuận'),
+('LAMDONG',   'Tỉnh Lâm Đồng',           'CENTRAL', 'Lâm Đồng + Bình Thuận + Đắk Nông'),
+('DAKLAK',    'Tỉnh Đắk Lắk',            'CENTRAL', 'Đắk Lắk + Phú Yên'),
+('TPHCM',     'TP. Hồ Chí Minh',         'SOUTH',   'TP.HCM + Bình Dương + Bà Rịa-Vũng Tàu'),
+('DONGNAI',   'Tỉnh Đồng Nai',           'SOUTH',   'Đồng Nai + Bình Phước'),
+('TAYNINH',   'Tỉnh Tây Ninh',           'SOUTH',   'Tây Ninh + Long An'),
+('CANTHO',    'Thành phố Cần Thơ',       'SOUTH',   'Cần Thơ + Hậu Giang + Sóc Trăng'),
+('VINHLONG',  'Tỉnh Vĩnh Long',          'SOUTH',   'Vĩnh Long + Bến Tre + Trà Vinh'),
+('DONGTHAP',  'Tỉnh Đồng Tháp',          'SOUTH',   'Đồng Tháp + Tiền Giang'),
+('CAMAU',     'Tỉnh Cà Mau',             'SOUTH',   'Cà Mau + Bạc Liêu'),
+('ANGIANG',   'Tỉnh An Giang',           'SOUTH',   'An Giang + Kiên Giang');
+
+-- ============================================================
+-- 0b. [NMAIex] JOBLEVEL (8 cấp — dùng minYears cho Seniority Penalty)
+-- ============================================================
+
+INSERT INTO JOBLEVEL (levelName, minYears, maxYears, description) VALUES
+('Intern',    0, 0,    'Thực tập sinh, chưa có kinh nghiệm đi làm'),
+('Fresher',   0, 1,    'Mới ra trường, dưới 1 năm kinh nghiệm'),
+('Junior',    1, 3,    '1-3 năm kinh nghiệm, cần được hướng dẫn'),
+('Middle',    3, 5,    '3-5 năm kinh nghiệm, làm việc độc lập'),
+('Senior',    5, 8,    '5-8 năm kinh nghiệm, dẫn dắt kỹ thuật'),
+('Lead',      7, 12,   '7+ năm, quản lý nhóm kỹ thuật'),
+('Manager',   8, NULL, '8+ năm, quản lý bộ phận/dự án lớn'),
+('Director',  12, NULL,'12+ năm, hoạch định chiến lược kỹ thuật');
+
+-- ============================================================
+-- 0c. [NMAIex] JOBCATEGORY (17 danh mục IT)
+-- ============================================================
+
+INSERT INTO JOBCATEGORY (catName, description) VALUES
+('Backend Development',   'Phát triển server-side, API, microservices'),
+('Frontend Development',  'Phát triển giao diện người dùng'),
+('Fullstack Development', 'Phát triển cả frontend và backend'),
+('Mobile Development',    'Phát triển ứng dụng iOS/Android'),
+('AI / Machine Learning', 'Trí tuệ nhân tạo và học máy'),
+('Data Engineering',      'Xây dựng pipeline và hạ tầng dữ liệu'),
+('Data Science',          'Phân tích dữ liệu, mô hình thống kê'),
+('DevOps / Cloud',        'Quản lý hạ tầng, CI/CD, container'),
+('QA / Testing',          'Kiểm thử phần mềm, đảm bảo chất lượng'),
+('Security / Pentest',    'Bảo mật thông tin, kiểm thử xâm nhập'),
+('Game Development',      'Phát triển trò chơi điện tử'),
+('Embedded / IoT',        'Lập trình nhúng và IoT'),
+('Blockchain / Web3',     'Công nghệ chuỗi khối và phi tập trung'),
+('UI/UX Design',          'Thiết kế giao diện và trải nghiệm người dùng'),
+('Project Management',    'Quản lý dự án phần mềm (Agile/Scrum)'),
+('IT Support / SysAdmin', 'Hỗ trợ kỹ thuật và quản trị hệ thống'),
+('ERP / SAP',             'Triển khai và vận hành hệ thống ERP/SAP');
+
+-- ============================================================
 -- 1. SKILL
+-- ============================================================
+
 INSERT INTO SKILL (skillName, description) VALUES
 ('Java', 'Ngôn ngữ lập trình hướng đối tượng'),
 ('Python', 'Ngôn ngữ lập trình đa năng, phổ biến trong AI/ML'),
@@ -92,8 +177,8 @@ INSERT INTO "permission" (permCode, description) VALUES
 ('VIEW_AUDIT_LOG', 'Xem nhật ký hoạt động');
 
 -- 5. ADMIN USER
-INSERT INTO "user" (userName, pwd, fName, lName, email, phone, prov, ward, street, stat, "role")
-VALUES ('admin', '123456', 'Admin', 'System', 'admin@micareer.vn', '0912345678', 'Hà Nội', 'Văn Quán', '119 Yên Lãng', 'ACTIVE', 'ADMIN');
+INSERT INTO "user" (userName, pwd, fName, lName, email, phone, provId, ward, street, stat, "role")
+VALUES ('admin', '123456', 'Admin', 'System', 'admin@micareer.vn', '0912345678', 'HANOI', 'Văn Quán', '119 Yên Lãng', 'ACTIVE', 'ADMIN');
 
 -- Gán admin vào bảng ADMIN với role Super Admin (subquery)
 INSERT INTO "admin" (userId, lastIp, roleId)

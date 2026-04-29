@@ -1,3 +1,5 @@
+-- Lưu ý cho Agent: Trong này mã Tỉnh viết tắt nhưng thực tế triển khai phải viết đầy đủ "provId      VARCHAR(20)  PRIMARY KEY,   -- Mã đầy đủ: HANOI, TPHCM, DANANG..."
+
 INSERT INTO Province (provId, provName, regId, mergedFrom) VALUES
 ('HN','Thành phố Hà Nội','NORTH', 'Giữ nguyên'),
 ('HU','Thành phố Huế','CENTRAL', 'Thừa Thiên - Huế'),

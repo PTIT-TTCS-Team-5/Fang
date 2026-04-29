@@ -20,28 +20,28 @@ Tham chiếu: `[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md`
 ### 1b. Seed Data
 > Tham khảo dữ liệu từ `cur_prj\miCareer\database\seed_data.sql` (MySQL) để convert sang PostgreSQL.
 
-- [ ] Cập nhật `database/root_data.sql`: INSERT 3 Region (`NORTH`, `CENTRAL`, `SOUTH`) và **34 Province theo mô hình sau sáp nhập 2025** — dùng INSERT từ `[NMAIex]_PROVINCE_MERGER_GUIDE.md`. Mã tỉnh dùng mã đầy đủ (`HANOI`, `TPHCM`, `DANANG`, `HAIPHONG`,...), có cột `mergedFrom`. (Tham khảo agent_workflow_doc\[NMAIex]_PROVINCE_MERGER_GUIDE.md)
-- [ ] Cập nhật `root_data.sql`: INSERT `JOBLEVEL` 8 cấp (Intern, Fresher, Junior, Middle, Senior, Lead, Manager, Director) với `minYears`/`maxYears` hợp lý.
-- [ ] Cập nhật `root_data.sql`: INSERT `JOBCATEGORY` 17 danh mục IT (Backend, Frontend, AI/ML...).
-- [ ] Cập nhật `database/seed_data.sql`:
+- [x] Cập nhật `database/root_data.sql`: INSERT 3 Region (`NORTH`, `CENTRAL`, `SOUTH`) và **34 Province theo mô hình sau sáp nhập 2025** — dùng INSERT từ `[NMAIex]_PROVINCE_MERGER_GUIDE.md`. Mã tỉnh dùng mã đầy đủ (`HANOI`, `TPHCM`, `DANANG`, `HAIPHONG`,...), có cột `mergedFrom`. (Tham khảo agent_workflow_doc\[NMAIex]_PROVINCE_MERGER_GUIDE.md)
+- [x] Cập nhật `root_data.sql`: INSERT `JOBLEVEL` 8 cấp (Intern, Fresher, Junior, Middle, Senior, Lead, Manager, Director) với `minYears`/`maxYears` hợp lý.
+- [x] Cập nhật `root_data.sql`: INSERT `JOBCATEGORY` 17 danh mục IT (Backend, Frontend, AI/ML...).
+- [x] Cập nhật `database/seed_data.sql`:
   - Sửa `prov = '...'` → `provId = 'HANOI'` (mã mới) cho tất cả user/company.
   - Giữ `workLoc` text display, thêm `provId` mới cho JOBPOSTING.
   - Thêm INSERT vào `JOB_LEVEL_MAP` và `JOB_CATEGORY_MAP` cho từng JobPosting.
   - Giữ lại ứng viên đặc biệt **Nguyễn Hải Hưng** và `cvUrl` gốc FANG.
 
 ### 1c. Cấu Hình NMAIex
-- [ ] Tạo file `.env.nmaiex` tại root FANG (theo template trong Implementation Plan).
+- [x] Tạo file `.env.nmaiex` tại root FANG (theo template trong Implementation Plan).
   - **Cloudinary dùng chung:** Credentials (`CLOUD_NAME`, `API_KEY`, `API_SECRET`) đặt ở `.env` gốc. Chỉ thêm `NMAIEX_CLOUDINARY_UPLOAD_FOLDER="nmaiex"` vào `.env.nmaiex`.
   - **TTCS:** Thêm `TTCS_CLOUDINARY_UPLOAD_FOLDER="ttcs"` vào `.env` gốc.
-- [ ] Thêm `.env.nmaiex` vào `.gitignore`.
-- [ ] Tạo `app/core/nmaiex_config.py` dùng `pydantic_settings`, đọc `.env.nmaiex` (Chỉ chứa `upload_folder` + Weights + Limits, **KHÔNG** chứa API Keys LLM hay Cloudinary credentials).
-- [ ] Tạo `app/core/.env.nmaiex.example` (template) để commit lên Git.
+- [x] Thêm `.env.nmaiex` vào `.gitignore`.
+- [x] Tạo `app/core/nmaiex_config.py` dùng `pydantic_settings`, đọc `.env.nmaiex` (Chỉ chứa `upload_folder` + Weights + Limits, **KHÔNG** chứa API Keys LLM hay Cloudinary credentials).
+- [x] Tạo `app/core/.env.nmaiex.example` (template) để commit lên Git.
 
 ### 1d. Fix TTCS Break Points
-- [ ] Kiểm tra `app/services/cv_parser.py` và `cv_parser_adapters.py`: Xác nhận nơi ghi `prov`/`location` vào DB — cập nhật để ghi `provId` thay vì string.
-- [ ] Kiểm tra `app/services/rag_query.py` và `markdown_builder.py`: Sửa query/build-string đang đọc `prov` string → JOIN với `PROVINCE` để lấy `provName`.
-- [ ] Chạy lại `scripts/reset_and_seed_db.py` — xác nhận DB reset thành công không lỗi FK.
-- [ ] Chạy smoke test: `POST /v2/ingest`, `POST /v2/chat` — xác nhận TTCS không bị gãy.
+- [x] Kiểm tra `app/services/cv_parser.py` và `cv_parser_adapters.py`: Xác nhận nơi ghi `prov`/`location` vào DB — cập nhật để ghi `provId` thay vì string.
+- [x] Kiểm tra `app/services/rag_query.py` và `markdown_builder.py`: Sửa query/build-string đang đọc `prov` string → JOIN với `PROVINCE` để lấy `provName`.
+- [x] Chạy lại `scripts/reset_and_seed_db.py` — xác nhận DB reset thành công không lỗi FK.
+- [x] Chạy smoke test: `POST /v2/ingest`, `POST /v2/chat` — xác nhận TTCS không bị gãy.
 
 ---
 
