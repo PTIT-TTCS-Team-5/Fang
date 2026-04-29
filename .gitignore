@@ -208,3 +208,9 @@ marimo/_lsp/
 __marimo__/
 docs/temp.md
 .env.nmaiex
+
+# Gitleaks
+gitleaks.exe
+gitleaks_report.json
+gitleaks_*.zip
+.gitleaks/

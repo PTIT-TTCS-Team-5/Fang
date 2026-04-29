@@ -6,6 +6,9 @@ Tài liệu này là **bản thiết kế kỹ thuật chi tiết (Low-level Des
 
 ---
 
+> **[Cập nhật 2026-04-29]** Bổ sung Mục 7 (Strategy C Tiered Skill Matching), Mục 8 (Pydantic Mapper Upgrade), Mục 9 (HR JobPosting Edit — Cascade Impact). Xem chi tiết cuối tài liệu.
+
+
 ## 1. Kiến Trúc Cơ Sở Dữ Liệu (PostgreSQL FANG)
 
 ### 1.1. Hiện Trạng Cần Biết Trước Khi Sửa
@@ -421,3 +424,184 @@ Luồng CV đã thiết kế sẵn trong FANG (`cvUrl`, `cvSnapUrl` đều đã 
 | Cập nhật README & tài liệu hiện có | AI khác | Sau Phase 4 | Theo `[NMAIex]_DOC_UPDATE_INSTRUCTIONS.md` |
 
 > **Quy trình:** Claude dev xong sẽ cập nhật liên tục file `agent_workflow_doc/[NMAIex]_DOC_UPDATE_INSTRUCTIONS.md` với các thay đổi cần tài liệu hóa. AI tài liệu sẽ đọc file đó và thực hiện toàn bộ sau khi dev xong.
+
+---
+
+## 7. Strategy C: Tiered Skill Matching
+
+> **Quyết định [2026-04-29]:** Thay thế cơ chế "Closed-World bỏ qua skill ngoài catalog" bằng chiến lược 2 tầng.
+
+### 7.1. Vấn Đề Gốc
+
+Catalog skill là `CLOSED-WORLD`: LLM mapper trả `[]` cho skill không có trong DB → mất thông tin âm thầm, ảnh hưởng nghiêm trọng đến ranking (skill_overlap là thành phần weight cao nhất trong công thức).
+
+Re-mapping batch khi catalog update (Strategy B) có rủi ro hạ tầng + chi phí LLM hàng loạt → bác bỏ.
+
+### 7.2. Kiến Trúc 2 Tầng
+
+**Tầng 1 — Closed-World (LLM Mapper, có schema enforcement):**
+- LLM nhận catalog từ DB (runtime), trả `SkillMappingResult(matched_ids, unmatched_texts)` (Pydantic-validated).
+- `matched_ids` → lưu `CANDIDATESKILL` như cũ → dùng cho exact scoring.
+- `unmatched_texts` → chuyển xuống Tầng 2.
+
+**Tầng 2 — Open-World (Embedding Fallback):**
+- `unmatched_texts` được embed bằng `text-embedding-3-small` → lưu vector vào `CANDIDATE_SKILL_RAW`.
+- Chi phí ~5x rẻ hơn LLM. Phù hợp cho các string ngắn.
+- Dùng cho fuzzy scoring trong ranking.
+
+### 7.3. Bảng DB Mới
+
+Thêm vào `schema_web_core.sql` sau `CANDIDATESKILL`:
+
+> **Embedding Dims cho Skill Matching:** TTCS dùng `halfvec(1024)` cho document chunks (kích thước lớn vì cần semantic depth cho toàn bộ context). Skills là text ngắn (1-5 từ) — **256 dims là đủ và rẻ hơn 4x**. `text-embedding-3-small` hỗ trợ giảm chiều Matryoshka (truyền `dimensions=256` lúc gọi API — không cần post-process). Lưu ý: `vector(N)` trong PostgreSQL là **fixed at CREATE TABLE** — nếu đổi dims phải DROP + recreate bảng. `reset_and_seed_db.py` cần đọc `NMAIEX_SKILL_EMBEDDING_DIMS` và sinh SQL động.
+
+**Thêm vào `.env.nmaiex`:**
+```env
+NMAIEX_SKILL_EMBEDDING_DIMS=256  # 256 là đủ cho skill text ngắn, rẻ hơn 1024/1536
+```
+
+**Thêm vào `nmaiex_config.py`:**
+```python
+nmaiex_skill_embedding_dims: int = 256
+```
+
+```sql
+-- [NMAIex] Strategy C: Unmatched skills với vector cho fuzzy matching
+CREATE TABLE CANDIDATE_SKILL_RAW (
+    rawId      SERIAL PRIMARY KEY,
+    candId     INT NOT NULL REFERENCES CANDIDATE(candId) ON DELETE CASCADE,
+    rawText    VARCHAR(200) NOT NULL,
+    embedding  vector(256),   -- dims = NMAIEX_SKILL_EMBEDDING_DIMS (default 256)
+    createdAt  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_cand_skill_raw_cand ON CANDIDATE_SKILL_RAW(candId);
+
+-- [NMAIex] Unmatched skills phía Job (khi HR nhập text-free skill)
+CREATE TABLE JOB_SKILL_RAW (
+    rawId      SERIAL PRIMARY KEY,
+    jobPostId  INT NOT NULL REFERENCES JOBPOSTING(jobPostId) ON DELETE CASCADE,
+    rawText    VARCHAR(200) NOT NULL,
+    embedding  vector(256),   -- cùng dims với CANDIDATE_SKILL_RAW để cosine có nghĩa
+    createdAt  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_job_skill_raw_job ON JOB_SKILL_RAW(jobPostId);
+```
+
+> **JOB_SKILL_RAW — ĐÃ CÓ LÝ DO TẠO NGAY:** User quyết định bổ sung text-free skill input cho HR (xem Mục 9.3). HR có thể nhập skill không có trong catalog → LLM mapper chạy → unmatched → lưu `JOB_SKILL_RAW`. Fuzzy overlap bây giờ có dữ liệu từ **cả 2 phía** — có ý nghĩa hơn.
+
+
+### 7.4. Công Thức Ranking Mới
+
+```
+skill_score = α * exact_overlap + (1-α) * fuzzy_overlap
+
+exact_overlap = |matched_job_ids ∩ matched_cand_ids| / max(|job_ids|, 1)
+fuzzy_overlap = avg_max_cosine(job_raw_embeddings, cand_raw_embeddings)
+                0.0 nếu một trong hai bên không có raw skills
+
+α = 0.8  → tham số NMAIEX_SKILL_ALPHA trong .env.nmaiex (dễ tune)
+
+final_score = clip(w_rrf*rrf + w_skill*skill_score - penalty, 0.0, 1.0)
+```
+
+`score_breakdown` trả thêm: `exact_overlap`, `fuzzy_overlap`, `skill_alpha`.
+
+---
+
+## 8. Pydantic Mapper Upgrade
+
+> **Quyết định [2026-04-29]:** Nâng mapper lên Pydantic-validated output, học theo pattern của `cv_parser_adapters.py`.
+
+### 8.1. Tại Sao Cần Nâng Cấp
+
+Mapper hiện tại (`nmaiex_mapper_service.py`) parse thủ công: strip markdown → `json.loads` → check `list[int]`. Không có schema enforcement, silent fail trả `[]`.
+
+### 8.2. Models Mới
+
+Thêm vào `app/models/nmaiex_schemas.py`:
+
+```python
+class SkillMappingResult(BaseModel):
+    """Output Pydantic-validated của LLM skill mapper."""
+    matched_ids: list[int]       # skillId có trong catalog
+    unmatched_texts: list[str]   # Raw text không map được → đưa sang Tầng 2
+
+class ProvinceMappingResult(BaseModel):
+    """Output Pydantic-validated của LLM province mapper."""
+    prov_id: str | None          # None nếu UNKNOWN
+```
+
+### 8.3. API Mapper Mới
+
+Hàm `map_strings_to_skill_ids` → đổi thành `map_skills` trả `SkillMappingResult`.
+Prompt mới: LLM trả `{"matched_ids": [...], "unmatched_texts": [...]}` thay vì chỉ array.
+
+Graceful degradation:
+- LLM trả output hợp lệ → validate Pydantic → return
+- Validation fail → log warning → trả `SkillMappingResult(matched_ids=[], unmatched_texts=all_input_skills)`
+
+Hàm mới `embed_and_store_raw_skills(entity_type, entity_id, unmatched_texts, conn)`:
+- `entity_type`: `"candidate"` hoặc `"job"` — quyết định INSERT vào bảng tương ứng.
+- Gọi `embed_chunks(unmatched_texts)` (tái dùng `app/services/embedding.py`) với `dimensions=nmaiex_settings.nmaiex_skill_embedding_dims`.
+- INSERT batch vào `CANDIDATE_SKILL_RAW` hoặc `JOB_SKILL_RAW`.
+
+
+---
+
+## 9. HR JobPosting Edit — Cascade Impact & Chiến Lược
+
+> **Vấn đề [2026-04-29]:** Khi frontend có trang quản lý Job cho HR, việc HR sửa JobPosting ảnh hưởng cascade lên nhiều thành phần. Cần chiến lược rõ ràng.
+
+### 9.1. Bản Đồ Cascade
+
+| Field HR sửa | Bảng bị ảnh hưởng | Hành động backend cần trigger |
+|---|---|---|
+| `title`, `description` | `AIDOCUMENTCHUNK` (vector chunks) | **Re-ingest**: DELETE chunks cũ → call FANG Ingestion API với nội dung mới → re-embed |
+| Skills (custom text + dropdown) | `JOBREQUIREMENT`, `JOB_SKILL_RAW` | Dropdown skills → DELETE+INSERT `JOBREQUIREMENT`. Text-free skills → LLM mapper → matched vào `JOBREQUIREMENT`, unmatched → embed + INSERT `JOB_SKILL_RAW`. |
+| `provId` / `workLoc` | `JOBPOSTING` | UPDATE trực tiếp |
+| Level (JOB_LEVEL_MAP) | `JOB_LEVEL_MAP` | DELETE cũ → INSERT mới |
+| Category (JOB_CATEGORY_MAP) | `JOB_CATEGORY_MAP` | DELETE cũ → INSERT mới |
+| `minSalary`, `maxSalary` | `JOBPOSTING` | UPDATE trực tiếp |
+
+> **Tại sao `title`/`description` ảnh hưởng AIDOCUMENTCHUNK?** FANG Ingestion Pipeline đã chunk + embed nội dung job description vào `AIDOCUMENTCHUNK` (kèm HNSW index). Ranking engine dùng HNSW vector search trên bảng này để tính `rrf_score`. Nếu HR sửa description (VD: "Python Backend" → "Java Spring Boot") nhưng chunks không được re-embed, vector search vẫn trả kết quả theo **nội dung cũ** → ranking sai. Re-ingest là bắt buộc cho Semantic Edit.
+
+
+### 9.2. Chiến Lược Xử Lý
+
+**Rule: Phân loại edit thành 2 loại:**
+
+1. **Semantic Edit** (thay đổi nội dung mô tả): `title`, `description` → **bắt buộc re-ingest** vì vector chunks lỗi thời → ranking bằng vector sẽ sai.
+2. **Structured Edit** (thay đổi metadata): skills, province, level, category, salary → **UPDATE/DELETE-INSERT trực tiếp**, không cần re-ingest.
+
+**API Backend cần cung cấp:**
+
+```
+PATCH /v2/nmaiex/jobs/{job_id}/structured
+    Body: { provId, levelIds[], catIds[], skillIds[], minSalary, maxSalary, workMode }
+    → UPDATE trực tiếp, không re-embed
+    → Trả: { job_id, updated_fields: [...] }
+
+PATCH /v2/nmaiex/jobs/{job_id}/content
+    Body: { title, description }
+    → UPDATE JOBPOSTING + trigger async re-ingest pipeline
+    → Trả: { job_id, reingestion_status: "queued" }
+```
+
+**Trạng thái re-ingest:**
+- Khi re-ingest đang chạy, job vẫn hiển thị bình thường nhưng ranking score có thể tạm thời kém chính xác.
+- Không cần thông báo realtime ở giai đoạn MVP. Log server-side là đủ.
+
+### 9.3. Frontend — Trang Quản Lý Job (HR)
+
+Đây là tính năng **mới hoàn toàn** chưa có trong frontend hiện tại. Cần bổ sung:
+
+- Trang `HR / Job Management` (list + CRUD job postings)
+- Form tạo/sửa Job: dùng các component chuẩn hóa (`LocationSelector`, `SkillSelector`, `LevelSelector`, `CategorySelector`)
+- **Skill Input — Hybrid Input:**
+  - **Dropdown** cho skills có sẵn trong catalog (giữ nguyên SkillSelector).
+  - **Text field** bổ sung cho skill không có trong catalog: HR gõ vào, backend chạy LLM mapper → nếu match → vào `JOBREQUIREMENT`; nếu không → embed → vào `JOB_SKILL_RAW`.
+  - UX: Tag input kiểu chip — khi HR nhập text và nhấn Enter, skill được thêm dưới dạng chip màu khác (phân biệt catalog skill vs. custom skill).
+- Nút **"Save Content"** (trigger re-ingest) tách biệt với **"Save Settings"** (structured update) để tránh re-embed không cần thiết.
+
+> **Hệ quả cập nhật:** Vì HR có text-free skill input, `JOB_SKILL_RAW` **cần được tạo ngay** (không còn DEFER). Fuzzy overlap trong ranking sẽ có dữ liệu từ cả 2 phía — ý nghĩa hơn nhiều.
+

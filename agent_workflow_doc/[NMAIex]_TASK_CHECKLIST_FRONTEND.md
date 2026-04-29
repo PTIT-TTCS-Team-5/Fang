@@ -11,13 +11,35 @@ Chuyển các ô nhập text tự do sang Dropdown gọi API `/v2/nmaiex/master/
 
 - [ ] **LocationSelector**: Thay thế text input địa điểm bằng Dropdown 2 cấp (Region → Province). Gọi `GET /v2/nmaiex/master/provinces`, group theo `regId`.
 - [ ] **SkillSelector**: Chuyển sang Multi-select Dropdown. Gọi `GET /v2/nmaiex/master/skills`. Hỗ trợ tìm kiếm (filter) trong dropdown.
+  - *Lưu ý: Component này dùng cho cả Candidate search và HR Job form. Phía Candidate: dropdown only. Phía HR Job form: kèm thêm text-free input (xem Phase 1.5).*
+
 - [ ] **LevelSelector**: Dropdown đơn. Gọi `GET /v2/nmaiex/master/levels`.
 - [ ] **CategorySelector**: Dropdown Multi-select (một Job có thể thuộc nhiều Category). Gọi `GET /v2/nmaiex/master/categories`.
 - [ ] Áp dụng các component trên cho form **Đăng Job** (HR) và form **Tìm kiếm** (Candidate).
 
 ---
 
-## Phase 2: Quản Lý Hồ Sơ Ứng Viên (CV & Bio)
+## Phase 1.5: Trang Quản Lý Job (HR) — Mới
+
+> **Bối cảnh [2026-04-29]:** Frontend hiện tại không có trang quản lý Job cho HR. Cần bổ sung để hỗ trợ NMAIex ranking (HR cần gắn provId, levelId, catId, skillId chuẩn cho từng Job Posting). Việc HR sửa Job có cascade impact nên UI phải phân biệt rõ 2 loại thay đổi.
+
+- [ ] **Trang `HR / Job Management`** — Danh sách Job Postings của HR:
+  - Hiển thị list job với tình trạng (active/closed) và nút action (Edit / View Ranking).
+
+- [ ] **Form tạo / sửa Job** — Sử dụng các component chuẩn hóa:
+  - `LocationSelector` (provId), `LevelSelector` (levelIds), `CategorySelector` (catIds).
+  - Field salary: `minSalary`, `maxSalary` (number input).
+  - **Skill Input — Hybrid:**
+    - **Dropdown** (`SkillSelector`): chọn skill có sẵn trong catalog.
+    - **Text-free Tag Input**: HR gõ skill tùy ý + Enter → hiện thị chip màu khác (phân biệt catalog chip vs. custom chip). Backend sẽ chạy LLM mapper khi save: match → `JOBREQUIREMENT`; unmatched → embed → `JOB_SKILL_RAW`.
+  - **Tách biệt 2 nút Save** để phân loại cascade impact:
+    - **"Lưu Nội dung"** (`PATCH /v2/nmaiex/jobs/{id}/content`): Gửi `title` + `description`. Backend trigger async re-ingest → re-embed vector chunks. Thông báo: *"Nội dung đang được cập nhật, ranking có thể chưa chính xác trong vài phút."*
+    - **"Lưu Cài đặt"** (`PATCH /v2/nmaiex/jobs/{id}/structured`): Gửi skills (cả catalog IDs + custom texts), province, levels, categories, salary. Backend xử lý ngay (không re-embed). Tức thì.
+
+- [ ] Sau khi tạo xong form, **liên kết** với nút "AI Ranking" trong Phase 3.
+
+
+
 
 *Lưu ý: `cvUrl` và `cvSnapUrl` đã có sẵn trong DB FANG. Cần xây dựng UI để quản lý.*
 

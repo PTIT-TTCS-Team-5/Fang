@@ -8,16 +8,42 @@ Tham chiếu: `[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md`
 ## Phase 1: Database & Cấu Hình
 
 ### 1a. Schema Mới
-- [ ] Thêm bảng `REGION` và `PROVINCE` vào `database/schema_web_core.sql` (**đặt trước** bảng `user` và `COMPANY` để tránh lỗi FK).
-- [ ] Thêm bảng `JOBLEVEL` (có cột `minYears`, `maxYears`) vào `schema_web_core.sql`.
-- [ ] Thêm bảng `JOBCATEGORY` vào `schema_web_core.sql`.
-- [ ] Thêm bảng nối `JOB_LEVEL_MAP` (jobPostId, levelId) vào `schema_web_core.sql`.
-- [ ] Thêm bảng nối `JOB_CATEGORY_MAP` (jobPostId, catId) vào `schema_web_core.sql`.
-- [ ] Thêm cột `provId VARCHAR(20) FK → PROVINCE` vào bảng `user`, `COMPANY`, `JOBPOSTING`.
+- [x] Thêm bảng `REGION` và `PROVINCE` vào `database/schema_web_core.sql` (**đặt trước** bảng `user` và `COMPANY` để tránh lỗi FK).
+- [x] Thêm bảng `JOBLEVEL` (có cột `minYears`, `maxYears`) vào `schema_web_core.sql`.
+- [x] Thêm bảng `JOBCATEGORY` vào `schema_web_core.sql`.
+- [x] Thêm bảng nối `JOB_LEVEL_MAP` (jobPostId, levelId) vào `schema_web_core.sql`.
+- [x] Thêm bảng nối `JOB_CATEGORY_MAP` (jobPostId, catId) vào `schema_web_core.sql`.
+- [x] Thêm cột `provId VARCHAR(20) FK → PROVINCE` vào bảng `user`, `COMPANY`, `JOBPOSTING`.
   - *Giữ lại `workLoc` cho mục đích display text (VD: "Tầng 15, Keangnam, Hà Nội").*
   - *Xóa cột `prov` (string tự do) khỏi `user` và `COMPANY`.*
+- [ ] **[Mới — Strategy C]** Thêm bảng `CANDIDATE_SKILL_RAW` vào `schema_web_core.sql` sau `CANDIDATESKILL`:
+  ```sql
+  CREATE TABLE CANDIDATE_SKILL_RAW (
+      rawId      SERIAL PRIMARY KEY,
+      candId     INT NOT NULL REFERENCES CANDIDATE(candId) ON DELETE CASCADE,
+      rawText    VARCHAR(200) NOT NULL,
+      embedding  vector(256),   -- dims = NMAIEX_SKILL_EMBEDDING_DIMS (default 256)
+      createdAt  TIMESTAMPTZ DEFAULT NOW()
+  );
+  CREATE INDEX idx_cand_skill_raw_cand ON CANDIDATE_SKILL_RAW(candId);
+  ```
+- [ ] **[Mới — Strategy C]** Thêm bảng `JOB_SKILL_RAW` vào `schema_web_core.sql` sau `CANDIDATE_SKILL_RAW`:
+  ```sql
+  CREATE TABLE JOB_SKILL_RAW (
+      rawId      SERIAL PRIMARY KEY,
+      jobPostId  INT NOT NULL REFERENCES JOBPOSTING(jobPostId) ON DELETE CASCADE,
+      rawText    VARCHAR(200) NOT NULL,
+      embedding  vector(256),   -- cùng dims với CANDIDATE_SKILL_RAW (cần khớp để cosine có nghĩa)
+      createdAt  TIMESTAMPTZ DEFAULT NOW()
+  );
+  CREATE INDEX idx_job_skill_raw_job ON JOB_SKILL_RAW(jobPostId);
+  ```
+  *HR có text-free skill input → `JOB_SKILL_RAW` được tạo ngay, không DEFER.*
+- [ ] **[Mới — Embedding Config]** Thêm `NMAIEX_SKILL_EMBEDDING_DIMS=256` vào `.env.nmaiex` và `nmaiex_config.py`:
+  - `nmaiex_skill_embedding_dims: int = 256` trong `NMAIexSettings`.
+  - `reset_and_seed_db.py` đọc giá trị này và sinh SQL `vector(N)` động khi CREATE TABLE.
+  - `embed_and_store_raw_skills` truyền `dimensions=nmaiex_settings.nmaiex_skill_embedding_dims`.
 
-### 1b. Seed Data
 > Tham khảo dữ liệu từ `cur_prj\miCareer\database\seed_data.sql` (MySQL) để convert sang PostgreSQL.
 
 - [x] Cập nhật `database/root_data.sql`: INSERT 3 Region (`NORTH`, `CENTRAL`, `SOUTH`) và **34 Province theo mô hình sau sáp nhập 2025** — dùng INSERT từ `[NMAIex]_PROVINCE_MERGER_GUIDE.md`. Mã tỉnh dùng mã đầy đủ (`HANOI`, `TPHCM`, `DANANG`, `HAIPHONG`,...), có cột `mergedFrom`. (Tham khảo agent_workflow_doc\[NMAIex]_PROVINCE_MERGER_GUIDE.md)
@@ -47,28 +73,41 @@ Tham chiếu: `[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md`
 
 ## Phase 2: Core Ranking Engine
 
-- [ ] Tạo `app/services/nmaiex_mapper_service.py`:
+- [x] Tạo `app/services/nmaiex_mapper_service.py`:
   - **Tái dùng toàn bộ `invoke_generation(messages, "auto-lite")`** của TTCS.
-  - Về vấn đề Billing: Quản lý linh hoạt bằng cách khai báo 2 bộ API Key (TTCS và NMAIex) ngay trong file `.env` gốc, và chủ động comment/uncomment để switch luồng billing khi cần. Không làm phức tạp hóa code.
-  - Hàm `map_string_to_province_id(text: str) -> str | None`:
-    - Fetch 34 tỉnh (sau sáp nhập 2025) từ DB, inject vào system prompt.
-    - **System prompt PHẢI chặt chẽ** (xem template trong Implementation Plan §3.2): chỉ trả về provId hợp lệ, map tỉnh cũ → tỉnh mới (sáp nhập), UNKNOWN nếu không xác định được. Không giải thích, không tự tạo mã mới.
-    - Parse `trace.response.strip().upper()` — trả `None` nếu là `UNKNOWN`.
-  - Hàm `map_strings_to_skill_ids(skills: list[str]) -> list[int]`:
-    - Gọi LLM **một lần cho cả batch** (không gọi từng kỹ năng riêng lẻ).
-    - **System prompt PHẢI chặt chẽ**: chỉ trả về JSON array chứa skillId hợp lệ, không tự tạo ID mới, không thêm text ngoài array.
-    - Parse JSON array trả về từ LLM — xử lý lỗi parse gracefully (trả `[]` nếu fail).
+  - Hàm `map_string_to_province_id(text: str) -> str | None` — wrap output vào `ProvinceMappingResult` (Pydantic).
+  - **[Đã thành `map_skills` — xem bên dưới]** ~~Hàm `map_strings_to_skill_ids`~~.
 
-- [ ] Tạo `app/services/nmaiex_ranking_service.py`:
+- [ ] **[Mới — Upgrade Mapper]** Nâng cấp `nmaiex_mapper_service.py` lên Pydantic-validated output:
+  - Thêm `SkillMappingResult(matched_ids, unmatched_texts)` vào `app/models/nmaiex_schemas.py`.
+  - Thêm `ProvinceMappingResult(prov_id)` vào `app/models/nmaiex_schemas.py`.
+  - **Đổi** `map_strings_to_skill_ids` → `map_skills(skills, cand_id, conn) -> SkillMappingResult`.
+    - Prompt mới: LLM trả `{"matched_ids": [...], "unmatched_texts": [...]}` (phân loại matched và unmatched).
+    - Validate bằng `SkillMappingResult.model_validate_json(response)` — graceful degradation nếu fail.
+  - **Thêm** hàm `embed_and_store_raw_skills(entity_type, entity_id, unmatched_texts, conn)`:
+    - `entity_type = "candidate"` → INSERT vào `CANDIDATE_SKILL_RAW`.
+    - `entity_type = "job"` → INSERT vào `JOB_SKILL_RAW` (dùng cho HR text-free skill input).
+    - Gọi `embed_chunks(unmatched_texts)` với `dimensions=nmaiex_settings.nmaiex_skill_embedding_dims`.
+
+
+- [x] Tạo `app/services/nmaiex_ranking_service.py`:
   - **Hard Filter SQL**: Lọc `provId` và `workMode` ngay trong SQL trước khi vector search.
   - **Vector HNSW**: Truy vấn `AIDOCUMENTCHUNK` top-K (K = limit × 5) bằng cosine distance.
   - **Text Match**: Dùng `ts_rank` (PostgreSQL full-text) từ `JOBPOSTING.description` vs `CVPARSED.rawText`.
   - **RRF Score**: `1/(k + rank_vector) + 1/(k + rank_text)` với `k` từ `nmaiex_settings.nmaiex_rrf_k`.
-  - **Skill Overlap**: `|Job Skills ∩ Candidate Skills| / |Job Skills|` từ `JOBREQUIREMENT` và `CANDIDATESKILL`.
+  - **Skill Overlap (Exact)**: `|Job Skills ∩ Candidate Skills| / |Job Skills|` từ `JOBREQUIREMENT` và `CANDIDATESKILL`.
   - **Seniority Penalty** (J→C): gap giữa `JOBLEVEL.minYears` của job và `CANDIDATE.expyears` × `penalty_seniority_coef`.
   - **Salary Gap Penalty** (C→J): gap giữa `JOBPOSTING.minSalary` và salary expectation ứng viên.
-  - **Late Fusion**: `final_score = clip(w_rrf*rrf + w_skill*skill_overlap - penalty, 0.0, 1.0)`.
+  - **Late Fusion**: `final_score = clip(w_rrf*rrf + w_skill*skill_score - penalty, 0.0, 1.0)`.
   - **score_breakdown**: dict chi tiết từng thành phần để debug (luôn trả về, UI tự ẩn/hiện).
+
+- [ ] **[Mới — Strategy C Ranking]** Nâng cấp `nmaiex_ranking_service.py` với Tiered Skill Scoring:
+  - Hàm `compute_skill_score(job_skill_ids, cand_skill_ids, job_post_id, cand_id, conn, alpha=0.8)`:
+    - **Exact overlap**: `|job_ids ∩ cand_ids| / max(|job_ids|, 1)`
+    - **Fuzzy overlap**: Lấy `embedding` từ `CANDIDATE_SKILL_RAW` (cand) và `JOB_SKILL_RAW` (job, hiện tại luôn rỗng vì HR dùng dropdown). Tính `avg_max_cosine`. Nếu một bên rỗng → fuzzy=0.0.
+    - **skill_score = 0.8 * exact + 0.2 * fuzzy**
+  - Thêm `exact_overlap`, `fuzzy_overlap`, `skill_alpha` vào `score_breakdown`.
+  - Thêm `NMAIEX_SKILL_ALPHA=0.8` vào `.env.nmaiex` và `nmaiex_config.py`.
 
 ---
 
