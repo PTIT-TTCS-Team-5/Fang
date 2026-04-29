@@ -63,11 +63,11 @@ Dựa trên nguyên tắc không tự động thay đổi kiến trúc nếu kh�
    * *Semantic Search:* Sử dụng pgvector với toán tử \<=\> trên không gian nhúng halfvec(1024) hiện tại.1  
    * *Lexical Search (BM25):* Sử dụng toán tử @@ và hàm ts\_rank\_cd để truy xuất các từ khóa chính xác.31  
 2. **Dung hợp Kết quả bằng Reciprocal Rank Fusion (RRF):** RRF là một thuật toán cực kỳ hiệu quả để kết hợp các danh sách xếp hạng có thang điểm khác nhau mà không cần chuẩn hóa phức tạp.32 RRF sẽ được thực thi trực tiếp bằng Common Table Expressions (CTE) trong SQL. Công thức toán học cốt lõi như sau:  
-   ![][image2]  
-   Trong đó, ![][image3] là một hằng số làm mượt (smoothing constant), thường được đặt bằng 60 để tránh việc các tài liệu ở top 1 chi phối hoàn toàn điểm số, đảm bảo sự phân phối hợp lý ở các hạng đầu.29  
+   $$RRF\_Score(d) = \frac{1}{k + rank_{vector}(d)} + \frac{1}{k + rank_{text}(d)}$$  
+   Trong đó, K là một hằng số làm mượt (smoothing constant), thường được đặt bằng 60 để tránh việc các tài liệu ở top 1 chi phối hoàn toàn điểm số, đảm bảo sự phân phối hợp lý ở các hạng đầu.29  
 3. **Lớp Xếp hạng Tuyển tính (Weighted Linear Scoring):** Sau khi cơ sở dữ liệu trả về tập hợp ứng viên hoặc công việc tiềm năng thông qua RRF, module FANG backend (viết bằng Python) sẽ áp dụng một lớp tuyến tính muộn (Late Fusion) để kết hợp các điểm số RRF với các đặc trưng cấu trúc (Structured Features) đã được phân tích ở Phần 2\.2 Cấu trúc của hàm đánh giá được thiết kế như sau:  
-   ![][image4]  
-   Trong đó, ![][image5] là một hàm phi tuyến tính phạt nặng các kết quả vi phạm ngân sách hoặc khoảng cách địa lý vượt quá ngưỡng quy định.3
+   $$Final\_Score = (w_{rrf} \times RRF\_Score) + (w_{skill} \times Semantic\_Skill\_Overlap) - (w_{penalty} \times Constraint\_Penalty)$$  
+   Trong đó, $Constraint\_Penalty$ là một hàm phi tuyến tính phạt nặng các kết quả vi phạm ngân sách hoặc khoảng cách địa lý vượt quá ngưỡng quy định.3
 
 Sự kết hợp này đảm bảo hệ thống có thể xử lý các truy vấn trừu tượng thông qua vector, đồng thời không bao giờ bỏ sót các yêu cầu từ khóa tuyệt đối nhờ BM25.2 Nó minh bạch, chi phí điện toán thấp, và dễ dàng tinh chỉnh thủ công trong quá trình thử nghiệm.
 
@@ -97,7 +97,7 @@ Do đặc thù của dữ liệu ATS (APPSTATUSHISTORY) là tỷ lệ chuyển �
 
 Hệ thống sẽ được triển khai theo chiến lược hai giai đoạn để đảm bảo tính ổn định:
 
-1. **Giai đoạn Khởi động Lạnh (Cold Start) \- Heuristic Calibration:** Các trọng số tuyến tính ban đầu (![][image6]) sẽ được đặt thủ công thông qua sự đồng thuận của các chuyên gia nhân sự, dựa trên các nghiên cứu thống kê trên thị trường. Ví dụ, thiết lập trọng số ưu tiên 40% cho Skill Overlap, 25% cho kinh nghiệm, và thiết lập mức phạt nghiêm khắc đối với rào cản về ngân sách.33  
+1. **Giai đoạn Khởi động Lạnh (Cold Start) \- Heuristic Calibration:** Các trọng số tuyến tính ban đầu  ($w_{rrf}, w_{skill}, w_{penalty}$) sẽ được đặt thủ công thông qua sự đồng thuận của các chuyên gia nhân sự, dựa trên các nghiên cứu thống kê trên thị trường. Ví dụ, thiết lập trọng số ưu tiên 40% cho Skill Overlap, 25% cho kinh nghiệm, và thiết lập mức phạt nghiêm khắc đối với rào cản về ngân sách.33  
 2. **Giai đoạn Warm Start \- Supervised Weight Learning:** Khi FANG đã thu thập đủ dữ liệu phản hồi ngầm (Implicit feedback: thời gian xem hồ sơ, nhấp chuột) và phản hồi rõ ràng (Explicit feedback: kết quả phỏng vấn, lời mời làm việc), hệ thống sẽ chuyển sang cơ chế học có giám sát.36 Hàm mục tiêu (Objective Function) sẽ là tối thiểu hóa hàm suy hao Log-Loss. Để kiểm soát overfitting trong quá trình học trọng số, kỹ thuật **L2 Regularization (Weight Decay)** sẽ được tích hợp vào hàm chi phí, ép buộc mô hình phải phân bổ trọng số đồng đều thay vì quá phụ thuộc vào một tín hiệu duy nhất.14
 
 ## **5\. Chiến lược Sinh Dữ liệu Tổng hợp (Synthetic Data) Quy mô Lớn**

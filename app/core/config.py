@@ -38,8 +38,8 @@ class Settings(BaseSettings):
 
     # --- Context Window Management (v2) ---
     # Budget (tokens) dành cho chat history, theo general model group
-    context_budget_lite: int = 25_000  # Gemini Flash (smallest window)
-    context_budget_pro: int = 960_000  # Gemini Pro / GPT-5.4 (1M window)
+    context_budget_lite: int = 180_000  # Safe for Claude 4.5 Haiku (200k window)
+    context_budget_pro: int = 960_000  # For Gemini Pro / GPT-5.5 (1M window)
     context_budget_warning_threshold: float = 0.80  # Cảnh báo khi > 80%
     context_summarization_model: str = "gemini-flash"  # Model dùng để tóm tắt
 

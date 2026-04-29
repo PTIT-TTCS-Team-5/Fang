@@ -37,7 +37,7 @@ flowchart TD
 
 ## 3. Hệ Thống 5-Tier Model
 
-### 3.1 Danh sách Tier (cập nhật 04/2026)
+### 3.1 Danh sách Tier (cập nhật 27/04/2026)
 
 | Tier | General Name | Provider | API Model ID | Candidates (resolve fallback) | Phân loại |
 |------|-------------|----------|-------------|------|-----------|
@@ -45,7 +45,7 @@ flowchart TD
 | 2 | `gpt-5.4-mini` | OpenAI | `gpt-5.4-mini` | `gpt-5.4-mini`, `gpt-5-mini` | 💚 Lite |
 | 3 | `claude-4.5-haiku` | Anthropic | `claude-4.5-haiku` | `claude-4.5-haiku`, `claude-3-5-haiku-latest` | 💚 Lite |
 | 4 | `gemini-pro` | Google | `gemini-3.1-pro-preview` | `gemini-3.1-pro-preview`, `gemini-3.1-pro`, `gemini-pro` | 🔶 Pro |
-| 5 | `gpt-5.4` | OpenAI | `gpt-5.4` | `gpt-5.4`, `gpt-5.4-pro` | 🔶 Pro |
+| 5 | `gpt-5.5` | OpenAI | `gpt-5.5` | `gpt-5.5`, `gpt-5.4`, `gpt-5.4-pro` | 🔶 Pro |
 
 > [!NOTE]
 > `gemini-3-pro-preview` đã deprecated (shutdown 09/03/2026). `GPT-4o` đã retired (03/04/2026).
@@ -321,10 +321,10 @@ Nếu tổng vượt model context limit → lỗi hoặc bị cắt ngầm.
 | Loại | Model ví dụ | Context limit | Budget cho history |
 |---|---|---|---|
 | 💚 Lite | Gemini Flash | ~1M tokens | ~800K tokens |
-| 💚 Lite | GPT-5.4 mini | ~400K tokens | ~320K tokens |
+| 💚 Lite | GPT-5.5 mini | ~400K tokens | ~320K tokens |
 | 💚 Lite | Claude 4.5 Haiku | ~200K tokens | ~180K tokens |
 | 🔶 Pro | Gemini 3.1 Pro | ~1M tokens | ~960K tokens |
-| 🔶 Pro | GPT-5.4 | ~1M tokens | ~850K tokens |
+| 🔶 Pro | GPT-5.5 | ~1M tokens | ~960K tokens |
 
 → **Budget khác nhau đáng kể giữa các model.** FANG cần lấy budget theo model đang dùng, không dùng một con số cố định.
 
@@ -420,8 +420,8 @@ context_budget_by_model: dict[str, int] = {
     "gemini-flash": 800_000,
     "gpt-5.4-mini": 320_000,
     "claude-4.5-haiku": 180_000,
-    "gemini-pro": 850_000,
-    "gpt-5.4": 850_000,
+    "gemini-pro": 960_000,
+    "gpt-5.4": 960_000,
 }
 context_budget_warning_threshold: float = 0.80   # Cảnh báo khi > 80%
 context_summarization_model: str = "gemini-flash" # Model dùng để tóm tắt

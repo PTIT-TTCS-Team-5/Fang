@@ -4,40 +4,40 @@
 SET client_encoding TO 'UTF8';
 
 -- 1. COMPANY (5)
-INSERT INTO COMPANY (compName, taxCode, webUrl, logoUrl, contactEmail, prov, ward, street) VALUES
-('FPT Demo',    '0101248141', 'https://fpt-demo.com',    '/logos/fpt.png',    'hr@fpt-demo.com',           'Hà Nội', 'Phường Dịch Vọng Hậu', 'Số 10 Phạm Văn Bạch'),
-('VNG Demo',    '0302553763', 'https://vng-demo.com',    '/logos/vng.png',    'careers@vng-demo.com',       'Hà Nội', 'Phường Mai Dịch',      'Tầng 10 Tòa Keangnam Phạm Hùng'),
-('Viettel Demo','0100109106', 'https://viettel-demo.com','/logos/viettel.png','tuyendung@viettel-demo.com', 'Hà Nội', 'Phường Yên Hòa',       'Số 1 Trần Hữu Dực'),
-('Tiki Demo',   '0309532909', 'https://tiki-demo.com',   '/logos/tiki.png',   'hr@tiki-demo.com',           'Hà Nội', 'Phường Quang Trung',   '18 Tây Sơn'),
-('Momo Demo',   '0313525427', 'https://momo-demo.com',   '/logos/momo.png',   'hr@momo-demo.com',           'Hà Nội', 'Phường Liễu Giai',     '28 Liễu Giai');
+INSERT INTO COMPANY (compName, taxCode, webUrl, logoUrl, contactEmail, provId, ward, street) VALUES
+('FPT Demo',    '0101248141', 'https://fpt-demo.com',    '/logos/fpt.png',    'hr@fpt-demo.com',           'HANOI', 'Phường Dịch Vọng Hậu', 'Số 10 Phạm Văn Bạch'),
+('VNG Demo',    '0302553763', 'https://vng-demo.com',    '/logos/vng.png',    'careers@vng-demo.com',       'HANOI', 'Phường Mai Dịch',      'Tầng 10 Tòa Keangnam Phạm Hùng'),
+('Viettel Demo','0100109106', 'https://viettel-demo.com','/logos/viettel.png','tuyendung@viettel-demo.com', 'HANOI', 'Phường Yên Hòa',       'Số 1 Trần Hữu Dực'),
+('Tiki Demo',   '0309532909', 'https://tiki-demo.com',   '/logos/tiki.png',   'hr@tiki-demo.com',           'HANOI', 'Phường Quang Trung',   '18 Tây Sơn'),
+('Momo Demo',   '0313525427', 'https://momo-demo.com',   '/logos/momo.png',   'hr@momo-demo.com',           'HANOI', 'Phường Liễu Giai',     '28 Liễu Giai');
 
 -- 2. USER (24: 18 Candidate + 5 HR + 1 Admin)
 -- ★ nguyenvanan = MAIN CANDIDATE cho demo (apply 3 job: Backend, Frontend, AI)
-INSERT INTO "user" (userName, pwd, fName, lName, email, phone, prov, ward, street, stat, "role") VALUES
-('nguyenvanan',    '123456', 'An',      'Nguyễn Văn',  'nguyenvanan@gmail.com',    '0901000001', 'Hà Nội', 'Phường Bách Khoa',        '1 Đại Cồ Việt',          'ACTIVE', 'CANDIDATE'),
-('tranthibinh',    '123456', 'Bình',    'Trần Thị',    'tranthibinh@gmail.com',    '0901000002', 'Hà Nội', 'Phường Nhân Chính',       '15 Lê Văn Lương',        'ACTIVE', 'CANDIDATE'),
-('levancuong',     '123456', 'Cường',   'Lê Văn',      'levancuong@gmail.com',     '0901000003', 'Hà Nội', 'Phường Quan Hoa',         '22 Nguyễn Khánh Toàn',   'ACTIVE', 'CANDIDATE'),
-('phamthidung',    '123456', 'Dung',    'Phạm Thị',    'phamthidung@gmail.com',    '0901000004', 'Hà Nội', 'Phường Trung Hòa',        '30 Trung Kính',          'ACTIVE', 'CANDIDATE'),
-('hoangvanduc',    '123456', 'Đức',     'Hoàng Văn',   'hoangvanduc@gmail.com',    '0901000005', 'Hà Nội', 'Phường Thanh Xuân Trung', '50 Nguyễn Trãi',         'ACTIVE', 'CANDIDATE'),
-('vuthiphuong',    '123456', 'Phương',  'Vũ Thị',      'vuthiphuong@gmail.com',    '0901000006', 'Hà Nội', 'Phường Thịnh Quang',      '3 Tây Sơn',              'ACTIVE', 'CANDIDATE'),
-('dangvangiang',   '123456', 'Giang',   'Đặng Văn',    'dangvangiang@gmail.com',   '0901000007', 'Hà Nội', 'Phường Dịch Vọng',        '100 Xuân Thủy',          'ACTIVE', 'CANDIDATE'),
-('buithihuong',    '123456', 'Hương',   'Bùi Thị',     'buithihuong@gmail.com',    '0901000008', 'Hà Nội', 'Phường Thanh Xuân Bắc',   '12 Lê Trọng Tấn',        'ACTIVE', 'CANDIDATE'),
-('lyvankhoi',      '123456', 'Khôi',    'Lý Văn',      'lyvankhoi@gmail.com',      '0901000009', 'Hà Nội', 'Phường Nam Đồng',         '8 Hồ Đắc Di',            'ACTIVE', 'CANDIDATE'),
-('maithilinh',     '123456', 'Linh',    'Mai Thị',     'maithilinh@gmail.com',     '0901000010', 'Hà Nội', 'Phường Khương Thượng',    '45 Tôn Thất Tùng',       'ACTIVE', 'CANDIDATE'),
-('truongvanminh',  '123456', 'Minh',    'Trương Văn',  'truongvanminh@gmail.com',  '0901000011', 'Hà Nội', 'Phường Láng Hạ',          '20 Láng Hạ',             'ACTIVE', 'CANDIDATE'),
-('ngothingoc',     '123456', 'Ngọc',    'Ngô Thị',     'ngothingoc@gmail.com',     '0901000012', 'Hà Nội', 'Phường Trung Liệt',       '7 Thái Hà',              'ACTIVE', 'CANDIDATE'),
-('dinhvanphong',   '123456', 'Phong',   'Đinh Văn',    'dinhvanphong@gmail.com',   '0901000013', 'Hà Nội', 'Phường Kim Liên',         '55 Phạm Ngọc Thạch',     'ACTIVE', 'CANDIDATE'),
-('phamvanquan',    '123456', 'Quân',    'Phạm Văn',    'phamvanquan@gmail.com',    '0901000014', 'Hà Nội', 'Phường Phương Liên',      '18 Đào Duy Anh',          'ACTIVE', 'CANDIDATE'),
-('hoangthiquynh',  '123456', 'Quỳnh',   'Hoàng Thị',   'hoangthiquynh@gmail.com',  '0901000015', 'Hà Nội', 'Phường Ô Chợ Dừa',       '10 Hoàng Cầu',            'ACTIVE', 'CANDIDATE'),
-('lethithanh',     '123456', 'Thanh',   'Lê Thị',      'lethithanh@gmail.com',     '0901000016', 'Hà Nội', 'Phường Hà Cầu',           '5 Quang Trung',           'ACTIVE', 'CANDIDATE'),
-('vuvanthang',     '123456', 'Thắng',   'Vũ Văn',      'vuvanthang@gmail.com',     '0901000017', 'Hà Nội', 'Phường Khương Mai',       '22 Vĩnh Hồ',             'ACTIVE', 'CANDIDATE'),
-('dangthiuyen',    '123456', 'Uyên',    'Đặng Thị',    'dangthiuyen@gmail.com',    '0901000018', 'Hà Nội', 'Phường Ngã Tư Sở',        '33 Trường Chinh',         'ACTIVE', 'CANDIDATE'),
-('hr_fpt',         '123456', 'Lan',     'Ngô Thị',     'lan.ngo@fpt-demo.com',     '0902000001', 'Hà Nội', 'Phường Dịch Vọng Hậu',   'Tòa nhà FPT',            'ACTIVE', 'HR'),
-('hr_vng',         '123456', 'Hùng',    'Đỗ Văn',      'hung.do@vng-demo.com',     '0902000002', 'Hà Nội', 'Phường Mai Dịch',         'Tòa Keangnam',            'ACTIVE', 'HR'),
-('hr_viettel',     '123456', 'Mai',     'Bùi Thị',     'mai.bui@viettel-demo.com', '0902000003', 'Hà Nội', 'Phường Yên Hòa',          'Số 1 Trần Hữu Dực',      'ACTIVE', 'HR'),
-('hr_tiki',        '123456', 'Tuấn',    'Vũ Minh',     'tuan.vu@tiki-demo.com',    '0902000004', 'Hà Nội', 'Phường Quang Trung',      '18 Tây Sơn',              'ACTIVE', 'HR'),
-('hr_momo',        '123456', 'Hà',      'Lý Thu',      'ha.ly@momo-demo.com',      '0902000005', 'Hà Nội', 'Phường Liễu Giai',        '28 Liễu Giai',            'ACTIVE', 'HR'),
-('admin_mod',      '123456', 'Trung',   'Trần Đức',    'mod@micareer.vn',          '0903000002', 'Hà Nội', 'Phường Thanh Xuân Trung', '18 Phạm Hùng',            'ACTIVE', 'ADMIN');
+INSERT INTO "user" (userName, pwd, fName, lName, email, phone, provId, ward, street, stat, "role") VALUES
+('nguyenvanan',    '123456', 'An',      'Nguyễn Văn',  'nguyenvanan@gmail.com',    '0901000001', 'HANOI', 'Phường Bách Khoa',        '1 Đại Cồ Việt',          'ACTIVE', 'CANDIDATE'),
+('tranthibinh',    '123456', 'Bình',    'Trần Thị',    'tranthibinh@gmail.com',    '0901000002', 'HANOI', 'Phường Nhân Chính',       '15 Lê Văn Lương',        'ACTIVE', 'CANDIDATE'),
+('levancuong',     '123456', 'Cường',   'Lê Văn',      'levancuong@gmail.com',     '0901000003', 'HANOI', 'Phường Quan Hoa',         '22 Nguyễn Khánh Toàn',   'ACTIVE', 'CANDIDATE'),
+('phamthidung',    '123456', 'Dung',    'Phạm Thị',    'phamthidung@gmail.com',    '0901000004', 'HANOI', 'Phường Trung Hòa',        '30 Trung Kính',          'ACTIVE', 'CANDIDATE'),
+('hoangvanduc',    '123456', 'Đức',     'Hoàng Văn',   'hoangvanduc@gmail.com',    '0901000005', 'HANOI', 'Phường Thanh Xuân Trung', '50 Nguyễn Trãi',         'ACTIVE', 'CANDIDATE'),
+('vuthiphuong',    '123456', 'Phương',  'Vũ Thị',      'vuthiphuong@gmail.com',    '0901000006', 'HANOI', 'Phường Thịnh Quang',      '3 Tây Sơn',              'ACTIVE', 'CANDIDATE'),
+('dangvangiang',   '123456', 'Giang',   'Đặng Văn',    'dangvangiang@gmail.com',   '0901000007', 'HANOI', 'Phường Dịch Vọng',        '100 Xuân Thủy',          'ACTIVE', 'CANDIDATE'),
+('buithihuong',    '123456', 'Hương',   'Bùi Thị',     'buithihuong@gmail.com',    '0901000008', 'HANOI', 'Phường Thanh Xuân Bắc',   '12 Lê Trọng Tấn',        'ACTIVE', 'CANDIDATE'),
+('lyvankhoi',      '123456', 'Khôi',    'Lý Văn',      'lyvankhoi@gmail.com',      '0901000009', 'HANOI', 'Phường Nam Đồng',         '8 Hồ Đắc Di',            'ACTIVE', 'CANDIDATE'),
+('maithilinh',     '123456', 'Linh',    'Mai Thị',     'maithilinh@gmail.com',     '0901000010', 'HANOI', 'Phường Khương Thượng',    '45 Tôn Thất Tùng',       'ACTIVE', 'CANDIDATE'),
+('truongvanminh',  '123456', 'Minh',    'Trương Văn',  'truongvanminh@gmail.com',  '0901000011', 'HANOI', 'Phường Láng Hạ',          '20 Láng Hạ',             'ACTIVE', 'CANDIDATE'),
+('ngothingoc',     '123456', 'Ngọc',    'Ngô Thị',     'ngothingoc@gmail.com',     '0901000012', 'HANOI', 'Phường Trung Liệt',       '7 Thái Hà',              'ACTIVE', 'CANDIDATE'),
+('dinhvanphong',   '123456', 'Phong',   'Đinh Văn',    'dinhvanphong@gmail.com',   '0901000013', 'HANOI', 'Phường Kim Liên',         '55 Phạm Ngọc Thạch',     'ACTIVE', 'CANDIDATE'),
+('phamvanquan',    '123456', 'Quân',    'Phạm Văn',    'phamvanquan@gmail.com',    '0901000014', 'HANOI', 'Phường Phương Liên',      '18 Đào Duy Anh',          'ACTIVE', 'CANDIDATE'),
+('hoangthiquynh',  '123456', 'Quỳnh',   'Hoàng Thị',   'hoangthiquynh@gmail.com',  '0901000015', 'HANOI', 'Phường Ô Chợ Dừa',       '10 Hoàng Cầu',            'ACTIVE', 'CANDIDATE'),
+('lethithanh',     '123456', 'Thanh',   'Lê Thị',      'lethithanh@gmail.com',     '0901000016', 'HANOI', 'Phường Hà Cầu',           '5 Quang Trung',           'ACTIVE', 'CANDIDATE'),
+('vuvanthang',     '123456', 'Thắng',   'Vũ Văn',      'vuvanthang@gmail.com',     '0901000017', 'HANOI', 'Phường Khương Mai',       '22 Vĩnh Hồ',             'ACTIVE', 'CANDIDATE'),
+('dangthiuyen',    '123456', 'Uyên',    'Đặng Thị',    'dangthiuyen@gmail.com',    '0901000018', 'HANOI', 'Phường Ngã Tư Sở',        '33 Trường Chinh',         'ACTIVE', 'CANDIDATE'),
+('hr_fpt',         '123456', 'Lan',     'Ngô Thị',     'lan.ngo@fpt-demo.com',     '0902000001', 'HANOI', 'Phường Dịch Vọng Hậu',   'Tòa nhà FPT',            'ACTIVE', 'HR'),
+('hr_vng',         '123456', 'Hùng',    'Đỗ Văn',      'hung.do@vng-demo.com',     '0902000002', 'HANOI', 'Phường Mai Dịch',         'Tòa Keangnam',            'ACTIVE', 'HR'),
+('hr_viettel',     '123456', 'Mai',     'Bùi Thị',     'mai.bui@viettel-demo.com', '0902000003', 'HANOI', 'Phường Yên Hòa',          'Số 1 Trần Hữu Dực',      'ACTIVE', 'HR'),
+('hr_tiki',        '123456', 'Tuấn',    'Vũ Minh',     'tuan.vu@tiki-demo.com',    '0902000004', 'HANOI', 'Phường Quang Trung',      '18 Tây Sơn',              'ACTIVE', 'HR'),
+('hr_momo',        '123456', 'Hà',      'Lý Thu',      'ha.ly@momo-demo.com',      '0902000005', 'HANOI', 'Phường Liễu Giai',        '28 Liễu Giai',            'ACTIVE', 'HR'),
+('admin_mod',      '123456', 'Trung',   'Trần Đức',    'mod@micareer.vn',          '0903000002', 'HANOI', 'Phường Thanh Xuân Trung', '18 Phạm Hùng',            'ACTIVE', 'ADMIN');
 
 -- 3. CANDIDATE (18)
 -- ★ MAIN CANDIDATE: nguyenvanan — bio chi tiết
@@ -146,7 +146,7 @@ INSERT INTO "admin" (userId, lastIp, roleId) VALUES
 -- J1 (Backend), J2 (Frontend), J4 (AI) = 3 job chính cho demo, mô tả chi tiết
 
 -- J1: Backend Developer (Java/Spring Boot) — FPT Demo
-INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, expAt, compId)
+INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, provId, expAt, compId)
 VALUES ('Backend Developer (Java/Spring Boot)',
 'CHI TIẾT CÔNG VIỆC
 Phát triển hệ thống Backend cho các dự án sản phẩm sử dụng Java và Spring Boot.
@@ -175,11 +175,11 @@ Gói bảo hiểm sức khỏe FPT Care - khám chữa bệnh miễn phí tại 
 Môi trường làm việc thân thiện, cởi mở. Cơ sở vật chất hiện đại.
 Nhiều cơ hội phát triển và thăng tiến.
 Văn hóa Doanh nghiệp đặc sắc: teambuilding, hội diễn Sao Chổi, sinh nhật FPT Demo.',
-15000000, 25000000, 'Số 10 Phạm Văn Bạch, Cầu Giấy, Hà Nội', 'ONSITE', '2026-06-30 23:59:59',
+15000000, 25000000, 'Số 10 Phạm Văn Bạch, Cầu Giấy, Hà Nội', 'ONSITE', 'HANOI', '2026-06-30 23:59:59',
 (SELECT compId FROM COMPANY WHERE compName = 'FPT Demo'));
 
 -- J2: Frontend Developer (ReactJS) — FPT Demo
-INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, expAt, compId)
+INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, provId, expAt, compId)
 VALUES ('Frontend Developer (ReactJS)',
 'CHI TIẾT CÔNG VIỆC
 Phối hợp cùng Product Owner và Team Lead để tìm hiểu yêu cầu nghiệp vụ và chuyển hóa thành giải pháp kỹ thuật.
@@ -206,18 +206,18 @@ BHXH, BHYT đầy đủ theo luật lao động.
 Gói chăm sóc sức khỏe FPT Care.
 Môi trường làm việc sáng tạo, cởi mở. Cơ hội hợp tác với chuyên gia công nghệ.
 Tài trợ chi phí khóa học và chứng chỉ liên quan.',
-12000000, 22000000, 'Số 10 Phạm Văn Bạch, Cầu Giấy, Hà Nội', 'HYBRID', '2026-07-15 23:59:59',
+12000000, 22000000, 'Số 10 Phạm Văn Bạch, Cầu Giấy, Hà Nội', 'HYBRID', 'HANOI', '2026-07-15 23:59:59',
 (SELECT compId FROM COMPANY WHERE compName = 'FPT Demo'));
 
 -- J3: Fullstack Developer (NodeJS) — VNG Demo
-INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, expAt, compId)
+INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, provId, expAt, compId)
 VALUES ('Fullstack Developer (NodeJS)',
 'Phát triển ứng dụng web fullstack với NodeJS + VueJS. Yêu cầu tối thiểu 2 năm kinh nghiệm NodeJS, PostgreSQL. Ưu tiên có kinh nghiệm Docker, AWS.',
-20000000, 35000000, 'Tòa Keangnam, Phạm Hùng, Hà Nội', 'ONSITE', '2026-07-31 23:59:59',
+20000000, 35000000, 'Tòa Keangnam, Phạm Hùng, Hà Nội', 'ONSITE', 'HANOI', '2026-07-31 23:59:59',
 (SELECT compId FROM COMPANY WHERE compName = 'VNG Demo'));
 
 -- J4: AI Engineer (Python/NLP) — VNG Demo
-INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, expAt, compId)
+INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, provId, expAt, compId)
 VALUES ('AI Engineer (Python/NLP)',
 'CHI TIẾT CÔNG VIỆC
 1. Phân tích yêu cầu nghiệp vụ và dữ liệu:
@@ -247,36 +247,112 @@ QUYỀN LỢI
 - Môi trường Sandbox công nghệ: Quản lý chi trả toàn bộ chi phí API Key, Server AWS để thử nghiệm công nghệ genAI.
 - Cấp quyền truy cập kho học liệu nội bộ, tài trợ học và thi chứng chỉ AI.
 - Đội ngũ GenZ siêu trẻ trung, năng động.',
-18000000, 30000000, 'Tòa Keangnam, Phạm Hùng, Hà Nội', 'HYBRID', '2026-08-15 23:59:59',
+18000000, 30000000, 'Tòa Keangnam, Phạm Hùng, Hà Nội', 'HYBRID', 'HANOI', '2026-08-15 23:59:59',
 (SELECT compId FROM COMPANY WHERE compName = 'VNG Demo'));
 
 -- J5: DevOps Engineer — Viettel Demo
-INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, expAt, compId)
+INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, provId, expAt, compId)
 VALUES ('DevOps Engineer',
 'Quản lý hạ tầng cloud, CI/CD pipeline. Yêu cầu Docker, AWS, Linux. Tối thiểu 2 năm kinh nghiệm.',
-20000000, 35000000, 'Số 1 Trần Hữu Dực, Cầu Giấy, Hà Nội', 'HYBRID', '2026-08-31 23:59:59',
+20000000, 35000000, 'Số 1 Trần Hữu Dực, Cầu Giấy, Hà Nội', 'HYBRID', 'HANOI', '2026-08-31 23:59:59',
 (SELECT compId FROM COMPANY WHERE compName = 'Viettel Demo'));
 
 -- J6: Mobile Developer (Kotlin) — Viettel Demo
-INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, expAt, compId)
+INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, provId, expAt, compId)
 VALUES ('Mobile Developer (Kotlin)',
 'Phát triển ứng dụng Android với Kotlin. Tích hợp API RESTful. Yêu cầu tối thiểu 1 năm kinh nghiệm.',
-15000000, 28000000, 'Số 1 Trần Hữu Dực, Cầu Giấy, Hà Nội', 'ONSITE', '2026-07-31 23:59:59',
+15000000, 28000000, 'Số 1 Trần Hữu Dực, Cầu Giấy, Hà Nội', 'ONSITE', 'HANOI', '2026-07-31 23:59:59',
 (SELECT compId FROM COMPANY WHERE compName = 'Viettel Demo'));
 
 -- J7: Backend Developer (Python/FastAPI) — Tiki Demo
-INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, expAt, compId)
+INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, provId, expAt, compId)
 VALUES ('Backend Developer (Python/FastAPI)',
 'Xây dựng API backend với FastAPI, PostgreSQL. Tích hợp AI/ML. Yêu cầu tối thiểu 1 năm Python.',
-18000000, 32000000, '18 Tây Sơn, Đống Đa, Hà Nội', 'HYBRID', '2026-08-15 23:59:59',
+18000000, 32000000, '18 Tây Sơn, Đống Đa, Hà Nội', 'HYBRID', 'HANOI', '2026-08-15 23:59:59',
 (SELECT compId FROM COMPANY WHERE compName = 'Tiki Demo'));
 
 -- J8: Frontend Developer (VueJS) — Momo Demo
-INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, expAt, compId)
+INSERT INTO JOBPOSTING (title, description, minSalary, maxSalary, workLoc, workMode, provId, expAt, compId)
 VALUES ('Frontend Developer (VueJS)',
 'Phát triển giao diện ứng dụng fintech với VueJS. Yêu cầu tối thiểu 1 năm kinh nghiệm VueJS/JavaScript.',
-16000000, 28000000, '28 Liễu Giai, Ba Đình, Hà Nội', 'ONSITE', '2026-08-31 23:59:59',
+16000000, 28000000, '28 Liễu Giai, Ba Đình, Hà Nội', 'ONSITE', 'HANOI', '2026-08-31 23:59:59',
 (SELECT compId FROM COMPANY WHERE compName = 'Momo Demo'));
+
+-- ============================================================
+-- 7b. [NMAIex] JOB_LEVEL_MAP & JOB_CATEGORY_MAP
+-- ============================================================
+
+-- J1 Backend: Junior, Middle | Backend Development
+INSERT INTO JOB_LEVEL_MAP (jobPostId, levelId)
+SELECT jp.jobPostId, jl.levelId FROM JOBPOSTING jp CROSS JOIN JOBLEVEL jl
+WHERE jp.title = 'Backend Developer (Java/Spring Boot)' AND jl.levelName IN ('Junior', 'Middle');
+
+INSERT INTO JOB_CATEGORY_MAP (jobPostId, catId)
+SELECT jp.jobPostId, jc.catId FROM JOBPOSTING jp CROSS JOIN JOBCATEGORY jc
+WHERE jp.title = 'Backend Developer (Java/Spring Boot)' AND jc.catName = 'Backend Development';
+
+-- J2 Frontend: Middle | Frontend Development
+INSERT INTO JOB_LEVEL_MAP (jobPostId, levelId)
+SELECT jp.jobPostId, jl.levelId FROM JOBPOSTING jp CROSS JOIN JOBLEVEL jl
+WHERE jp.title = 'Frontend Developer (ReactJS)' AND jl.levelName = 'Middle';
+
+INSERT INTO JOB_CATEGORY_MAP (jobPostId, catId)
+SELECT jp.jobPostId, jc.catId FROM JOBPOSTING jp CROSS JOIN JOBCATEGORY jc
+WHERE jp.title = 'Frontend Developer (ReactJS)' AND jc.catName = 'Frontend Development';
+
+-- J3 Fullstack: Middle | Fullstack Development
+INSERT INTO JOB_LEVEL_MAP (jobPostId, levelId)
+SELECT jp.jobPostId, jl.levelId FROM JOBPOSTING jp CROSS JOIN JOBLEVEL jl
+WHERE jp.title = 'Fullstack Developer (NodeJS)' AND jl.levelName = 'Middle';
+
+INSERT INTO JOB_CATEGORY_MAP (jobPostId, catId)
+SELECT jp.jobPostId, jc.catId FROM JOBPOSTING jp CROSS JOIN JOBCATEGORY jc
+WHERE jp.title = 'Fullstack Developer (NodeJS)' AND jc.catName = 'Fullstack Development';
+
+-- J4 AI: Fresher, Junior | AI / Machine Learning
+INSERT INTO JOB_LEVEL_MAP (jobPostId, levelId)
+SELECT jp.jobPostId, jl.levelId FROM JOBPOSTING jp CROSS JOIN JOBLEVEL jl
+WHERE jp.title = 'AI Engineer (Python/NLP)' AND jl.levelName IN ('Fresher', 'Junior');
+
+INSERT INTO JOB_CATEGORY_MAP (jobPostId, catId)
+SELECT jp.jobPostId, jc.catId FROM JOBPOSTING jp CROSS JOIN JOBCATEGORY jc
+WHERE jp.title = 'AI Engineer (Python/NLP)' AND jc.catName = 'AI / Machine Learning';
+
+-- J5 DevOps: Middle | DevOps / Cloud
+INSERT INTO JOB_LEVEL_MAP (jobPostId, levelId)
+SELECT jp.jobPostId, jl.levelId FROM JOBPOSTING jp CROSS JOIN JOBLEVEL jl
+WHERE jp.title = 'DevOps Engineer' AND jl.levelName = 'Middle';
+
+INSERT INTO JOB_CATEGORY_MAP (jobPostId, catId)
+SELECT jp.jobPostId, jc.catId FROM JOBPOSTING jp CROSS JOIN JOBCATEGORY jc
+WHERE jp.title = 'DevOps Engineer' AND jc.catName = 'DevOps / Cloud';
+
+-- J6 Mobile: Junior | Mobile Development
+INSERT INTO JOB_LEVEL_MAP (jobPostId, levelId)
+SELECT jp.jobPostId, jl.levelId FROM JOBPOSTING jp CROSS JOIN JOBLEVEL jl
+WHERE jp.title = 'Mobile Developer (Kotlin)' AND jl.levelName = 'Junior';
+
+INSERT INTO JOB_CATEGORY_MAP (jobPostId, catId)
+SELECT jp.jobPostId, jc.catId FROM JOBPOSTING jp CROSS JOIN JOBCATEGORY jc
+WHERE jp.title = 'Mobile Developer (Kotlin)' AND jc.catName = 'Mobile Development';
+
+-- J7 Backend Python: Junior | Backend Development
+INSERT INTO JOB_LEVEL_MAP (jobPostId, levelId)
+SELECT jp.jobPostId, jl.levelId FROM JOBPOSTING jp CROSS JOIN JOBLEVEL jl
+WHERE jp.title = 'Backend Developer (Python/FastAPI)' AND jl.levelName = 'Junior';
+
+INSERT INTO JOB_CATEGORY_MAP (jobPostId, catId)
+SELECT jp.jobPostId, jc.catId FROM JOBPOSTING jp CROSS JOIN JOBCATEGORY jc
+WHERE jp.title = 'Backend Developer (Python/FastAPI)' AND jc.catName = 'Backend Development';
+
+-- J8 Frontend VueJS: Junior | Frontend Development
+INSERT INTO JOB_LEVEL_MAP (jobPostId, levelId)
+SELECT jp.jobPostId, jl_lvl.levelId FROM JOBPOSTING jp CROSS JOIN JOBLEVEL jl_lvl
+WHERE jp.title = 'Frontend Developer (VueJS)' AND jl_lvl.levelName = 'Junior';
+
+INSERT INTO JOB_CATEGORY_MAP (jobPostId, catId)
+SELECT jp.jobPostId, jc.catId FROM JOBPOSTING jp CROSS JOIN JOBCATEGORY jc
+WHERE jp.title = 'Frontend Developer (VueJS)' AND jc.catName = 'Frontend Development';
 
 -- 7. JOBREQUIREMENT
 -- Dùng INSERT...SELECT để map skillName → skillId, jobTitle → jobPostId
@@ -1285,8 +1361,8 @@ END $$;
 -- 13. THÍ SINH ĐẶC BIỆT: NGUYỄN HẢI HƯNG
 -- Data mock riêng cho bài test AI Engineer
 -- ==========================================
-INSERT INTO "user" (userName, pwd, fName, lName, email, phone, prov, ward, street, stat, "role") VALUES
-('nguyenhaihung',  '123456', 'Hưng',    'Nguyễn Hải',  'nguyenhaihung@gmail.com',  '0909000001', 'Hà Nội', 'Phường Đại Kim',          'KĐT Đại Kim',            'ACTIVE', 'CANDIDATE') ON CONFLICT DO NOTHING;
+INSERT INTO "user" (userName, pwd, fName, lName, email, phone, provId, ward, street, stat, "role") VALUES
+('nguyenhaihung',  '123456', 'Hưng',    'Nguyễn Hải',  'nguyenhaihung@gmail.com',  '0909000001', 'HANOI', 'Phường Đại Kim',          'KĐT Đại Kim',            'ACTIVE', 'CANDIDATE') ON CONFLICT DO NOTHING;
 
 INSERT INTO CANDIDATE (userId, bio, cvUrl, dob, expyears) VALUES
 ((SELECT userId FROM "user" WHERE userName = 'nguyenhaihung'),

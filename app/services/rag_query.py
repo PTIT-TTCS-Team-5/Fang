@@ -84,9 +84,10 @@ async def _fetch_job_posting(job_app_id: int) -> dict[str, Any] | None:
 async def _fetch_candidate_profile(job_app_id: int) -> dict[str, Any] | None:
     """Lấy thông tin Candidate profile."""
     query = """
-        SELECT u.fName || ' ' || u.lName AS fullname, u.email, u.phone, c.bio, c.expyears
+        SELECT u.fName || ' ' || u.lName AS fullname, u.email, u.phone, c.bio, c.expyears, p.provName AS location
         FROM CANDIDATE c
         INNER JOIN "user" u ON c.userId = u.userId
+        LEFT JOIN PROVINCE p ON u.provId = p.provId
         INNER JOIN JOBAPPLICATION ja ON ja.candidateId = c.userId
         WHERE ja.jobAppId = $1;
     """
@@ -151,6 +152,8 @@ def _build_system_prompt(
             c_section += f"\nHọ tên: {candidate['fullname']}"
         if candidate.get("expyears"):
             c_section += f"\nKinh nghiệm: {candidate['expyears']} năm"
+        if candidate.get("location"):
+            c_section += f"\nKhu vực: {candidate['location']}"
         if candidate.get("bio"):
             c_section += f"\nBio: {candidate['bio']}"
         parts.append(c_section)

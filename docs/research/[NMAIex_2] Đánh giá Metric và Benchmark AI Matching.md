@@ -34,10 +34,10 @@ Dựa trên cơ sở hạ tầng embedding-based retrieval hiện tại của FA
 
 **Độ đo Primary: Normalized Discounted Cumulative Gain (nDCG@K)** Độ đo nDCG là lựa chọn hoàn hảo và bắt buộc phải có cho chiều Candidate-to-Job. Nó giải quyết xuất sắc hai vấn đề nền tảng trong hệ thống gợi ý: nó hỗ trợ chấm điểm mức độ liên quan theo nhiều cấp độ (graded relevance) và nó áp dụng hình phạt suy giảm (discounting factor) dựa trên vị trí hiển thị.11
 
-Nguyên lý của nDCG là các kết quả có độ liên quan cao nhất phải xuất hiện ở các vị trí đầu tiên, và giá trị của một kết quả tốt sẽ giảm dần theo hàm logarit nếu nó bị đẩy xuống dưới danh sách.21 Công thức của Discounted Cumulative Gain (DCG) tại vị trí ![][image1] được biểu diễn như sau:
+Nguyên lý của nDCG là các kết quả có độ liên quan cao nhất phải xuất hiện ở các vị trí đầu tiên, và giá trị của một kết quả tốt sẽ giảm dần theo hàm logarit nếu nó bị đẩy xuống dưới danh sách.21 Công thức của Discounted Cumulative Gain (DCG) tại vị trí K được biểu diễn như sau:
 
-![][image2]  
-Trong đó ![][image3] là điểm đánh giá mức độ phù hợp của công việc tại vị trí ![][image4]. Ví dụ, một công việc "Perfect Match" có thể được gán ![][image5], "Good Match" là ![][image6], "Fair Match" là ![][image7]. Giá trị DCG này sau đó được chuẩn hóa bằng cách chia cho Ideal DCG (IDCG) \- là giá trị DCG đạt được nếu danh sách được sắp xếp hoàn hảo nhất có thể.22 Việc chuẩn hóa này tạo ra nDCG dao động trong khoảng từ 0 đến 1, cho phép so sánh chéo hiệu suất giữa các ứng viên có số lượng công việc phù hợp lý tưởng khác nhau trong cơ sở dữ liệu.22
+$$DCG@K = \sum_{i=1}^{K} \frac{2^{rel_i} - 1}{\log_2(i + 1)}$$  
+Trong đó $rel_i$ là điểm đánh giá mức độ phù hợp của công việc tại vị trí i. Ví dụ, một công việc "Perfect Match" có thể được gán $rel = 3$, "Good Match" là $rel = 2$, "Fair Match" là $rel = 1$. Giá trị DCG này sau đó được chuẩn hóa bằng cách chia cho Ideal DCG (IDCG) \- là giá trị DCG đạt được nếu danh sách được sắp xếp hoàn hảo nhất có thể.22 Việc chuẩn hóa này tạo ra nDCG dao động trong khoảng từ 0 đến 1, cho phép so sánh chéo hiệu suất giữa các ứng viên có số lượng công việc phù hợp lý tưởng khác nhau trong cơ sở dữ liệu.22
 
 **Độ đo Secondary: HitRate@K và MAP (Mean Average Precision)** HitRate@K đóng vai trò đo lường tỷ lệ những người dùng nhận được *ít nhất một* gợi ý công việc thực sự chất lượng trong top K.11 HitRate là một thước đo mang tính trực quan cao để đội ngũ phát triển sản phẩm biết được hệ thống có đang giải quyết triệt để vấn đề "khởi động lạnh" (cold start) hay không.11
 
@@ -51,14 +51,14 @@ Ngược lại với ứng viên, nhà tuyển dụng có quỹ thời gian hạ
 
 Nếu ứng viên xuất sắc nhất xuất hiện ở vị trí đầu tiên, Reciprocal Rank là 1\. Nếu xuất hiện ở vị trí thứ hai, điểm giảm mạnh xuống còn 0.5. Nếu ở vị trí thứ ba, điểm là 0.33. Quá trình này được trung bình hóa trên toàn bộ tập truy vấn công việc theo công thức:
 
-![][image8]  
+$$MRR = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \frac{1}{rank_i}$$ 
 Sự suy giảm tuyến tính cực gắt của MRR phản ánh đúng tâm lý thiếu kiên nhẫn của nhà tuyển dụng đối với các hệ thống ATS hiện đại.11 Nếu thuật toán embedding của FANG đẩy các ứng viên không liên quan lên top đầu, điểm MRR sẽ rớt thảm hại, phát ra tín hiệu báo động ngay lập tức cho đội ngũ kỹ sư.
 
 **Độ đo Secondary: Precision@K và AUC (Area Under the ROC Curve)** Hỗ trợ cho MRR, Precision@K (với K nhỏ, thường là K=5 hoặc K=10) sẽ đánh giá tỷ lệ hồ sơ thực sự chất lượng trong cụm kết quả đầu tiên.10 Khác với nDCG đo lường thứ tự một cách chi tiết, Precision@K cung cấp góc nhìn nhị phân về tính hợp lệ của danh sách top đầu, giúp định lượng được tỷ lệ "tín hiệu trên nhiễu" (signal-to-noise ratio).27 AUC có thể được sử dụng để đánh giá năng lực phân loại toàn cục của mô hình (pairwise accuracy) giữa một ứng viên được nhận và một ứng viên bị loại bỏ, tuy nhiên AUC thiếu độ nhạy về mặt thứ hạng vị trí (position bias) nên không thể thay thế nDCG hay MRR.28
 
 ### **Tổng hợp Độ đo Hai chiều và Lựa chọn Tham số Top-K**
 
-Một hệ thống tuyển dụng xuất sắc không chỉ phục vụ tốt một bên. Khái niệm Gợi ý Tương hỗ (Reciprocal Recommendation) đòi hỏi việc tổng hợp mức độ thành công của các tương tác.1 Việc lựa chọn giá trị ![][image1] (top-K cutoff) đóng vai trò quyết định trong việc định hình kết quả đánh giá.11 Dữ liệu và nghiên cứu cho thấy sự chú ý của con người suy giảm nghiêm trọng sau một số lượng kết quả nhất định.11
+Một hệ thống tuyển dụng xuất sắc không chỉ phục vụ tốt một bên. Khái niệm Gợi ý Tương hỗ (Reciprocal Recommendation) đòi hỏi việc tổng hợp mức độ thành công của các tương tác.1 Việc lựa chọn giá trị $K$ (top-K cutoff) đóng vai trò quyết định trong việc định hình kết quả đánh giá.11 Dữ liệu và nghiên cứu cho thấy sự chú ý của con người suy giảm nghiêm trọng sau một số lượng kết quả nhất định.11
 
 | Tham số Top-K | Ý nghĩa trong Luồng Candidate-to-Job | Ý nghĩa trong Luồng Job-to-Candidate | Đề xuất cho hệ thống FANG |
 | :---- | :---- | :---- | :---- |
@@ -122,11 +122,11 @@ Sau khi đã có bộ metric vững chắc và framework benchmark chuẩn xác,
 
 Để biến kết quả xếp hạng từ một danh sách điểm số vô tri thành một tín hiệu định lượng có ý nghĩa vận hành (ví dụ: "hệ thống tự tin 90% rằng ứng viên này sẽ vượt qua vòng lọc hồ sơ"), việc tích hợp một lớp hiệu chuẩn điểm số (Calibration layer) vào ngay sau quy trình retrieval của FANG là thao tác kỹ thuật có giá trị ROI (Return on Investment) cực cao và chi phí vận hành thấp.64
 
-Lớp hiệu chuẩn có nhiệm vụ biến đổi (transform) không tuyến tính điểm số Cosine thô thành một phân phối xác suất mang tính dự báo thực tế, tiệm cận với xác suất trúng tuyển (![][image9]). Hai kỹ thuật toán học hàng đầu được xem xét trong báo cáo này là Platt Scaling và Isotonic Regression.66
+Lớp hiệu chuẩn có nhiệm vụ biến đổi (transform) không tuyến tính điểm số Cosine thô thành một phân phối xác suất mang tính dự báo thực tế, tiệm cận với xác suất trúng tuyển  ($P(Hire|CV, Job)$). Hai kỹ thuật toán học hàng đầu được xem xét trong báo cáo này là Platt Scaling và Isotonic Regression.66
 
 | Tiêu chí | Platt Scaling | Isotonic Regression | Phân tích Mức độ Phù hợp với FANG |
 | :---- | :---- | :---- | :---- |
-| **Bản chất Toán học** | Huấn luyện một mô hình Hồi quy Logistic trên điểm số thô, biến đổi kết quả theo hàm Sigmoid chuẩn.68 Công thức: ![][image10] | Hồi quy phi tham số (non-parametric), thiết lập một hàm bậc thang để sửa chữa bất kỳ biến dạng đơn điệu nào (monotonic distortion).67 | Cả hai đều biến đổi điểm số về dải $$ chuẩn xác suất. |
+| **Bản chất Toán học** | Huấn luyện một mô hình Hồi quy Logistic trên điểm số thô, biến đổi kết quả theo hàm Sigmoid chuẩn.68 Công thức: $P = \frac{1}{1 + \exp(A \cdot f + B)}$ | Hồi quy phi tham số (non-parametric), thiết lập một hàm bậc thang để sửa chữa bất kỳ biến dạng đơn điệu nào (monotonic distortion).67 | Cả hai đều biến đổi điểm số về dải $$ chuẩn xác suất. |
 | **Yêu cầu Khối lượng Dữ liệu** | Hoạt động cực kỳ ổn định ngay cả khi dữ liệu huấn luyện (cross-validation) nhỏ gọn.66 | Đòi hỏi một lượng lớn dữ liệu phân phối đều để xác định các điểm ngắt của hàm bậc thang một cách chính xác.66 | FANG hiện đang ở giai đoạn mở rộng dữ liệu, số lượng ground truth chưa thể đạt mức khổng lồ ngay lập tức. |
 | **Nguy cơ Quá khớp (Overfitting)** | Rất thấp, cấu trúc hàm tham số có tính tổng quát hóa (generalization) cao đối với các điểm dữ liệu mới.67 | Rất cao nếu dữ liệu có nhiều nhiễu, phân phối lệch, hoặc đối với các truy vấn hiếm (tail queries).66 | Isotonic Regression có nguy cơ phá vỡ hệ thống nếu áp dụng cho các tin tuyển dụng ngách có ít ứng viên. |
 

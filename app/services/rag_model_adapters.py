@@ -456,7 +456,7 @@ MODEL_MODE_REGISTRY: dict[str, tuple[GenerationAdapter, str]] = {
     "claude-haiku": (AnthropicGenerationAdapter(), "claude-4.5-haiku"),
     # 🔶 Pro — model cụ thể
     "gemini-pro": (GeminiGenerationAdapter(), "gemini-pro"),
-    "gpt-full": (OpenAIGenerationAdapter(), "gpt-5.4"),
+    "gpt-full": (OpenAIGenerationAdapter(), "gpt-5.5"),
 }
 
 #: Map từ auto mode → danh sách (adapter, model_name) theo thứ tự fallback
@@ -468,7 +468,7 @@ AUTO_MODE_CHAINS: dict[str, list[tuple[GenerationAdapter, str]]] = {
     ],
     "auto-pro": [
         (GeminiGenerationAdapter(), "gemini-pro"),
-        (OpenAIGenerationAdapter(), "gpt-5.4"),
+        (OpenAIGenerationAdapter(), "gpt-5.5"),
     ],
 }
 
