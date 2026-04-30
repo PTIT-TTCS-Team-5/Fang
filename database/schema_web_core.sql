@@ -174,7 +174,28 @@ CREATE TABLE CANDIDATESKILL (
   FOREIGN KEY (userId) REFERENCES CANDIDATE(userId),
   FOREIGN KEY (skillId) REFERENCES SKILL(skillId)
 );
- 
+
+-- [NMAIex] Strategy C: Unmatched skills với vector cho fuzzy matching (Tầng 2)
+CREATE TABLE CANDIDATE_SKILL_RAW (
+    rawId      SERIAL PRIMARY KEY,
+    candId     INT NOT NULL REFERENCES CANDIDATE(userId) ON DELETE CASCADE,
+    rawText    VARCHAR(200) NOT NULL,
+    embedding  vector(__NMAIEX_SKILL_EMBEDDING_DIM__),  -- dims từ NMAIEX_SKILL_EMBEDDING_DIMS
+    createdAt  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_cand_skill_raw_cand ON CANDIDATE_SKILL_RAW(candId);
+
+-- [NMAIex] Strategy C: Unmatched skills phía Job (khi HR nhập text-free skill)
+-- Dung cho HR hybrid skill input -> LLM mapper -> unmatched -> embed -> JOB_SKILL_RAW
+CREATE TABLE JOB_SKILL_RAW (
+    rawId      SERIAL PRIMARY KEY,
+    jobPostId  INT NOT NULL REFERENCES JOBPOSTING(jobPostId) ON DELETE CASCADE,
+    rawText    VARCHAR(200) NOT NULL,
+    embedding  vector(__NMAIEX_SKILL_EMBEDDING_DIM__),  -- cùng dims với CANDIDATE_SKILL_RAW
+    createdAt  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_job_skill_raw_job ON JOB_SKILL_RAW(jobPostId);
+
 CREATE TABLE JOBAPPLICATION (
   jobAppId SERIAL PRIMARY KEY,
   candidateId INT NOT NULL,

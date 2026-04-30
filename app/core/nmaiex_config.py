@@ -22,6 +22,10 @@ class NMAIexSettings(BaseSettings):
     nmaiex_ranking_default_limit: int = 20
     nmaiex_ranking_max_limit: int = 100
 
+    # Strategy C: Tiered Skill Matching
+    nmaiex_skill_embedding_dims: int = 256  # 256 đủ cho text ngắn, rẻ hơn 4x
+    nmaiex_skill_alpha: float = 0.8  # exact_overlap weight (1-alpha = fuzzy)
+
     model_config = SettingsConfigDict(
         env_file=".env.nmaiex", env_file_encoding="utf-8", extra="ignore"
     )
