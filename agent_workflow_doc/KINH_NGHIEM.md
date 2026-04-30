@@ -17,3 +17,10 @@ File duy nhất trong dự án được viết thủ công :b
     - 'AI_MANUAL_UPDATE' để Agent tự lên mạng kiếm thông tin về các Model LLM dự án dùng và sau đó tự động cập nhật tại các tài liệu Code liên quan (cập nhật context size, thông báo deprecation v.v )
     - 'GIT_WORKFLOW_GUIDE' để Agent tự biết cách rẽ nhánh, commit theo chuẩn mình yêu cầu 
     - 'AI_WORKFLOW_INIT' để Agent khởi tạo ngữ cảnh, tự biết đi tìm tài liệu đọc hiểu dự án v.v
+
+## Quan trọng lắm này
+- Làm việc với Agent, ít nhất là ở thời điểm hiện tại thì chưa thể tin tưởng được chúng nó đâu =))
+    - Phải duyệt phương án triển khai, chiến lược rất kỹ. Đôi khi sửa đi sửa lại chục lần
+    - Trong quá trình nó thực thi (tự đọc code, search web, triển khai v.v) phải ngồi đọc suy nghĩ nó liên tục. Để nó tự làm thì mất ổ C lúc nào không biết đâu :b. Đùa thôi nhưng mà thực sự giám sát liên tục lúc nó làm việc mới thấy vẫn còn phải chỉnh khá nhiều, nhất là khi nó bị hallucination mà mình không chặn kịp thì nó quậy cho hỏng hết.
+    - Nhất là lúc chúng nó đưa ra phương án xong bảo là đợi mình duyệt mà toàn tự duyệt r làm luôn. Lúc đấy mà không quan sát thì nó tự triển khai lung tung thì ăn đủ :b Tốn token chỉ để sửa r làm lại từ đầu
+- À cách dùng bên trên lấy bối cảnh là mình dùng Antigravity có gói google AI pro, github copilot trong vs code có gói pro student nhé. Claude gọi ở bên Antigravity còn Haiku, Codex gọi bên GitHub Copilot

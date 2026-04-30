@@ -55,6 +55,12 @@ Tham chiếu: `[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md`
   - Thêm INSERT vào `JOB_LEVEL_MAP` và `JOB_CATEGORY_MAP` cho từng JobPosting.
   - Giữ lại ứng viên đặc biệt **Nguyễn Hải Hưng** và `cvUrl` gốc FANG.
 
+### 1b. Chuẩn Hóa Hạ Tầng (Infrastructure Standardization)
+- `[/]` Refactor `app/services/embedding.py`: Thêm tham số `dimensions` vào `embed_chunks` và fallback về `settings.embedding_dim`.
+- `[ ]` Cập nhật `database/schema_ai_core.sql`: Đổi `vector(1024)` thành `vector(__TTCS_EMBEDDING_DIM__)`.
+- `[ ]` Cập nhật `database/schema_web_core.sql`: Đổi `vector(256)` thành `vector(__NMAIEX_SKILL_EMBEDDING_DIM__)` cho bảng `CANDIDATE_SKILL_RAW` và `JOB_SKILL_RAW`.
+- `[ ]` Cập nhật `scripts/reset_and_seed_db.py`: Bổ sung logic string replace các placeholder (`__TTCS_EMBEDDING_DIM__`, `__NMAIEX_SKILL_EMBEDDING_DIM__`) bằng giá trị thực tế từ `.env`.
+
 ### 1c. Cấu Hình NMAIex
 - [x] Tạo file `.env.nmaiex` tại root FANG (theo template trong Implementation Plan).
   - **Cloudinary dùng chung:** Credentials (`CLOUD_NAME`, `API_KEY`, `API_SECRET`) đặt ở `.env` gốc. Chỉ thêm `NMAIEX_CLOUDINARY_UPLOAD_FOLDER="nmaiex"` vào `.env.nmaiex`.

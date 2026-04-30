@@ -10,7 +10,7 @@ from app.core.database import acquire_conn, db
 from app.core.logging import logger
 
 MOCK_CLOUDINARY_URL = (
-    "https://res.cloudinary.com/dfwkw1guc/image/upload/v1775987977/sample_ml2jzo.pdf"
+    "https://res.cloudinary.com/dfwkw1guc/raw/upload/v1777525993/ttcs/sample"
 )
 TARGET_DB_NAME = "micareer_lite_db"
 

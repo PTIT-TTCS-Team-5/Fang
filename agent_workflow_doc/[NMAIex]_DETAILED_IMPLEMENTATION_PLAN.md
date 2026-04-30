@@ -605,3 +605,19 @@ PATCH /v2/nmaiex/jobs/{job_id}/content
 
 > **Hệ quả cập nhật:** Vì HR có text-free skill input, `JOB_SKILL_RAW` **cần được tạo ngay** (không còn DEFER). Fuzzy overlap trong ranking sẽ có dữ liệu từ cả 2 phía — ý nghĩa hơn nhiều.
 
+---
+
+## 10. Chuẩn Hóa Hạ Tầng Toàn Hệ Thống (Infrastructure Standardization)
+
+> **Quyết định [2026-04-30]:** Thay vì cố gắng chắp vá NMAIex một cách độc lập ("minimal intervention"), chúng ta chuẩn hóa một số thành phần lõi của TTCS để trở thành các dịch vụ dùng chung (Generic Services) mạnh mẽ hơn.
+
+### 10.1. Refactor `embedding.py`
+- Biến hàm `embed_chunks` thành một dịch vụ chung có thể cấu hình số chiều.
+- Signature mới: `async def embed_chunks(chunks: List[str], dimensions: Optional[int] = None) -> List[List[float]]`.
+- Việc này giúp NMAIex tái sử dụng cơ chế batching, error handling, và logging của TTCS cho các skill chunks ngắn với `dimensions=256`. 
+- **Backward compatibility:** Nếu `dimensions=None` thì fallback về `settings.embedding_dim`.
+
+### 10.2. Schema Động (Infrastructure as Code)
+- Để đảm bảo Single Source of Truth, mọi cấu hình số chiều (dims) phải được kiểm soát từ `.env` và `.env.nmaiex`.
+- Đổi các số literal như `vector(1024)` hay `vector(256)` trong file `schema_ai_core.sql` và `schema_web_core.sql` thành các placeholder: `__TTCS_EMBEDDING_DIM__` và `__NMAIEX_SKILL_EMBEDDING_DIM__`.
+- Nâng cấp `scripts/reset_and_seed_db.py` để tự động thực hiện string replace các placeholder này bằng giá trị từ `settings` và `nmaiex_settings` trước khi thực thi lệnh SQL. Điều này loại bỏ hoàn toàn rủi ro lệch pha cấu hình DB và code.
