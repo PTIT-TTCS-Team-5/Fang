@@ -33,6 +33,25 @@ CREATE TABLE JOBCATEGORY (
   description TEXT
 );
 
+-- [NMAIex] Bảng ngôn ngữ chuẩn (Language Requirement System — Phase 2.5)
+-- Cập nhật thủ công khi có ngôn ngữ mới phổ biến trong thị trường VN
+CREATE TABLE LANGUAGE (
+    langId   SERIAL PRIMARY KEY,
+    langCode VARCHAR(10)  NOT NULL UNIQUE,  -- ISO 639-1: 'en', 'ja', 'ko', 'zh', 'vi'...
+    langName VARCHAR(50)  NOT NULL
+);
+
+-- [NMAIex] Yêu cầu ngôn ngữ của Job (N-N, REQUIRED vs PREFERRED)
+-- Lưu ý: tiếng Việt ('vi') không cần chỉ định vì là mặc định của thị trường VN
+-- Chỉ cần khai báo khi Job yêu cầu ngoại ngữ hoặc yêu cầu tiếng Việt ở level đặc biệt
+CREATE TABLE JOB_LANG_REQUIREMENT (
+    jobPostId  INT         NOT NULL REFERENCES JOBPOSTING(jobPostId) ON DELETE CASCADE,
+    langId     INT         NOT NULL REFERENCES LANGUAGE(langId),
+    reqType    VARCHAR(10) NOT NULL CHECK (reqType IN ('REQUIRED', 'PREFERRED')),
+    minLevel   VARCHAR(20) CHECK (minLevel IN ('BASIC','INTERMEDIATE','ADVANCED','FLUENT','NATIVE')),
+    PRIMARY KEY (jobPostId, langId)
+);
+
 -- ============================================================
 -- Core User & Account tables
 -- ============================================================

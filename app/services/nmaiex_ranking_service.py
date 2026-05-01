@@ -23,6 +23,172 @@ def clip_score(score: float) -> float:
 
 
 # ============================================================
+# Helpers for C->J Optimization (Salary, Language)
+# ============================================================
+
+
+def estimate_expected_salary(expyears: float, location: str = "DEFAULT") -> int:
+    """Ước lượng expected salary từ experience years"""
+    base_salaries = {
+        "HANOI": nmaiex_settings.nmaiex_salary_base_hanoi,
+        "TPHCM": nmaiex_settings.nmaiex_salary_base_tphcm,
+        "DANANG": nmaiex_settings.nmaiex_salary_base_danang,
+        "DEFAULT": nmaiex_settings.nmaiex_salary_base_default,
+    }
+    base = base_salaries.get(location, nmaiex_settings.nmaiex_salary_base_default)
+
+    if expyears <= 1:
+        increment = nmaiex_settings.nmaiex_salary_increment_junior
+    elif expyears <= 3:
+        increment = nmaiex_settings.nmaiex_salary_increment_middle
+    elif expyears <= 5:
+        increment = nmaiex_settings.nmaiex_salary_increment_senior
+    else:
+        increment = nmaiex_settings.nmaiex_salary_increment_lead
+
+    return base + int(expyears * increment)
+
+
+def compute_salary_adjustment(
+    min_salary: Optional[int],
+    max_salary: Optional[int],
+    expected_salary: int,
+) -> float:
+    """
+    Tính điểm thưởng/phạt lương (Asymmetric).
+    Trừ điểm nếu lương thấp hơn kỳ vọng, cộng điểm nếu cao hơn.
+    """
+    if not min_salary and not max_salary:
+        return 0.0
+
+    if not min_salary:
+        min_salary = max_salary
+    if not max_salary:
+        max_salary = min_salary
+
+    mid_salary = (min_salary + max_salary) / 2
+    lower_tolerance = expected_salary * nmaiex_settings.nmaiex_salary_tolerance_lower
+    upper_target = expected_salary * nmaiex_settings.nmaiex_salary_tolerance_upper
+
+    # 0.20 là base weight (room còn lại của w_rrf + w_title + w_skill)
+    # Vì total weights hiện tại = 0.35 + 0.15 + 0.30 = 0.80
+    base_weight = 0.20
+
+    if mid_salary < lower_tolerance * 0.8:
+        # Very low
+        gap_ratio = (lower_tolerance * 0.8 - mid_salary) / expected_salary
+        return -base_weight * min(gap_ratio, 1.0)
+    elif mid_salary < lower_tolerance:
+        # Low
+        gap_ratio = (lower_tolerance - mid_salary) / expected_salary
+        return -base_weight * 0.5 * gap_ratio
+    elif mid_salary < upper_target:
+        # Acceptable (Neutral)
+        return 0.0
+    else:
+        # High (Bonus)
+        bonus_ratio = (mid_salary - upper_target) / expected_salary
+        bonus = base_weight * 0.2 * bonus_ratio
+        return min(bonus, nmaiex_settings.nmaiex_salary_bonus_cap)
+
+
+async def compute_language_score(
+    job_post_id: int,
+    candidate_languages: list[
+        dict
+    ],  # List of {"language": "en", "proficiency": "ADVANCED"}
+    conn,
+) -> tuple[float, float, dict]:
+    """Tính điểm ngôn ngữ.
+    Returns:
+        (lang_penalty, lang_bonus, breakdown_dict)
+    """
+    req_rows = await conn.fetch(
+        """
+        SELECT l.langCode, r.reqType, r.minLevel
+        FROM JOB_LANG_REQUIREMENT r
+        JOIN LANGUAGE l ON r.langId = l.langId
+        WHERE r.jobPostId = $1
+        """,
+        job_post_id,
+    )
+
+    if not req_rows:
+        return 0.0, 0.0, {"requirements": []}
+
+    from app.services.nmaiex_mapper_service import PROFICIENCY_LEVELS
+
+    lang_penalty = 0.0
+    lang_bonus = 0.0
+    breakdown = {"requirements": []}
+
+    # Chuẩn hóa map ngôn ngữ của candidate (chuyển sang dict để dễ tra cứu)
+    cand_lang_map = {}
+    for cl in candidate_languages:
+        if not isinstance(cl, dict):
+            continue
+        lang_name = cl.get("language", "").lower()
+        if "english" in lang_name or "tiếng anh" in lang_name:
+            code = "en"
+        elif "japanese" in lang_name or "tiếng nhật" in lang_name:
+            code = "ja"
+        elif "korean" in lang_name or "tiếng hàn" in lang_name:
+            code = "ko"
+        elif "chinese" in lang_name or "tiếng trung" in lang_name:
+            code = "zh"
+        elif "french" in lang_name or "tiếng pháp" in lang_name:
+            code = "fr"
+        elif "german" in lang_name or "tiếng đức" in lang_name:
+            code = "de"
+        else:
+            code = lang_name  # Giữ nguyên nếu không match
+
+        prof = cl.get("proficiency", "BASIC")
+        cand_lang_map[code] = PROFICIENCY_LEVELS.get(prof, 1)
+
+    for req in req_rows:
+        code = req["langcode"]
+        req_type = req["reqtype"]
+        min_level_str = req["minlevel"] or "BASIC"
+        req_level = PROFICIENCY_LEVELS.get(min_level_str, 1)
+
+        cand_level = cand_lang_map.get(code, 0)  # 0 = not have this language
+
+        req_info = {
+            "lang": code,
+            "req_type": req_type,
+            "min_level": min_level_str,
+            "cand_level_num": cand_level,
+            "met": False,
+            "score_diff": 0.0,
+        }
+
+        if req_type == "REQUIRED":
+            if cand_level == 0:
+                diff = -nmaiex_settings.nmaiex_lang_required_penalty
+                lang_penalty += abs(diff)
+                req_info["score_diff"] = diff
+            elif cand_level < req_level:
+                diff = -nmaiex_settings.nmaiex_lang_level_penalty
+                lang_penalty += abs(diff)
+                req_info["score_diff"] = diff
+            else:
+                req_info["met"] = True
+
+        elif req_type == "PREFERRED":
+            if cand_level >= req_level:
+                diff = nmaiex_settings.nmaiex_lang_preferred_bonus
+                lang_bonus += diff
+                req_info["score_diff"] = diff
+                req_info["met"] = True
+
+        breakdown["requirements"].append(req_info)
+
+    lang_bonus = min(lang_bonus, nmaiex_settings.nmaiex_lang_bonus_cap)
+    return lang_penalty, lang_bonus, breakdown
+
+
+# ============================================================
 # Tiered Skill Scoring (Strategy C)
 # ============================================================
 
@@ -137,7 +303,7 @@ async def rank_candidates_for_job(
         )
         job_skills = {r["skillid"] for r in job_skills_rows}
 
-        # Lấy required seniority (lấy min để penalty nhẹ nhất nếu job chấp nhiều level)
+        # Lấy required seniority với buffer dựa vào career path
         job_levels_rows = await conn.fetch(
             """
             SELECT l.minYears
@@ -148,7 +314,26 @@ async def rank_candidates_for_job(
             job_id,
         )
         job_min_years = [r["minyears"] for r in job_levels_rows]
-        required_min_years = min(job_min_years) if job_min_years else 0
+
+        if job_min_years:
+            job_min = min(job_min_years)
+            job_max_raw = max(job_min_years)
+
+            if job_max_raw <= 1:
+                buffer = nmaiex_settings.nmaiex_buffer_very_junior
+            elif job_max_raw <= 3:
+                buffer = nmaiex_settings.nmaiex_buffer_junior
+            elif job_max_raw <= 5:
+                buffer = nmaiex_settings.nmaiex_buffer_middle
+            elif job_max_raw <= 8:
+                buffer = nmaiex_settings.nmaiex_buffer_senior
+            else:
+                buffer = nmaiex_settings.nmaiex_buffer_lead_manager
+
+            job_max = job_max_raw + buffer
+        else:
+            job_min = 0
+            job_max = float("inf")
 
     # Embed job text để làm vector query
     from app.services.embedding import embed_chunks
@@ -223,7 +408,6 @@ async def rank_candidates_for_job(
         rrf_k = nmaiex_settings.nmaiex_rrf_k
         w_rrf = nmaiex_settings.nmaiex_jc_weight_rrf
         w_skill = nmaiex_settings.nmaiex_jc_weight_skill
-        penalty_coef = nmaiex_settings.nmaiex_jc_penalty_seniority_coef
         alpha = nmaiex_settings.nmaiex_skill_alpha
 
         vec_sorted = sorted(
@@ -261,10 +445,21 @@ async def rank_candidates_for_job(
                 alpha=alpha,
             )
 
-            # Seniority Penalty
+            # Seniority Penalty - Asymmetric (Insufficient vs Overqualified)
             c_exp = c["expyears"] or 0
-            gap = max(0, required_min_years - c_exp)
-            seniority_penalty = penalty_coef * gap
+            base_penalty_coef = nmaiex_settings.nmaiex_jc_penalty_seniority_coef
+            overqualified_ratio = (
+                nmaiex_settings.nmaiex_seniority_overqualified_penalty_ratio
+            )
+
+            if c_exp < job_min:
+                gap = job_min - c_exp
+                seniority_penalty = base_penalty_coef * gap
+            elif c_exp > job_max:
+                gap = c_exp - job_max
+                seniority_penalty = base_penalty_coef * overqualified_ratio * gap
+            else:
+                seniority_penalty = 0.0
 
             final_score = clip_score(
                 w_rrf * rrf_score_norm + w_skill * skill_score - seniority_penalty
@@ -320,7 +515,15 @@ async def rank_jobs_for_candidate(
                 WHERE candidateId = $1
                 GROUP BY candidateId
             )
-            SELECT u.fName, u.lName, c.expyears, c.bio, cv.rawText
+            SELECT 
+                u.fName, u.lName, u.provId, c.expyears, c.bio, 
+                cv.rawText, 
+                cv.parsedData -> 'experience' as experiences,
+                cv.parsedData -> 'certificates' as certificates_list,
+                cv.parsedData -> 'education' as education_list,
+                cv.parsedData -> 'languages' as languages,
+                cv.parsedData -> 'expectedSalaryMin' as exp_sal_min,
+                cv.parsedData -> 'expectedSalaryMax' as exp_sal_max
             FROM "user" u
             JOIN CANDIDATE c ON u.userId = c.userId
             LEFT JOIN LatestApp la ON u.userId = la.candidateId
@@ -343,17 +546,75 @@ async def rank_jobs_for_candidate(
         )
         c_skills = {r["skillid"] for r in c_skills_rows}
 
+    import json
+
+    experiences = (
+        json.loads(candidate_row["experiences"]) if candidate_row["experiences"] else []
+    )
+    recent_titles = [
+        e.get("title")
+        for e in experiences[:3]
+        if isinstance(e, dict) and e.get("title")
+    ]
+    certs = (
+        json.loads(candidate_row["certificates_list"])
+        if candidate_row["certificates_list"]
+        else []
+    )
+    edu_list = (
+        json.loads(candidate_row["education_list"])
+        if candidate_row["education_list"]
+        else []
+    )
+    edu_degrees = [
+        e.get("degree") for e in edu_list if isinstance(e, dict) and e.get("degree")
+    ]
+
+    profile_parts = []
+    if recent_titles:
+        profile_parts.append(" ".join(recent_titles))
+    if candidate_row["bio"]:
+        profile_parts.append(candidate_row["bio"])
+    if certs:
+        profile_parts.append(" ".join(certs))
+    if edu_degrees:
+        profile_parts.append(" ".join(edu_degrees))
+
     # Build candidate text cho text search
-    candidate_text = candidate_row["rawtext"] or candidate_row["bio"] or ""
+    candidate_text = (
+        " ".join(filter(None, profile_parts)) or candidate_row["rawtext"] or ""
+    )
     if not candidate_text.strip() and c_skills:
         candidate_text = " ".join(str(s) for s in c_skills)
     if not candidate_text.strip():
         candidate_text = "Experienced candidate"
 
+    recent_titles_text = " ".join(recent_titles) if recent_titles else candidate_text
+
+    # Prepare salary expectation
+    exp_min = candidate_row["exp_sal_min"]
+    exp_max = candidate_row["exp_sal_max"]
+    c_expyears = candidate_row["expyears"] or 0
+    if exp_min is None and exp_max is None:
+        expected_salary = estimate_expected_salary(
+            c_expyears, candidate_row["provid"] or "DEFAULT"
+        )
+    else:
+        # Nếu có ít nhất 1, lấy trung bình
+        if exp_min is None:
+            exp_min = exp_max
+        if exp_max is None:
+            exp_max = exp_min
+        expected_salary = (exp_min + exp_max) / 2
+
+    cand_languages = (
+        json.loads(candidate_row["languages"]) if candidate_row["languages"] else []
+    )
+
     async with acquire_conn() as conn:
         filter_parts = ["p.expAt > CURRENT_TIMESTAMP"]
-        params: list = [candidate_text]
-        param_idx = 2
+        params: list = [candidate_text, recent_titles_text]
+        param_idx = 3
 
         if province_id:
             filter_parts.append(f"p.provId = ${param_idx}")
@@ -377,11 +638,16 @@ async def rank_jobs_for_candidate(
                 p.jobPostId as job_id,
                 p.title as job_title,
                 p.minSalary,
+                p.maxSalary,
                 js.req_skills,
                 ts_rank(
                     to_tsvector('english', p.title || ' ' || p.description),
                     plainto_tsquery('english', $1)
-                ) as text_rank
+                ) as text_rank,
+                ts_rank(
+                    to_tsvector('english', p.title),
+                    plainto_tsquery('english', $2)
+                ) as title_rank
             FROM JOBPOSTING p
             LEFT JOIN JobSkills js ON p.jobPostId = js.jobPostId
             WHERE {filter_sql}
@@ -391,7 +657,8 @@ async def rank_jobs_for_candidate(
 
         rrf_k = nmaiex_settings.nmaiex_rrf_k
         w_rrf = nmaiex_settings.nmaiex_cj_weight_rrf
-        w_skill = nmaiex_settings.nmaiex_jc_weight_skill
+        w_title = nmaiex_settings.nmaiex_cj_weight_title
+        w_skill = nmaiex_settings.nmaiex_cj_weight_skill
         alpha = nmaiex_settings.nmaiex_skill_alpha
 
         text_sorted = sorted(
@@ -401,13 +668,22 @@ async def rank_jobs_for_candidate(
         )
         txt_rank = {j["job_id"]: idx + 1 for idx, j in enumerate(text_sorted)}
 
+        title_sorted = sorted(
+            jobs,
+            key=lambda x: x["title_rank"] if x["title_rank"] is not None else 0,
+            reverse=True,
+        )
+        title_rank_dict = {j["job_id"]: idx + 1 for idx, j in enumerate(title_sorted)}
+
         results = []
         for j in jobs:
             jid = j["job_id"]
             r_txt = txt_rank[jid]
+            r_title = title_rank_dict[jid]
 
             # C→J chỉ có text rank (không có vector search từ phía job chunk → candidate)
             rrf_score_norm = (1.0 / (rrf_k + r_txt)) * rrf_k
+            title_score = (1.0 / (rrf_k + r_title)) * rrf_k
 
             # Tiered Skill Scoring
             j_skills = set(j["req_skills"] or [])
@@ -420,11 +696,25 @@ async def rank_jobs_for_candidate(
                 alpha=alpha,
             )
 
-            # Salary Penalty (hiện tại = 0 vì DB chưa có expected salary của ứng viên)
-            salary_penalty = 0.0
+            # Salary Adjustment
+            salary_adjustment = compute_salary_adjustment(
+                min_salary=j["minsalary"],
+                max_salary=j["maxsalary"],
+                expected_salary=expected_salary,
+            )
+
+            # Language Scoring
+            lang_penalty, lang_bonus, lang_breakdown = await compute_language_score(
+                job_post_id=jid, candidate_languages=cand_languages, conn=conn
+            )
 
             final_score = clip_score(
-                w_rrf * rrf_score_norm + w_skill * skill_score - salary_penalty
+                w_rrf * rrf_score_norm
+                + w_title * title_score
+                + w_skill * skill_score
+                + salary_adjustment
+                - lang_penalty
+                + lang_bonus
             )
 
             results.append(
@@ -434,11 +724,15 @@ async def rank_jobs_for_candidate(
                     "match_score": round(final_score, 4),
                     "score_breakdown": {
                         "text_score": round(rrf_score_norm, 4),
+                        "title_score": round(title_score, 4),
                         "exact_overlap": round(exact_overlap, 4),
                         "fuzzy_overlap": round(fuzzy_overlap, 4),
                         "skill_score": round(skill_score, 4),
                         "skill_alpha": alpha,
-                        "salary_penalty": round(salary_penalty, 4),
+                        "salary_adjustment": round(salary_adjustment, 4),
+                        "lang_penalty": round(lang_penalty, 4),
+                        "lang_bonus": round(lang_bonus, 4),
+                        "lang_breakdown": lang_breakdown,
                         "hard_filter_passed": True,
                     },
                 }

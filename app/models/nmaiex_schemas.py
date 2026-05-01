@@ -40,14 +40,24 @@ class ProvinceMappingResult(BaseModel):
 class ScoreBreakdown(BaseModel):
     """Chi tiết từng thành phần điểm — luôn trả về để debug."""
 
-    rrf_score: float
+    # Common
     exact_overlap: float
     fuzzy_overlap: float
     skill_score: float
     skill_alpha: float
-    seniority_penalty: float = 0.0
-    salary_penalty: float = 0.0
     hard_filter_passed: bool = True
+
+    # J→C specific
+    rrf_score: Optional[float] = None
+    seniority_penalty: Optional[float] = None
+
+    # C→J specific
+    text_score: Optional[float] = None
+    title_score: Optional[float] = None
+    salary_adjustment: Optional[float] = None
+    lang_penalty: Optional[float] = None
+    lang_bonus: Optional[float] = None
+    lang_breakdown: Optional[dict] = None
 
 
 class CandidateRankResult(BaseModel):

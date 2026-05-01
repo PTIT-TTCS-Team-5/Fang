@@ -193,3 +193,74 @@ async def embed_and_store_raw_skills(
         f"[NMAIex] Stored {len(records)} raw skill vectors "
         f"into {table} for {entity_type} id={entity_id}"
     )
+
+
+# ============================================================
+# Language Proficiency Normalizer (Phase 2.5g)
+# ============================================================
+
+# Thứ tự chuẩn hóa proficiency — dùng để so sánh level
+PROFICIENCY_LEVELS = {
+    "BASIC": 1,
+    "INTERMEDIATE": 2,
+    "ADVANCED": 3,
+    "FLUENT": 4,
+    "NATIVE": 5,
+}
+
+_PROFICIENCY_SYSTEM_PROMPT = (
+    "Bạn là công cụ chuẩn hóa trình độ ngôn ngữ. Nhiệm vụ DUY NHẤT của bạn là "
+    "map một mô tả trình độ bất kỳ sang MỘT trong 5 cấp độ chuẩn sau:\n"
+    "  BASIC | INTERMEDIATE | ADVANCED | FLUENT | NATIVE\n\n"
+    "Ví dụ mapping:\n"
+    "  'N5', 'A1', 'Sơ cấp', 'Beginner' → BASIC\n"
+    "  'N3', 'N4', 'B1', 'B2', 'Conversational', 'Trung cấp' → INTERMEDIATE\n"
+    "  'N2', 'C1', 'IELTS 6.5-7.5', 'Business level', 'Khá' → ADVANCED\n"
+    "  'N1', 'C2', 'IELTS 8+', 'Fluent', 'Thành thạo' → FLUENT\n"
+    "  'Native speaker', 'Tiếng mẹ đẻ', 'Mother tongue' → NATIVE\n\n"
+    "QUY TẮC BẮT BUỘC:\n"
+    "1. CHỈ trả về MỘT từ trong 5 cấp độ trên. KHÔNG thêm text khác.\n"
+    "2. Nếu không xác định được → trả về: BASIC\n"
+    "3. TUYỆT ĐỐI KHÔNG giải thích, KHÔNG thêm dấu câu."
+)
+
+
+async def normalize_proficiency(raw_proficiency: str | None) -> str:
+    """Chuẩn hóa raw proficiency string từ CV → BASIC|INTERMEDIATE|ADVANCED|FLUENT|NATIVE.
+
+    [NMAIex Phase 2.5g] Dùng LLM auto-lite để map đa dạng cách viết:
+      'N3' → INTERMEDIATE, 'IELTS 7.5' → ADVANCED, 'Native speaker' → NATIVE, v.v.
+
+    Returns:
+        Một trong: 'BASIC', 'INTERMEDIATE', 'ADVANCED', 'FLUENT', 'NATIVE'
+        Fallback về 'BASIC' nếu raw_proficiency là None hoặc không xác định.
+    """
+    if not raw_proficiency or not raw_proficiency.strip():
+        return "BASIC"
+
+    # Fast path: nếu đã là cấp độ chuẩn → trả về ngay
+    normalized = raw_proficiency.strip().upper()
+    if normalized in PROFICIENCY_LEVELS:
+        return normalized
+
+    messages = [
+        {"role": "system", "content": _PROFICIENCY_SYSTEM_PROMPT},
+        {"role": "user", "content": f"Trình độ cần chuẩn hóa: {raw_proficiency}"},
+    ]
+
+    try:
+        trace = await invoke_generation(messages, "auto-lite")
+        result = trace.response.strip().upper()
+        if result in PROFICIENCY_LEVELS:
+            return result
+        logger.warning(
+            f"[NMAIex] normalize_proficiency got unexpected value: '{result}'. "
+            f"Fallback to BASIC. raw='{raw_proficiency}'"
+        )
+        return "BASIC"
+    except Exception as e:
+        logger.warning(
+            f"[NMAIex] normalize_proficiency LLM failed: {e}. "
+            f"Fallback to BASIC. raw='{raw_proficiency}'"
+        )
+        return "BASIC"

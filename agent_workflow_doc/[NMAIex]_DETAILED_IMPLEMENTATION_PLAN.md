@@ -1,4 +1,4 @@
-# [NMAIex] Kế Hoạch Triển Khai Chi Tiết Hệ Thống Xếp Hạng Hai Chiều
+﻿# [NMAIex] Kế Hoạch Triển Khai Chi Tiết Hệ Thống Xếp Hạng Hai Chiều
 
 > **Ngữ cảnh:** FANG AI Core (FastAPI, PostgreSQL + pgvector, asyncpg) là backend AI xử lý toàn bộ. miCareer-mini là frontend thin-client chỉ gọi API. Hai CSDL song song: `schema_web_core.sql` (dữ liệu tuyển dụng) và `schema_ai_core.sql` (bảng AI: chunk, vector, conversation). DB connection dùng `asyncpg` pool, truy cập qua `acquire_conn()` từ `app/core/database.py`.
 
@@ -621,3 +621,259 @@ PATCH /v2/nmaiex/jobs/{job_id}/content
 - Để đảm bảo Single Source of Truth, mọi cấu hình số chiều (dims) phải được kiểm soát từ `.env` và `.env.nmaiex`.
 - Đổi các số literal như `vector(1024)` hay `vector(256)` trong file `schema_ai_core.sql` và `schema_web_core.sql` thành các placeholder: `__TTCS_EMBEDDING_DIM__` và `__NMAIEX_SKILL_EMBEDDING_DIM__`.
 - Nâng cấp `scripts/reset_and_seed_db.py` để tự động thực hiện string replace các placeholder này bằng giá trị từ `settings` và `nmaiex_settings` trước khi thực thi lệnh SQL. Điều này loại bỏ hoàn toàn rủi ro lệch pha cấu hình DB và code.
+
+
+---
+## 11. C→J Flow Optimization (2026-05-01)
+
+> **Bối cảnh:** Sau khi review code thực tế `nmaiex_ranking_service.py`, phát hiện 5 vấn đề trong luồng C→J. Tài liệu phân tích gốc: `[NMAIex]_CJ_FLOW_OPTIMIZATION_REPORT.md`.
+
+### 11.1. Tại Sao C→J Không Dùng Vector Search (Intentional Design)
+
+> **Quyết định có chủ ý — cần document để tránh nhầm lẫn khi đọc code.**
+
+**J→C** lấy embedding của JobPosting (đã index trong `AIDOCUMENTCHUNK` từ FANG TTCS pipeline) → vector search tìm CV chunks gần nhất. Vector index đã tồn tại sẵn.
+
+**C→J** chiều ngược lại gặp 2 vấn đề kỹ thuật ở giai đoạn MVP:
+1. `AIDOCUMENTCHUNK` index theo chiều "CV nào gần Job này", không tối ưu cho "Job nào gần CV này".
+2. CV có nhiều chunks (5-15 chunks/CV), không có "representative vector" rõ ràng.
+
+**MVP scope:** Với Job pool nhỏ (~100-200 trong MVP), FTS (`ts_rank`) đủ hiệu quả.
+
+> **Future improvement** (ghi vào `docs/strategy/nmaiex_ranking_strategy.md`): Khi scale >1000 jobs, thêm index `JOB_EMBEDDING` (embed `title + description` mỗi Job), cho phép C→J: embed candidate profile → ANN search → RRF với text score.
+
+### 11.2. Fix Weight Bug — w_skill Dùng Nhầm J→C Config
+
+**Bug (dòng 394 `nmaiex_ranking_service.py`):** C→J dùng `nmaiex_jc_weight_skill` (0.40) thay vì config riêng. `nmaiex_cj_weight_title` (0.15) được định nghĩa nhưng không bao giờ enable.
+
+**Fix — Thêm vào `.env.nmaiex`:**
+```env
+NMAIEX_CJ_WEIGHT_SKILL=0.30
+```
+
+**Thêm vào `nmaiex_config.py`:**
+```python
+nmaiex_cj_weight_skill: float = 0.30
+```
+
+**Sửa `nmaiex_ranking_service.py` dòng 392-394:**
+```python
+w_rrf   = nmaiex_settings.nmaiex_cj_weight_rrf    # 0.35
+w_skill = nmaiex_settings.nmaiex_cj_weight_skill  # 0.30 (đúng CJ config)
+w_title = nmaiex_settings.nmaiex_cj_weight_title  # 0.15 (enable)
+```
+
+**Lý do w_skill CJ (0.30) < JC (0.40):** J→C có 2 tín hiệu (vector + text), RRF mạnh hơn → skill có thể đóng vai trò lớn hơn. C→J chỉ có text search → cần nhường weight cho title (0.15).
+
+**Về tổng weight không = 1.0:** Tổng CJ = 0.35 + 0.15 + 0.30 = 0.80. Room 0.20 còn lại cho salary_adjustment (cộng/trừ). `clip(0,1)` đảm bảo output hợp lệ.
+
+### 11.3. Title Matching & CV Profile Enrichment
+
+**Vấn đề:** C→J chỉ dùng `rawText` làm candidate profile cho FTS. Không khai thác `experience[].title` (chức danh gần đây) — nguồn relevance cao nhất.
+
+**Giải pháp — Enrich candidate_text:**
+```python
+# Thêm vào SELECT query
+cv.parsedData -> 'experience' as experiences,
+cv.parsedData -> 'certificates' as certificates_list,
+cv.parsedData -> 'education' as education_list
+
+# Build enriched profile
+experiences = (cv_row["parseddata"] or {}).get("experience", [])
+recent_titles = [e["title"] for e in experiences[:3] if e and e.get("title")]
+certs = (cv_row["parseddata"] or {}).get("certificates", [])
+edu_list = (cv_row["parseddata"] or {}).get("education", [])
+edu_degrees = [e.get("degree") for e in edu_list if e and e.get("degree")]
+
+profile_parts = []
+if recent_titles:        profile_parts.append(" ".join(recent_titles))
+if candidate_row["bio"]: profile_parts.append(candidate_row["bio"])
+if certs:                profile_parts.append(" ".join(certs))
+if edu_degrees:          profile_parts.append(" ".join(edu_degrees))
+candidate_text = " ".join(filter(None, profile_parts)) or candidate_row["rawtext"] or "Experienced candidate"
+```
+
+**Title score (w_title = 0.15):** Tính ts_rank riêng giữa `recent_titles` và `job.title`.
+
+> **Future note (strategy doc):** Embed `recent_titles` → cosine với job title embedding → chính xác hơn với alias ("BE Dev" ≈ "Backend Engineer").
+
+### 11.4. Salary Adjustment
+
+**Vấn đề:** `salary_penalty = 0.0` hard-code. `nmaiex_cj_penalty_salary_coef` không được dùng. DB không có `expectedSalary` của ứng viên.
+
+**Giải pháp 2 tầng:**
+
+**Tầng 1 — Parse expectedSalary từ CV (nguồn chính):**
+
+Thêm vào `app/models/cv_models.py` (`ParsedCV`):
+```python
+expectedSalaryMin: int | None = Field(None, description="Expected min salary (VND). None if not stated.")
+expectedSalaryMax: int | None = Field(None, description="Expected max salary (VND). None if not stated.")
+```
+Cập nhật LLM prompt trong `cv_parser_adapters.py` để extract 2 field này. LLM trả `null` nếu không có.
+
+**Tầng 2 — Fallback estimate khi CV không có expected salary:**
+```python
+estimate = salary_base[location] + expyears * salary_increment[tier]
+```
+
+**Xử lý "lương thỏa thuận":** `minSalary IS NULL AND maxSalary IS NULL` → `salary_adjustment = 0.0` (neutral).
+
+**Logic asymmetric:**
+```python
+mid_job = (minSalary + maxSalary) / 2
+expected = parsedCV.expectedSalaryMin/Max hoặc estimate()
+
+mid < expected*0.8*0.8  → penalty mạnh (quá thấp)
+mid < expected*0.8      → penalty nhẹ
+mid < expected*1.2      → neutral 0.0
+mid >= expected*1.2     → bonus (tối đa salary_bonus_cap)
+```
+
+**Config mới trong `.env.nmaiex`:**
+```env
+NMAIEX_SALARY_BASE_HANOI=15000000
+NMAIEX_SALARY_BASE_TPHCM=14000000
+NMAIEX_SALARY_BASE_DANANG=12000000
+NMAIEX_SALARY_BASE_DEFAULT=13000000
+NMAIEX_SALARY_INCREMENT_JUNIOR=1500000
+NMAIEX_SALARY_INCREMENT_MIDDLE=2000000
+NMAIEX_SALARY_INCREMENT_SENIOR=2500000
+NMAIEX_SALARY_INCREMENT_LEAD=3000000
+NMAIEX_SALARY_TOLERANCE_LOWER=0.8
+NMAIEX_SALARY_TOLERANCE_UPPER=1.2
+NMAIEX_SALARY_BONUS_CAP=0.2
+```
+* NOTE FROM USER: Nếu có thể phân tách số tiền VND cho dễ đọc thì tốt, ví dụ 15_000_000
+**Công thức C→J cuối (sau tất cả fixes + Language System):**
+```python
+final_score = clip(
+    w_rrf   * rrf_score_norm
+    + w_title * title_score
+    + w_skill * skill_score
+    + salary_adjustment    # âm = penalty, dương = bonus
+    - lang_penalty         # Mục 12
+    + lang_bonus           # Mục 12
+, 0.0, 1.0)
+```
+
+---
+
+## 12. Language Requirement System (2026-05-01)
+
+> **Quyết định:** Implement ngay cùng với C→J optimizations (không defer sau Phase 3).
+> **Lý do thực tế thị trường VN:** Phân biệt REQUIRED/PREFERRED ngôn ngữ rất phổ biến trong IT jobs outsourcing (FPT/Fujitsu/Samsung). Job yêu cầu tiếng Nhật thường trả lương cao hơn 15-30%.
+
+### 12.1. Schema Mới
+
+Thêm vào `schema_web_core.sql` (sau bảng `JOBCATEGORY`):
+
+```sql
+-- [NMAIex] Bảng ngôn ngữ chuẩn
+CREATE TABLE LANGUAGE (
+    langId   SERIAL PRIMARY KEY,
+    langCode VARCHAR(10)  NOT NULL UNIQUE,
+    langName VARCHAR(50)  NOT NULL
+);
+
+-- [NMAIex] Yêu cầu ngôn ngữ của Job (N-N, REQUIRED vs PREFERRED)
+CREATE TABLE JOB_LANG_REQUIREMENT (
+    jobPostId  INT         NOT NULL REFERENCES JOBPOSTING(jobPostId) ON DELETE CASCADE,
+    langId     INT         NOT NULL REFERENCES LANGUAGE(langId),
+    reqType    VARCHAR(10) NOT NULL CHECK (reqType IN ('REQUIRED', 'PREFERRED')),
+    minLevel   VARCHAR(20) CHECK (minLevel IN ('BASIC','INTERMEDIATE','ADVANCED','FLUENT','NATIVE')),
+    PRIMARY KEY (jobPostId, langId)
+);
+```
+
+**Seed data (`root_data.sql`):**
+```sql
+INSERT INTO LANGUAGE (langCode, langName) VALUES
+('en','English'),('ja','Japanese'),('ko','Korean'),
+('zh','Chinese'),('vi','Vietnamese'),('fr','French'),('de','German');
+```
+* NOTE FROM USER: Đây cũng là một cái đáng lưu tâm để cập nhật thường xuyên -> Cân nhắc thêm task vào agent_workflow_doc\AI_MANUAL_UPDATE.md
+
+### 12.2. CV Parser Update — `ParsedCV.languages`
+* NOTE FROM USER: Web tuyển dụng phục vụ 99% là người Việt Nam, vậy tiếng Việt sẽ không cần phải xét đâu chứ nhỉ?, nghĩa là mặc định tiếng Việt không cần chỉ định trong JobPosting hay CV. Còn ngoại lệ ư? Tư vấn mình nếu cần thiết và việc thiếu tiếng Việt không phải là hiếm.
+**Breaking change:** `list[str]` → `list[LanguageEntry]`
+
+Thêm class mới vào `app/models/cv_models.py`:
+```python
+class LanguageEntry(CVBaseModel):
+    """Represents a language skill from a CV."""
+    language: str = Field(..., description="Language name (e.g. 'English', 'Japanese').")
+    proficiency: str | None = Field(
+        None,
+        description="Proficiency as stated in CV (e.g. 'N3', 'Fluent', 'B2'). Raw string."
+    )
+```
+
+Sửa `ParsedCV`:
+```python
+languages: list[LanguageEntry] = Field(
+    default_factory=list,
+    description="List of languages with proficiency levels."
+)
+```
+
+Cập nhật LLM prompt trong `cv_parser_adapters.py` để extract `[{"language": "Japanese", "proficiency": "N3"}, ...]`.
+
+### 12.3. Proficiency Normalization
+
+Tái dùng LLM mapper pattern:
+```python
+Raw proficiency → invoke_generation("auto-lite") → chuẩn hóa về:
+BASIC | INTERMEDIATE | ADVANCED | FLUENT | NATIVE
+
+Thứ tự: BASIC(1) < INTERMEDIATE(2) < ADVANCED(3) < FLUENT(4) < NATIVE(5)
+
+Ví dụ mapping:
+  "N3" → INTERMEDIATE
+  "N2" → ADVANCED
+  "N1" → FLUENT
+  "Business level" → ADVANCED
+  "Native speaker" / "Tiếng mẹ đẻ" → NATIVE
+  "Sơ cấp" / "Basic" → BASIC
+```
+
+### 12.4. Language Scoring Logic
+
+Hàm `compute_language_score(job_post_id, candidate_languages, conn)` trả `(lang_penalty, lang_bonus, breakdown)`:
+
+```python
+Với mỗi yêu cầu ngôn ngữ của Job:
+  REQUIRED + candidate không có ngôn ngữ → penalty += NMAIEX_LANG_REQUIRED_PENALTY (0.25)
+  REQUIRED + candidate có nhưng level không đủ → penalty += NMAIEX_LANG_LEVEL_PENALTY (0.10)
+  PREFERRED + candidate có đủ level → bonus += NMAIEX_LANG_PREFERRED_BONUS (0.08)
+
+Tổng bonus bị cap bởi NMAIEX_LANG_BONUS_CAP (0.15)
+```
+
+### 12.5. Config Mới
+
+**`.env.nmaiex`:**
+```env
+NMAIEX_LANG_REQUIRED_PENALTY=0.25
+NMAIEX_LANG_LEVEL_PENALTY=0.10
+NMAIEX_LANG_PREFERRED_BONUS=0.08
+NMAIEX_LANG_BONUS_CAP=0.15
+```
+
+**`nmaiex_config.py`:**
+```python
+nmaiex_lang_required_penalty: float = 0.25
+nmaiex_lang_level_penalty: float = 0.10
+nmaiex_lang_preferred_bonus: float = 0.08
+nmaiex_lang_bonus_cap: float = 0.15
+```
+
+### 12.6. Frontend Cascade
+
+`LangSelector` component cần được thêm vào Phase 1.5 (HR Job Management form), tương tự `LevelSelector`. Cập nhật `TASK_CHECKLIST_FRONTEND.md` khi đến lượt.
+
+### 12.7. Quyết Định Về Chứng Chỉ & Education
+
+> **Chứng chỉ:** Text enrichment only — gom vào `candidate_text` → ts_rank tự xử lý. Cert keywords (`AWS`, `CKA`) rất specific → FTS match tự nhiên. Không cần bảng riêng.
+>
+> **Education (Bachelor/Master/PhD):** Text enrichment only. Ít phổ biến hơn language requirement trong IT VN. Future: thêm `educationLevel` enum vào `CANDIDATE` nếu cần HR filter.

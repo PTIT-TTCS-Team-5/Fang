@@ -108,6 +108,8 @@
 | 2026-04-30 | **Phase 1b**: Refactor `embedding.py` thêm `dimensions` param (Matryoshka). Schema placeholder `__TTCS_EMBEDDING_DIM__` và `__NMAIEX_SKILL_EMBEDDING_DIM__`. Reset script inject dims. Thêm `CANDIDATE_SKILL_RAW` + `JOB_SKILL_RAW` vào schema. | `embedding.py`, `schema_ai_core.sql`, `schema_web_core.sql`, `reset_and_seed_db.py`, `.env.nmaiex`, `nmaiex_config.py` | A2 (guide mục 1: reset DB), B3 (README nhắc đến NMAIex) |
 | 2026-04-30 | **Phase 2 Upgrade**: Tạo `nmaiex_schemas.py` (Pydantic models). Nâng cấp mapper lên Pydantic-validated `map_skills` + Tier-2 `embed_and_store_raw_skills`. Nâng cấp ranking với `compute_skill_score` (exact + fuzzy cosine). `score_breakdown` bổ sung `exact_overlap`, `fuzzy_overlap`, `skill_score`, `skill_alpha`. | `nmaiex_mapper_service.py`, `nmaiex_ranking_service.py`, `app/models/nmaiex_schemas.py` | A1 (chiến lược Strategy C, Tiered Skill), A2 (guide mục 4: mapper 2 tầng), A2 (guide mục 3: score_breakdown) |
 
+| 2026-05-01 | **Phase 2.5 Optimization**: Sửa lỗi logic w_skill của luồng C→J. Implement Asymmetric Seniority Penalty theo career path buffer. Thêm extract Title/Cert/Edu/Language/Salary từ CV (đổi ParsedCV.languages sang model mới). Code hàm penalty salary và language. Tích hợp full C→J (Title match + RRF + Score adjustment). Tạo nmaiex_ranking_strategy.md. | pp/services/nmaiex_ranking_service.py, pp/services/cv_parser_adapters.py, pp/models/cv_models.py, database/schema_web_core.sql, docs/strategy/nmaiex_ranking_strategy.md | A1 (giải thích Ranking Score, Penalty Salary & Language, Asymmetric Buffer), A2 (guide mục score_breakdown) |
+
 ---
 
 *File này được tạo ngày 2026-04-29. Claude cập nhật Phần C liên tục. AI tài liệu đọc và thực hiện Phần A + B sau khi toàn bộ dev hoàn tất.*

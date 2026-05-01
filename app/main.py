@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.nmaiex_routes_ranking import router as nmaiex_router
 from app.api.routes_chat import router as chat_router
 from app.api.routes_ingestion import router as ingestion_router
 from app.core.config import settings
@@ -37,6 +38,7 @@ app.add_middleware(
 # --- v2 routes ---
 app.include_router(ingestion_router, prefix="/v2")
 app.include_router(chat_router, prefix="/v2")
+app.include_router(nmaiex_router, prefix="/v2/nmaiex")
 
 # --- v1 routes (backward-compatible, deprecated) ---
 app.include_router(ingestion_router, prefix="/v1")

@@ -24,3 +24,7 @@ File duy nhất trong dự án được viết thủ công :b
     - Trong quá trình nó thực thi (tự đọc code, search web, triển khai v.v) phải ngồi đọc suy nghĩ nó liên tục. Để nó tự làm thì mất ổ C lúc nào không biết đâu :b. Đùa thôi nhưng mà thực sự giám sát liên tục lúc nó làm việc mới thấy vẫn còn phải chỉnh khá nhiều, nhất là khi nó bị hallucination mà mình không chặn kịp thì nó quậy cho hỏng hết.
     - Nhất là lúc chúng nó đưa ra phương án xong bảo là đợi mình duyệt mà toàn tự duyệt r làm luôn. Lúc đấy mà không quan sát thì nó tự triển khai lung tung thì ăn đủ :b Tốn token chỉ để sửa r làm lại từ đầu
 - À cách dùng bên trên lấy bối cảnh là mình dùng Antigravity có gói google AI pro, github copilot trong vs code có gói pro student nhé. Claude gọi ở bên Antigravity còn Haiku, Codex gọi bên GitHub Copilot
+
+
+## Prompt mồi mình rất hay dùng 
+"Đọc AI_WORKFLOW_INIT để hiểu dự án, đọc [NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md để biết phương án triển khai mới nhất. Đọc [NMAIex]_TASK_CHECHLIST_BACKEND.md và [NMAIex]_TASK_CHECHLIST_FRONTEND.md để biết tiến độ."

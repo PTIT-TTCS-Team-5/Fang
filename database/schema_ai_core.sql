@@ -30,7 +30,7 @@ CREATE TABLE AIDOCUMENTCHUNK (
   chunkIndex INT NOT NULL,
   tokenCount INT NOT NULL,
   metadata JSONB,
-  -- Mac dinh cho DEV/Test la halfvec(__TTCS_EMBEDDING_DIM__) de tiet kiem RAM/index.
+  -- Mac dinh cho DEV/Test la halfvec(__TTCS_EMBEDDING_DIM__)
   -- Neu muon doi sang full precision, chi can sua:
   --   1. halfvec(__TTCS_EMBEDDING_DIM__) -> vector(__TTCS_EMBEDDING_DIM__)
   --   2. halfvec_cosine_ops -> vector_cosine_ops

@@ -88,33 +88,82 @@ Tham chiếu: `[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md`
       - **skill_score = alpha * exact + (1-alpha) * fuzzy**
     - [x] Thêm `exact_overlap`, `fuzzy_overlap`, `skill_score`, `skill_alpha` vào `score_breakdown`.
     - [x] Thêm `NMAIEX_SKILL_ALPHA=0.8` vào `.env.nmaiex` và `nmaiex_config.py`.
-  - **Seniority Penalty** (J→C): gap giữa `JOBLEVEL.minYears` của job và `CANDIDATE.expyears` × `penalty_seniority_coef`.
-  - **Salary Gap Penalty** (C→J): gap giữa `JOBPOSTING.minSalary` và salary expectation ứng viên.
+  - **Seniority Penalty** (J→C): Asymmetric Buffer-based penalty. Xem chi tiết tại `[NMAIex]_SENIORITY_PENALTY_PROPOSAL.md`. Đã implement.
+  - **Salary Gap Penalty** (C→J): placeholder, chưa implement đầy đủ (xẻ Issue #3 trong Phase 2.5).
   - **Late Fusion**: `final_score = clip(w_rrf*rrf + w_skill*skill_score - penalty, 0.0, 1.0)`.
   - **score_breakdown**: dict chi tiết từng thành phần để debug (luôn trả về, UI tự ẩn/hiện).
 
-- [ ] **[Mới — Strategy C Ranking]** Nâng cấp `nmaiex_ranking_service.py` với Tiered Skill Scoring:
-  - Hàm `compute_skill_score(job_skill_ids, cand_skill_ids, job_post_id, cand_id, conn, alpha=0.8)`:
-    - **Exact overlap**: `|job_ids ∩ cand_ids| / max(|job_ids|, 1)`
-    - **Fuzzy overlap**: Lấy `embedding` từ `CANDIDATE_SKILL_RAW` (cand) và `JOB_SKILL_RAW` (job, hiện tại luôn rỗng vì HR dùng dropdown). Tính `avg_max_cosine`. Nếu một bên rỗng → fuzzy=0.0.
-    - **skill_score = 0.8 * exact + 0.2 * fuzzy**
-  - Thêm `exact_overlap`, `fuzzy_overlap`, `skill_alpha` vào `score_breakdown`.
-  - Thêm `NMAIEX_SKILL_ALPHA=0.8` vào `.env.nmaiex` và `nmaiex_config.py`.
+---
+
+## Phase 2.5: C→J Flow Optimization & Language System (2026-05-01)
+
+> Tham chiếu: `[NMAIex]_CJ_FLOW_OPTIMIZATION_REPORT.md`, `[NMAIex]_SENIORITY_PENALTY_PROPOSAL.md`, Mục 11-12 trong `DETAILED_IMPLEMENTATION_PLAN.md`.
+
+### 2.5a. Fix Weight Bug (Issue #1 & #2)
+- [x] Thêm `NMAIEX_CJ_WEIGHT_SKILL=0.30` vào `.env.nmaiex`.
+- [x] Thêm `nmaiex_cj_weight_skill: float = 0.30` vào `app/core/nmaiex_config.py`.
+- [x] Sửa `nmaiex_ranking_service.py` hàm `rank_jobs_for_candidate()` dòng 392-394: đổi `nmaiex_jc_weight_skill` → `nmaiex_cj_weight_skill` và enable `w_title`.
+
+### 2.5b. Seniority Penalty — Asymmetric Buffer (Issue #0)
+- [x] Implement `compute_seniority_penalty(cand_expyears, job_min_threshold, career_stage)` theo spec `[NMAIex]_SENIORITY_PENALTY_PROPOSAL.md`.
+  - Thiếu kinh nghiệm: `penalty = 0.25 * gap`
+  - Thừa kinh nghiệm (overqualified, vượt buffer): `penalty = 0.5 * excess * 0.5` (nhẹ hơn)
+  - Rename biến `job_max_raw` → `job_level_threshold_max` cho rõ nghĩa.
+- [x] Thêm `seniority_penalty`, `career_stage`, `exp_gap` vào `score_breakdown`.
+- [x] Thêm config buffer tiers vào `.env.nmaiex` + `nmaiex_config.py`:
+
+### 2.5c. Title Matching & CV Profile Enrichment (Issue #4 & #5-cert)
+- [x] Cập nhật SELECT query trong `rank_jobs_for_candidate()`: thêm `cv.parsedData -> 'experience'`, `cv.parsedData -> 'certificates'`, `cv.parsedData -> 'education'`.
+- [x] Build `candidate_text` enriched từ: recent_titles (3 gần nhất) + bio + certs + education degrees.
+- [x] Tính `title_score` riêng (ts_rank của `recent_titles` vs `job.title`) và nhân với `w_title`.
+
+### 2.5d. Salary Adjustment — Full Implementation (Issue #3)
+- [x] Thêm `expectedSalaryMin: int | None` và `expectedSalaryMax: int | None` vào `ParsedCV` trong `app/models/cv_models.py`.
+- [x] Cập nhật LLM prompt trong `app/services/cv_parser_adapters.py`: thêm hướng dẫn extract `expectedSalaryMin`/`expectedSalaryMax`. LLM trả `null` nếu không có.
+- [x] Implement `estimate_expected_salary(expyears, location)` fallback dùng config tiers.
+- [x] Implement `compute_salary_adjustment(job_min, job_max, expected_min, expected_max)`:
+  - `NULL job salary` → return `0.0` (neutral)
+  - Asymmetric: penalty nếu job thấp hơn expected, bonus nếu cao hơn (capped)
+- [x] Thêm các `NMAIEX_SALARY_*` vào `.env.nmaiex` + `nmaiex_config.py` (xem Mục 11.4 trong Implementation Plan).
+- [x] Tích hợp `salary_adjustment` vào `final_score` trong `rank_jobs_for_candidate()`.
+
+### 2.5e. Language Requirement System (Issue #5-lang) — Schema
+- [x] Thêm bảng `LANGUAGE` vào `database/schema_web_core.sql` (sau `JOBCATEGORY`).
+- [x] Thêm bảng `JOB_LANG_REQUIREMENT` vào `database/schema_web_core.sql`.
+- [x] Thêm INSERT seed data 7 ngôn ngữ vào `database/root_data.sql`.
+- [x] Chạy lại `scripts/reset_and_seed_db.py` — xác nhận không lỗi FK.
+
+### 2.5f. Language Requirement System — CV Parser Update
+- [x] Thêm class `LanguageEntry(CVBaseModel)` vào `app/models/cv_models.py`.
+- [x] Đổi `ParsedCV.languages: list[str]` → `list[LanguageEntry]` (**breaking change, migration cần test**).
+- [x] Cập nhật LLM prompt trong `cv_parser_adapters.py`: extract `[{"language": "...", "proficiency": "..."}]`.
+- [x] Test: parse lại 1 CV mẫu có ngôn ngữ → xác nhận output đúng format.
+
+### 2.5g. Language Requirement System — Mapper & Scoring
+- [x] Implement `normalize_proficiency(raw_str) -> str` trong `nmaiex_mapper_service.py`:
+  - Dùng LLM mapper `invoke_generation("auto-lite")` chuẩn hóa về `BASIC|INTERMEDIATE|ADVANCED|FLUENT|NATIVE`.
+- [x] Implement `compute_language_score(job_post_id, candidate_languages, conn) -> (penalty, bonus, breakdown)`.
+- [x] Thêm các `NMAIEX_LANG_*` vào `.env.nmaiex` + `nmaiex_config.py`.
+- [x] Tích hợp `lang_penalty`, `lang_bonus` vào `final_score` trong `rank_jobs_for_candidate()`.
+- [x] Thêm `lang_breakdown` vào `score_breakdown`.
+
+### 2.5h. Strategy Doc Note
+- [x] Tạo/cập nhật `docs/strategy/nmaiex_ranking_strategy.md`: Ghi chú lý do C→J không dùng vector search (MVP scope), future plan cho JOB_EMBEDDING index.
 
 ---
 
 ## Phase 3: API & Router
 
-- [ ] Tạo `app/models/nmaiex_schemas.py`: Pydantic models (`ScoreBreakdown`, `CandidateRankResult`, `JobRankResult`, `RankingResponse`, `MasterDataItem`).
-- [ ] Tạo `app/api/nmaiex_routes_ranking.py`:
+- [x] Tạo `app/models/nmaiex_schemas.py`: Pydantic models (`ScoreBreakdown`, `CandidateRankResult`, `JobRankResult`, `RankingResponse`, `MasterDataItem`).
+- [x] Tạo `app/api/nmaiex_routes_ranking.py`:
   - `GET /v2/nmaiex/ranking/candidates/{job_id}?limit=20&province_id=...&work_mode=...`
   - `GET /v2/nmaiex/ranking/jobs/{candidate_id}?limit=20&province_id=...&work_mode=...`
   - `GET /v2/nmaiex/master/provinces` (có nhóm theo region)
   - `GET /v2/nmaiex/master/levels`
   - `GET /v2/nmaiex/master/categories`
   - `GET /v2/nmaiex/master/skills`
-- [ ] Cập nhật `app/main.py`: Thêm `include_router(nmaiex_router, prefix="/v2")` — **KHÔNG** sửa các router TTCS hiện có.
-- [ ] Kiểm tra: `GET /v2/nmaiex/ranking/candidates/1?limit=10` trả về JSON hợp lệ với `score_breakdown`.
+- [x] Cập nhật `app/main.py`: Thêm `include_router(nmaiex_router, prefix="/v2")` — **KHÔNG** sửa các router TTCS hiện có.
+- [x] Kiểm tra: `GET /v2/nmaiex/ranking/candidates/1?limit=10` trả về JSON hợp lệ với `score_breakdown`.
 
 ---
 
@@ -122,7 +171,7 @@ Tham chiếu: `[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md`
 
 > **Lưu ý:** Phần này KHÔNG phải task code. Claude thực hiện task (1), AI khác thực hiện task (2) và (3) sau khi dev xong.
 
-- [ ] **(Claude — Sau Phase 3)** Viết `docs/strategy/nmaiex_ranking_strategy.md`:
+- [x] **(Claude — Sau Phase 3)** Viết `docs/strategy/nmaiex_ranking_strategy.md`:
   - Lý do chọn RRF + Late Fusion (thay vì Cross-Encoder thuần).
   - Triết lý Recall over Precision ở Retrieval Stage.
   - Quyết định clip [0,1] và tại sao weights tổng < 1.
@@ -130,9 +179,9 @@ Tham chiếu: `[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md`
   - Lý do dùng 34 tỉnh sau sáp nhập
   - Liên kết research: `[NMAIex_th_3]`, `[NMAIex_3]`.
 
-- [ ] **(Claude — Liên tục trong quá trình dev)** Cập nhật `agent_workflow_doc/[NMAIex]_DOC_UPDATE_INSTRUCTIONS.md` với hướng dẫn cho AI tài liệu.
+- [x] **(Claude — Liên tục trong quá trình dev)** Cập nhật `agent_workflow_doc/[NMAIex]_DOC_UPDATE_INSTRUCTIONS.md` với hướng dẫn cho AI tài liệu.
 
-- [ ] **(AI tài liệu — Sau Phase 4 frontend xong)** Thực hiện theo `[NMAIex]_DOC_UPDATE_INSTRUCTIONS.md`:
+- [x] **(AI tài liệu — Sau Phase 4 frontend xong)** Thực hiện theo `[NMAIex]_DOC_UPDATE_INSTRUCTIONS.md`:
   - Viết `docs/guide/nmaiex_ranking_guide.md`.
   - Cập nhật `docs/strategy/README.md`, `docs/guide/README.md`.
   - Cập nhật `Fang/README.md` để nhắc đến NMAIex extension.
