@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 
 from openai import AsyncOpenAI
 
@@ -8,8 +8,18 @@ from app.core.config import settings
 from app.core.logging import logger
 
 
-async def embed_chunks(chunks: List[str]) -> List[List[float]]:
-    """Embed chunk content with the configured provider and dimensions."""
+async def embed_chunks(
+    chunks: List[str],
+    dimensions: Optional[int] = None,
+) -> List[List[float]]:
+    """Embed chunk content with the configured provider and dimensions.
+
+    Args:
+        chunks: List of non-empty strings to embed.
+        dimensions: Optional override for embedding dimensions.
+                    Supports OpenAI Matryoshka truncation (e.g. 256 for skill text).
+                    Falls back to settings.embedding_dim if None.
+    """
 
     if not chunks:
         return []
@@ -30,6 +40,9 @@ async def embed_chunks(chunks: List[str]) -> List[List[float]]:
             raise ValueError(f"chunks[{index}] must be a non-empty string.")
         normalized_chunks.append(chunk.strip())
 
+    # Use provided dimensions or fallback to the default from settings
+    effective_dims = dimensions if dimensions is not None else settings.embedding_dim
+
     client = AsyncOpenAI(api_key=settings.openai_api_key)
     vectors: list[list[float] | None] = [None] * len(normalized_chunks)
     total_prompt_tokens = 0
@@ -44,7 +57,7 @@ async def embed_chunks(chunks: List[str]) -> List[List[float]]:
             response = await client.embeddings.create(
                 model=settings.embedding_model,
                 input=batch,
-                dimensions=settings.embedding_dim,
+                dimensions=effective_dims,
             )
 
             for item in response.data:
@@ -62,7 +75,7 @@ async def embed_chunks(chunks: List[str]) -> List[List[float]]:
             extra={
                 "provider": provider,
                 "model": settings.embedding_model,
-                "dimension": settings.embedding_dim,
+                "dimension": effective_dims,
                 "chunkCount": len(normalized_chunks),
                 "batchSize": settings.embedding_batch_size,
                 "promptTokens": total_prompt_tokens,

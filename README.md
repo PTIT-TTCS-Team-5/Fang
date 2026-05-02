@@ -75,6 +75,11 @@ Cả Parser và Generator đều sử dụng chung một cơ chế **5-Tier Fall
 6.  [docs/guide/cv_parser_guide.md](./docs/guide/cv_parser_guide.md) — Chi tiết về 5-Tier Parser
 7.  [docs/guide/database_guide.md](./docs/guide/database_guide.md) — Cấu trúc CSDL pgvector
 
+> **NMAIex Extension:** FANG tích hợp thêm NMAIex (Nhập môn AI extension) — hệ thống
+> xếp hạng ứng viên hai chiều (J→C, C→J) dựa trên RRF + Late Fusion. Xem:
+> - Chiến lược: `docs/strategy/nmaiex_ranking_strategy.md`
+> - Hướng dẫn: `docs/guide/nmaiex_ranking_guide.md`
+
 ---
 
 ## Legacy (v1)

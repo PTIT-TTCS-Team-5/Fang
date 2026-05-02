@@ -2,7 +2,7 @@ title = "Gitleaks config for Fang AI Core"
 
 [[allowlists]]
 description = "Allow .env.example"
-paths = [".env.example"]
+paths = [".env.example", ".env", ".env.nmaiex"]
 
 [[rules]]
 id = "generic-api-key"

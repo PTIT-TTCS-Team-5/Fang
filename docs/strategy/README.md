@@ -7,6 +7,8 @@ Phạm vi chính:
 - Phân tích trade-off giữa các phương án.
 - Chính sách fallback, quality gate, token budget, và tiêu chí vận hành.
 - Liên kết tới tài liệu nghiên cứu làm căn cứ kỹ thuật.
+- [NMAIex] Chiến lược xếp hạng hai chiều (J→C, C→J): RRF, Late Fusion, Penalty design.
+- [NMAIex] Chính sách LLM mapper: System prompt design, chống hallucination.
 
 Nguyên tắc biên soạn:
 - Nêu rõ bối cảnh, quyết định, lý do chọn và tác động.
