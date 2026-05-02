@@ -8,8 +8,8 @@ File duy nhất trong dự án được viết thủ công :b
 5. Triển khai, thông thường me sẽ chia kế hoạch thành các pha, thường là 3-5 đối với một tính năng to ví dụ như NMAIex. Cơ bản kế hoạch có chiến lược rõ ràng, có kiến trúc và tài liệu triển khai nhìn là Code được thì:
     - Đối với các task đơn giản kiểu CRUD hoặc chỉ định rất rõ không cần tư duy gì thêm thì cho Gemini Flask làm (hoặc Haiku nhưng me chưa thử)
     - Khó hơn tý mà bắt đầu code đến nhiều hàm, nhiều file thì dùng GPT Codex hoặc Gemini Pro (low-high tùy biến)
-    - Đối với các task mà các Model trước bất lực hoặc review code thấy chúng nó không đủ trình làm thì mới sử dụng Claude Sonnet để code (Căng nữa thì dùng hẳn Opus nhưng me chưa bao giờ dùng đến cả)
-6. Khi xong rồi thì thường me sẽ dùng một Model nhỏ đến tầm trung để cập nhật toàn bộ tài liệu dự án (Thừa token thì dùng tụi Model cao cấp nhưng mà khả năng là phí)
+    - Đối với các task mà các Model trước bất lực hoặc review code thấy chúng nó không đủ trình làm thì mới sử dụng Claude Sonnet để code (Căng nữa thì dùng hẳn Opus nhưng me chưa bao giờ dùng đến cả) (Thực ra nếu có dư thfi ae cứ bào Sonnet thật mạnh chứ gần như task phải khá dễ, tư duy ít thì mới tin Gemini hay Codex được. Sonnet code thì miễn chê, mỗi tội Anthropic bóp token nên hay bị over token limit)
+6. Khi xong rồi thì thường me sẽ dùng một Model nhỏ đến tầm trung để cập nhật toàn bộ tài liệu dự án (Các tài liệu quan trọng như strategy hoặc guide thì vẫn nên dùng Sonnet để biết, cập nhật nhỏ không tư duy nhiều thì dùng đến Gemini Pro thôi)
 7. Có 2 phương án, một là xong hẳn thì nghỉ ngơi thôi. Còn chưa xong mà hết token thì cũng nghỉ sớm :b (hoặc cần lắm thì bào credit bằng overages)
 
 ## Mấy thứ lặt vặt
