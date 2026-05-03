@@ -3,9 +3,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class NMAIexSettings(BaseSettings):
-    # Cloud Storage — Cloudinary dùng chung, chỉ tách folder
-    # CLOUDINARY_CLOUD_NAME / API_KEY / API_SECRET đọc từ .env gốc qua FangSettings
-    nmaiex_cloudinary_upload_folder: str = "nmaiex"
+    # Note: CLOUDINARY_UPLOAD_FOLDER được quản lý chung tại .env gốc
+    # vì NMAIex là phần của AI layer hỗ trợ TTCS, không cần config riêng
+    # Xem app/core/config.py để tham khảo cách FangSettings quản lý Cloudinary
 
     # ----------------------------------------------------------------
     # Weights J→C (HR tìm ứng viên — ưu tiên Precision/MRR)

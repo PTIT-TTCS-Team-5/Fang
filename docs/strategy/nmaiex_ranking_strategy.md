@@ -247,16 +247,32 @@ Khi `minSalary IS NULL AND maxSalary IS NULL` (lương thỏa thuận) → `sala
 
 ### 8.3 Language Requirement Score (C→J)
 
-Một số vị trí IT yêu cầu ngoại ngữ (đặc biệt phổ biến ở công ty outsourcing Nhật/Hàn). Scoring language là asymmetric penalty + bonus:
+Một số vị trí IT yêu cầu ngoại ngữ (đặc biệt phổ biến ở công ty outsourcing Nhật/Hàn). Scoring language là asymmetric penalty + bonus, **chỉ áp dụng trong luồng C→J**.
 
+**Thang trình độ chuẩn (5 bậc số nguyên — dùng để so sánh)**:
+```python
+PROFICIENCY_LEVELS = {
+    "BASIC": 1, "INTERMEDIATE": 2, "ADVANCED": 3, "FLUENT": 4, "NATIVE": 5
+}
 ```
-REQUIRED + candidate không có ngôn ngữ   → penalty += 0.25
-REQUIRED + candidate có nhưng level thấp → penalty += 0.10
-PREFERRED + candidate đủ level           → bonus  += 0.08
-Tổng bonus bị cap bởi NMAIEX_LANG_BONUS_CAP = 0.15
+Trình độ thô từ CV (e.g. `"N3"`, `"IELTS 7.5"`, `"Business level"`) được chuẩn hóa qua `normalize_proficiency()` (LLM auto-lite) trước khi so sánh. Fast path: nếu đã là chuẩn → return ngay, không gọi LLM.
+
+**Logic scoring**:
+```
+REQUIRED + candidate không có ngôn ngữ       → penalty += 0.25  (NMAIEX_LANG_REQUIRED_PENALTY)
+REQUIRED + candidate có nhưng level < min    → penalty += 0.10  (NMAIEX_LANG_LEVEL_PENALTY)
+REQUIRED + candidate đủ level               → không phạt/thưởng
+PREFERRED + candidate đủ level              → bonus  += 0.08  (NMAIEX_LANG_PREFERRED_BONUS)
+PREFERRED + candidate thiếu/không đủ level  → không phạt
+Tổng lang_bonus bị cap: NMAIEX_LANG_BONUS_CAP = 0.15
 ```
 
-Tiếng Việt không được đưa vào hệ thống scoring vì đây là website tuyển dụng nội địa — tiếng Việt là mặc định của mọi ứng viên, không phải điểm cộng hay trừ.
+**Dữ liệu nguồn**:
+- Ngôn ngữ của ứng viên: lấy từ `parsedData → languages` (danh sách `{language, proficiency}`).
+- Yêu cầu của job: query `JOB_LANG_REQUIREMENT JOIN LANGUAGE` — chứa `langCode`, `reqType`, `minLevel`.
+- Mapping tên ngôn ngữ thô → `langCode` thực hiện trong code: `"english"/"tiếng anh"` → `"en"`, `"japanese"/"tiếng nhật"` → `"ja"`, v.v.
+
+Tiếng Việt không được đưa vào hệ thống scoring vì đây là website tuyển dụng nội địa — tiếng Việt là mặc định của mọi ứng viên, không phải điểm cộng hay trừ. Chỉ khai báo `JOB_LANG_REQUIREMENT` khi vị trí cần ngoại ngữ.
 
 ---
 
@@ -299,7 +315,9 @@ Cả TTCS và NMAIex dùng chung một tài khoản Cloudinary. Tách biệt qua
 - `Home/ttcs/` — CV và tài liệu của hệ thống TTCS gốc.
 - `Home/nmaiex/` — CV snapshot khi ứng viên apply Job trong NMAIex.
 
-Biến `NMAIEX_CLOUDINARY_UPLOAD_FOLDER="nmaiex"` trong `.env.nmaiex` kiểm soát folder đích khi upload từ luồng NMAIex.
+**Config:** Biến `CLOUDINARY_UPLOAD_FOLDER` (đặt tại `.env` gốc) kiểm soát folder đích. 
+- Thay giá trị `"ttcs"` hay `"nmaiex"` khi cần switch project.
+- Vì NMAIex là phần của AI layer hỗ trợ TTCS, không cần config riêng biệt.
 
 ---
 
@@ -329,11 +347,17 @@ Biến `NMAIEX_CLOUDINARY_UPLOAD_FOLDER="nmaiex"` trong `.env.nmaiex` kiểm so�
 | `GET` | `/v2/nmaiex/master/provinces` | Danh sách 34 tỉnh (nhóm theo Region) |
 | `GET` | `/v2/nmaiex/master/levels` | Danh sách cấp bậc JOBLEVEL |
 | `GET` | `/v2/nmaiex/master/categories` | Danh sách danh mục JOBCATEGORY |
-| `GET` | `/v2/nmaiex/master/skills` | Danh sách kỹ năng SKILL |
+| `GET` | `/v2/nmaiex/master/skills` | Danh sách kỹ năng SKILL (catalog cho LLM mapper) |
+
+> **Lưu ý**: Endpoint `/v2/nmaiex/master/languages` chưa được triển khai — bảng `LANGUAGE` tồn tại trong DB nhưng chưa có route riêng. Khi cần, thêm vào `nmaiex_routes_ranking.py` tương tự pattern master data khác.
 
 Query params ranking: `?limit=20&province_id=HANOI&work_mode=REMOTE`
 
-Response ranking luôn chứa `score_breakdown` với từng thành phần (`rrf_score`, `skill_score`, `exact_overlap`, `fuzzy_overlap`, `seniority_penalty`, `salary_adjustment`, `lang_penalty`, `lang_bonus`, ...).
+**Response ranking** luôn chứa `score_breakdown`.
+
+*J→C breakdown*: `rrf_score`, `exact_overlap`, `fuzzy_overlap`, `skill_score`, `skill_alpha`, `seniority_penalty`, `hard_filter_passed`.
+
+*C→J breakdown*: thêm `text_score`, `title_score`, `salary_adjustment`, `lang_penalty`, `lang_bonus`, `lang_breakdown`.
 
 ---
 

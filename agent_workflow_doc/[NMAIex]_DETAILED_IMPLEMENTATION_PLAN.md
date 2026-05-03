@@ -127,10 +127,9 @@ Tác vụ Mapping (chuyển String → ID) bản chất là một bước thuộ
 # --- Cloud Storage (Cloudinary dùng CHUNG cho TTCS và NMAIex) ---
 # Account Cloudinary là tài khoản chung. Mỗi project upload vào folder riêng.
 # Thư mục đã tạo sẵn trên Cloudinary Home: Home/ttcs và Home/nmaiex
-# CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET → đặt tại .env gốc
-# Biến dưới đây chỉ định folder đích khi upload từ NMAIex:
-NMAIEX_CLOUDINARY_UPLOAD_FOLDER="nmaiex"
-# Tương ứng, TTCS dùng folder: ttcs (đặt biến TTCS_CLOUDINARY_UPLOAD_FOLDER="ttcs" tại .env gốc)
+# CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_UPLOAD_FOLDER → đặt tại .env gốc
+# Thay đổi giá trị CLOUDINARY_UPLOAD_FOLDER khi switch project (ttcs ↔ nmaiex)
+# Không cần khai báo riêng ở .env.nmaiex vì NMAIex là phần của AI layer hỗ trợ
 
 # --- Static Weights Giai Đoạn 1 (không Calibration) ---
 # LƯU Ý: Tổng w_rrf + w_skill < 1 là CÓ CHỦ Ý.
@@ -181,7 +180,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class NMAIexSettings(BaseSettings):
     # Cloud Storage — Cloudinary dùng chung, chỉ tách folder
     # CLOUDINARY_CLOUD_NAME / API_KEY / API_SECRET đọc từ .env gốc qua FangSettings
-    nmaiex_cloudinary_upload_folder: str = "nmaiex"  # Home/nmaiex trên Cloudinary
+    # Note: cloudinary_upload_folder được quản lý chung tại .env gốc
     # Weights J->C
     nmaiex_jc_weight_rrf: float = 0.30
     nmaiex_jc_weight_skill: float = 0.40

@@ -1,6 +1,16 @@
 ### Ghi chú: Click "Send Request" phía trên tên method (nếu dùng REST Client) để gọi API
+### Đảm bảo server đang chạy: uvicorn app.main:app --reload (cổng 8000)
 
-### Gửi yêu cầu Ingestion E2E (Parse -> Chunk -> Embed)
+# ============================================================
+# TTCS Core — Ingestion & Chat
+# ============================================================
+
+### [TTCS] Healthcheck
+GET http://localhost:8000/v2/healthz
+
+###
+
+### [TTCS] Gửi yêu cầu Ingestion E2E (Parse → Chunk → Embed)
 POST http://localhost:8000/v2/ingestion/jobs
 Content-Type: application/json
 
@@ -9,5 +19,71 @@ Content-Type: application/json
   "cvSnapUrl": "https://res.cloudinary.com/dfwkw1guc/raw/upload/v1776871380/Home/miCareer-mini/sample"
 }
 
-### Kiểm tra trạng thái Job (Thay thế indexJobId trả về từ request trên vào số 1)
-GET http://localhost:8000/v1/ingestion/jobs/40
+###
+
+### [TTCS] Kiểm tra trạng thái Ingestion Job (thay 40 bằng indexJobId thực tế)
+GET http://localhost:8000/v2/ingestion/jobs/40
+
+###
+
+# ============================================================
+# NMAIex Ranking — J→C (HR tìm ứng viên cho job)
+# ============================================================
+
+### [NMAIex J→C] Tìm ứng viên phù hợp nhất cho job_id=x
+GET http://localhost:8000/v2/nmaiex/ranking/candidates/5
+
+###
+
+### [NMAIex J→C] Giới hạn 5 kết quả, lọc tỉnh HANOI
+GET http://localhost:8000/v2/nmaiex/ranking/candidates/1?limit=5&province_id=HANOI
+
+###
+
+### [NMAIex J→C] Lọc Remote + giới hạn 10
+GET http://localhost:8000/v2/nmaiex/ranking/candidates/1?limit=10&work_mode=REMOTE
+
+###
+
+# ============================================================
+# NMAIex Ranking — C→J (Ứng viên tìm việc)
+# ============================================================
+
+### [NMAIex C→J] Tìm job phù hợp nhất cho candidate_id=1
+GET http://localhost:8000/v2/nmaiex/ranking/jobs/1
+
+###
+
+### [NMAIex C→J] Giới hạn 5 kết quả
+GET http://localhost:8000/v2/nmaiex/ranking/jobs/1?limit=5
+
+###
+
+### [NMAIex C→J] Lọc theo tỉnh + workMode
+GET http://localhost:8000/v2/nmaiex/ranking/jobs/1?province_id=TPHCM&work_mode=HYBRID
+
+###
+
+# ============================================================
+# NMAIex Master Data — Dùng cho frontend dropdown
+# ============================================================
+
+### [Master] Danh sách tỉnh thành (nhóm theo Vùng)
+GET http://localhost:8000/v2/nmaiex/master/provinces
+
+###
+
+### [Master] Danh sách cấp bậc (JobLevel)
+GET http://localhost:8000/v2/nmaiex/master/levels
+
+###
+
+### [Master] Danh sách danh mục IT (JobCategory)
+GET http://localhost:8000/v2/nmaiex/master/categories
+
+###
+
+### [Master] Danh sách kỹ năng hệ thống (Skill catalog)
+GET http://localhost:8000/v2/nmaiex/master/skills
+
+###

@@ -44,8 +44,7 @@ Tham chiếu: `[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md`
 
 ### 1c. Cấu Hình NMAIex
 - [x] Tạo file `.env.nmaiex` tại root FANG (theo template trong Implementation Plan).
-  - **Cloudinary dùng chung:** Credentials (`CLOUD_NAME`, `API_KEY`, `API_SECRET`) đặt ở `.env` gốc. Chỉ thêm `NMAIEX_CLOUDINARY_UPLOAD_FOLDER="nmaiex"` vào `.env.nmaiex`.
-  - **TTCS:** Thêm `TTCS_CLOUDINARY_UPLOAD_FOLDER="ttcs"` vào `.env` gốc.
+  - **Cloudinary dùng chung:** Credentials (`CLOUD_NAME`, `API_KEY`, `API_SECRET`) và `CLOUDINARY_UPLOAD_FOLDER` đặt ở `.env` gốc. Không cần khai báo lại ở `.env.nmaiex` (NMAIex là phần của AI layer hỗ trợ TTCS).
 - [x] Thêm `.env.nmaiex` vào `.gitignore`.
 - [x] Tạo `app/core/nmaiex_config.py` dùng `pydantic_settings`, đọc `.env.nmaiex` (Chỉ chứa `upload_folder` + Weights + Limits, **KHÔNG** chứa API Keys LLM hay Cloudinary credentials).
 - [x] Tạo `app/core/.env.nmaiex.example` (template) để commit lên Git.

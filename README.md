@@ -22,6 +22,18 @@ FANG v2 hoạt động như một REST API Server độc lập, bao gồm 2 Pipe
 - `POST /v2/ingestion/jobs` — Kích hoạt xử lý CV.
 - `GET /v2/ingestion/jobs/{indexJobId}` — Kiểm tra trạng thái xử lý (`PENDING`, `PROCESSING`, `SUCCESS`, `FAILED`).
 
+### NMAIex Ranking API
+- `GET /v2/nmaiex/ranking/candidates/{job_id}` — **J→C**: Danh sách ứng viên phù hợp nhất cho một job (có `score_breakdown`).
+- `GET /v2/nmaiex/ranking/jobs/{candidate_id}` — **C→J**: Danh sách job gợi ý cho ứng viên (salary adjustment + language scoring).
+
+  Query params: `?limit=20&province_id=HANOI&work_mode=REMOTE`
+
+### NMAIex Master Data API
+- `GET /v2/nmaiex/master/provinces` — 34 tỉnh/thành (nhóm theo vùng Bắc/Trung/Nam sau sáp nhập 2025).
+- `GET /v2/nmaiex/master/levels` — Các cấp bậc công việc (Intern, Fresher, Junior → Director).
+- `GET /v2/nmaiex/master/categories` — Danh mục ngành IT (17 mục).
+- `GET /v2/nmaiex/master/skills` — Catalog kỹ năng hệ thống (dùng cho LLM mapper).
+
 ## 5-Tier LLM Architecture
 
 Cả Parser và Generator đều sử dụng chung một cơ chế **5-Tier Fallback** với **ProTierGate** nghiêm ngặt để tối ưu chi phí và chất lượng:
@@ -76,9 +88,13 @@ Cả Parser và Generator đều sử dụng chung một cơ chế **5-Tier Fall
 7.  [docs/guide/database_guide.md](./docs/guide/database_guide.md) — Cấu trúc CSDL pgvector
 
 > **NMAIex Extension:** FANG tích hợp thêm NMAIex (Nhập môn AI extension) — hệ thống
-> xếp hạng ứng viên hai chiều (J→C, C→J) dựa trên RRF + Late Fusion. Xem:
-> - Chiến lược: `docs/strategy/nmaiex_ranking_strategy.md`
-> - Hướng dẫn: `docs/guide/nmaiex_ranking_guide.md`
+> xếp hạng ứng viên hai chiều (J→C, C→J) dựa trên RRF + Late Fusion.
+>
+> **Chiến lược:** [`docs/strategy/nmaiex_ranking_strategy.md`](./docs/strategy/nmaiex_ranking_strategy.md)
+>
+> **Hướng dẫn vận hành:** [`docs/guide/nmaiex_ranking_guide.md`](./docs/guide/nmaiex_ranking_guide.md)
+>
+> **Cấu hình môi trường:** copy `.env.nmaiex.example` → `.env.nmaiex` và điền giá trị. Router được mount tại `/v2/nmaiex`.
 
 ---
 

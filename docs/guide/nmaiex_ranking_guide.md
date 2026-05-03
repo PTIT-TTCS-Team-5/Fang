@@ -122,9 +122,18 @@ skill_score = α × exact_overlap + (1 − α) × fuzzy_overlap
 
 ### Language Proficiency Normalizer — `normalize_proficiency(raw)`
 - Fast path: Nếu đã là chuẩn (`BASIC|INTERMEDIATE|ADVANCED|FLUENT|NATIVE`) → return ngay, không gọi LLM.
-- LLM map các dạng như `"N3"`, `"IELTS 7.5"`, `"Business level"` → chuẩn hóa.
-- Fallback về `BASIC` nếu fail.
-* NOTE FROM USER: Cần có hướng dẫn kỹ cho LLM về chính xác khoảng điểm nào tương đương với 1 trong 5 mức. Tránh hallucination và vibe-assumption 
+- LLM map các dạng như `"N3"`, `"IELTS 7.5"`, `"Business level"` → chuẩn hóa. Mapping tham khảo:
+
+  | Input mẫu | Output chuẩn |
+  |---|---|
+  | N5, A1, Sơ cấp, Beginner | `BASIC` |
+  | N3, N4, B1, B2, Conversational, Trung cấp | `INTERMEDIATE` |
+  | N2, C1, IELTS 6.5–7.5, Business level, Khá | `ADVANCED` |
+  | N1, C2, IELTS 8+, Fluent, Thành thạo | `FLUENT` |
+  | Native speaker, Tiếng mẹ đẻ, Mother tongue | `NATIVE` |
+
+- Fallback về `BASIC` nếu LLM fail hoặc không xác định được.
+- **Lưu ý**: System prompt LLM được thiết kế chặt để tránh hallucination — có ví dụ cụ thể cho từng dải điểm, rõ ràng về boundary.
 ---
 
 ## 6. Cấu Hình — `nmaiex_config.py` & `.env.nmaiex`
@@ -152,6 +161,7 @@ Các nhóm cấu hình chính:
 Response từ cả hai endpoint tuân theo `RankingResponse` (`nmaiex_schemas.py`):
 
 ```json
+// J→C: rank_candidates_for_job
 {
   "job_id": 1,
   "total_candidates": 45,
@@ -173,6 +183,44 @@ Response từ cả hai endpoint tuân theo `RankingResponse` (`nmaiex_schemas.py
     }
   ]
 }
+
+// C→J: rank_jobs_for_candidate
+{
+  "candidate_id": 42,
+  "total_jobs": 120,
+  "returned": 20,
+  "results": [
+    {
+      "job_id": 7,
+      "job_title": "Senior Java Engineer",
+      "match_score": 0.8134,
+      "score_breakdown": {
+        "text_score": 0.5200,
+        "title_score": 0.4800,
+        "exact_overlap": 0.7500,
+        "fuzzy_overlap": 0.2200,
+        "skill_score": 0.6860,
+        "skill_alpha": 0.8,
+        "salary_adjustment": 0.0400,
+        "lang_penalty": 0.0000,
+        "lang_bonus": 0.0800,
+        "lang_breakdown": {
+          "requirements": [
+            {
+              "lang": "ja",
+              "req_type": "PREFERRED",
+              "min_level": "INTERMEDIATE",
+              "cand_level_num": 3,
+              "met": true,
+              "score_diff": 0.08
+            }
+          ]
+        },
+        "hard_filter_passed": true
+      }
+    }
+  ]
+}
 ```
 * NOTE FROM USER: sau có thời gian thì bổ sung hướng dẫn về cơ chế xếp hạng và dùng LLM để từ hướng dẫn chi tiết đó -> Giải thích thêm
 `score_breakdown` **luôn được trả về** trong response, kể cả trên production. Frontend tự quyết định ẩn/hiện theo `VITE_DEV_MODE`. Việc giữ breakdown phía backend giúp debug và audit không cần thay đổi API và tận dụng để làm LLM giải thích trong tương lai
@@ -183,14 +231,15 @@ Với C→J, breakdown còn có thêm: `text_score`, `title_score`, `salary_adju
 
 ## 8. Master Data Endpoints
 
-Bốn endpoint phụ trợ phục vụ frontend dropdown — query thẳng từ DB, không qua ranking logic:
+Năm endpoint phụ trợ phục vụ frontend dropdown — query thẳng từ DB, không qua ranking logic:
 
 | Endpoint | Nguồn | Đặc biệt |
 |---|---|---|
 | `GET /v2/nmaiex/master/provinces` | `PROVINCE JOIN REGION` | Trả về nhóm theo `region` (Bắc/Trung/Nam) |
-| `GET /v2/nmaiex/master/levels` | `JOBLEVEL` | Bao gồm `minYears/maxYears` cho UI display |
+| `GET /v2/nmaiex/master/levels` | `JOBLEVEL` | Bao gồm `levelId`, `levelName`, `description` |
 | `GET /v2/nmaiex/master/categories` | `JOBCATEGORY` | Danh mục IT (17 mục) |
 | `GET /v2/nmaiex/master/skills` | `SKILL` | Catalog skill chuẩn cho LLM mapper |
+| `GET /v2/nmaiex/master/languages` | `LANGUAGE` | **Chưa triển khai** — bảng DB đã có, route chưa được tạo |
 
 ---
 

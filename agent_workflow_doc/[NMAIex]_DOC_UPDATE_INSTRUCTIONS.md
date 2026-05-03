@@ -43,9 +43,9 @@
 **Nội dung cần có (theo chuẩn guide — trả lời "Làm thế nào?"):**
 
 #### 1. Thiết lập môi trường NMAIex
-- Tạo `.env.nmaiex` (copy từ `.env.nmaiex.example`), điền `NMAIEX_CLOUDINARY_UPLOAD_FOLDER`.
-- Cloudinary credentials (`CLOUD_NAME`, `API_KEY`, `API_SECRET`) đã có trong `.env` gốc — không cần thêm.
-- Cấu trúc folder Cloudinary: `Home/ttcs` (TTCS), `Home/nmaiex` (NMAIex).
+- Tạo `.env.nmaiex` (copy từ `.env.nmaiex.example`) với ranking weights và limits.
+- Cloudinary credentials (`CLOUD_NAME`, `API_KEY`, `API_SECRET`, `CLOUDINARY_UPLOAD_FOLDER`) đã có trong `.env` gốc — không cần thêm.
+- Cấu trúc folder Cloudinary: `Home/ttcs` (TTCS), `Home/nmaiex` (NMAIex). Thay đổi `CLOUDINARY_UPLOAD_FOLDER` ở `.env` khi cần switch project.
 
 #### 2. Reset DB với schema NMAIex
 - Chạy `scripts/reset_and_seed_db.py`.
