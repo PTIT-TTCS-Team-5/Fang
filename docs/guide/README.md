@@ -7,6 +7,7 @@ Phạm vi chính:
 - Luồng thao tác theo từng bước cho dev/test.
 - Hướng dẫn kiểm thử nhanh, kiểm thử tích hợp và xử lý sự cố.
 - Đối chiếu giữa tài liệu và mã nguồn để triển khai đúng vị trí.
+- [NMAIex] Hướng dẫn vận hành hệ thống xếp hạng ứng viên và gợi ý việc làm.
 
 Nguyên tắc biên soạn:
 - Ưu tiên tính thực thi: đọc xong có thể làm ngay.

@@ -85,6 +85,22 @@ INSERT INTO JOBCATEGORY (catName, description) VALUES
 ('ERP / SAP',             'Triển khai và vận hành hệ thống ERP/SAP');
 
 -- ============================================================
+-- 0d. [NMAIex] LANGUAGE (Language Requirement System — Phase 2.5)
+-- Cập nhật thủ công khi có ngôn ngữ mới phổ biến trong thị trường VN
+-- Lưu ý: tiếng Việt ('vi') là mặc định thị trường, không cần khai báo trong JobPosting
+-- thông thường trừ khi Job đặc thù (VD: phiên dịch, truyền thông quốc tế).
+-- ============================================================
+
+INSERT INTO LANGUAGE (langCode, langName) VALUES
+('en', 'English'),
+('ja', 'Japanese'),
+('ko', 'Korean'),
+('zh', 'Chinese'),
+('vi', 'Vietnamese'),
+('fr', 'French'),
+('de', 'German');
+
+-- ============================================================
 -- 1. SKILL
 -- ============================================================
 

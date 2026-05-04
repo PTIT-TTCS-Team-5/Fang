@@ -26,6 +26,19 @@ Rules:
 - Keep summary concise and factual.
 - Put the CV's plain extracted text into rawText.
 - Return only the structured data required by the schema.
+
+Language extraction rules (languages field):
+- Extract each language as {"language": "<name>", "proficiency": "<raw level>"}.
+- Keep proficiency exactly as stated in CV (e.g. "N3", "IELTS 7.5", "Fluent", "B2", "Native").
+  Do NOT normalize — use the raw text from the CV.
+- If no proficiency is mentioned for a language, set proficiency to null.
+- Vietnamese is the default market language; include it only if explicitly stated in CV.
+
+Salary extraction rules (expectedSalaryMin, expectedSalaryMax):
+- Extract expected salary range ONLY if explicitly stated in the CV (e.g. "Expected: 20-30M", "Mong muốn: 25,000,000 VND").
+- Values in millions (M) → multiply by 1,000,000. Values in thousands (K) → multiply by 1,000.
+- If only one figure is stated (e.g. "25M"), set both min and max to the same value.
+- If salary is "negotiable" / "thỏa thuận" or not mentioned → set both to null.
 """.strip()
 
 CV_PARSE_SCHEMA = ParsedCV.model_json_schema()

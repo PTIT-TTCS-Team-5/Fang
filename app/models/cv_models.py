@@ -57,6 +57,24 @@ class Experience(CVBaseModel):
     )
 
 
+class LanguageEntry(CVBaseModel):
+    """Represents a language skill from a CV.
+
+    [NMAIex Phase 2.5f] Breaking change: replaces list[str] in ParsedCV.languages.
+    Proficiency is stored as raw string from CV (e.g. 'N3', 'Fluent', 'B2') —
+    normalization to BASIC|INTERMEDIATE|ADVANCED|FLUENT|NATIVE happens in
+    nmaiex_mapper_service.normalize_proficiency() at scoring time.
+    """
+
+    language: str = Field(
+        ..., description="Language name (e.g. 'English', 'Japanese')."
+    )
+    proficiency: str | None = Field(
+        None,
+        description="Proficiency as stated in CV (e.g. 'N3', 'Fluent', 'B2'). Raw string.",
+    )
+
+
 class ParsedCV(CVBaseModel):
     """The root model representing the entire parsed content of a CV."""
 
@@ -75,8 +93,9 @@ class ParsedCV(CVBaseModel):
     certificates: list[str] = Field(
         default_factory=list, description="List of certificates obtained."
     )
-    languages: list[str] = Field(
-        default_factory=list, description="List of languages the candidate speaks."
+    languages: list[LanguageEntry] = Field(
+        default_factory=list,
+        description="[NMAIex Phase 2.5f] List of languages with proficiency levels.",
     )
     summary: str = Field("", description="A brief summary or objective from the CV.")
     rawText: str = Field(
@@ -86,4 +105,14 @@ class ParsedCV(CVBaseModel):
     )
     parserVer: str | None = Field(
         None, description="Version of the CV parser used to process the file."
+    )
+    # [NMAIex Phase 2.5d] Expected salary — dùng cho Salary Adjustment trong C→J
+    # LLM trả null nếu CV không đề cập. None = không có thông tin.
+    expectedSalaryMin: int | None = Field(
+        None,
+        description="Expected minimum salary (VND). None if not stated in CV.",
+    )
+    expectedSalaryMax: int | None = Field(
+        None,
+        description="Expected maximum salary (VND). None if not stated in CV.",
     )

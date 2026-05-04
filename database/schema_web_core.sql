@@ -2,6 +2,9 @@
 -- DROP DATABASE IF EXISTS micareer_lite_db;
 -- CREATE DATABASE micareer_lite_db;
 
+-- Enable pgvector extension (nếu chưa có)
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- ============================================================
 -- [NMAIex] MASTER DATA — Phải đặt TRƯỚC user và COMPANY (FK)
 -- ============================================================
@@ -31,6 +34,14 @@ CREATE TABLE JOBCATEGORY (
   catId       SERIAL PRIMARY KEY,
   catName     VARCHAR(100) NOT NULL UNIQUE,
   description TEXT
+);
+
+-- [NMAIex] Bảng ngôn ngữ chuẩn (Language Requirement System — Phase 2.5)
+-- Cập nhật thủ công khi có ngôn ngữ mới phổ biến trong thị trường VN
+CREATE TABLE LANGUAGE (
+    langId   SERIAL PRIMARY KEY,
+    langCode VARCHAR(10)  NOT NULL UNIQUE,  -- ISO 639-1: 'en', 'ja', 'ko', 'zh', 'vi'...
+    langName VARCHAR(50)  NOT NULL
 );
 
 -- ============================================================
@@ -79,6 +90,23 @@ CREATE TABLE COMPANY (
   ward         VARCHAR(100) NOT NULL,
   street       VARCHAR(255) NOT NULL
 );
+--JOB & APPLICATION 
+ 
+CREATE TABLE JOBPOSTING (
+  jobPostId   SERIAL PRIMARY KEY,
+  title       VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  minSalary   INT,
+  maxSalary   INT,
+  workLoc     VARCHAR(255),              -- Giữ nguyên cho mục đích display text
+  workMode    VARCHAR(50),               -- ONSITE | HYBRID | REMOTE
+  provId      VARCHAR(20) REFERENCES PROVINCE(provId),  -- [NMAIex] FK địa lý cho hard filter
+  createdAt   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expAt       TIMESTAMP NOT NULL,
+  compId      INT NOT NULL,
+  FOREIGN KEY (compId) REFERENCES COMPANY(compId)
+);
+
 CREATE TABLE HR (
   userId INT PRIMARY KEY,
   emailSign TEXT,
@@ -118,22 +146,6 @@ CREATE TABLE HASPERM (
   FOREIGN KEY (permId) REFERENCES "permission"(permId)
 );
  
---JOB & APPLICATION 
- 
-CREATE TABLE JOBPOSTING (
-  jobPostId   SERIAL PRIMARY KEY,
-  title       VARCHAR(255) NOT NULL,
-  description TEXT NOT NULL,
-  minSalary   INT,
-  maxSalary   INT,
-  workLoc     VARCHAR(255),              -- Giữ nguyên cho mục đích display text
-  workMode    VARCHAR(50),               -- ONSITE | HYBRID | REMOTE
-  provId      VARCHAR(20) REFERENCES PROVINCE(provId),  -- [NMAIex] FK địa lý cho hard filter
-  createdAt   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  expAt       TIMESTAMP NOT NULL,
-  compId      INT NOT NULL,
-  FOREIGN KEY (compId) REFERENCES COMPANY(compId)
-);
 
 -- [NMAIex] Bảng nối N-N: JobPosting ↔ JobLevel
 CREATE TABLE JOB_LEVEL_MAP (
@@ -151,6 +163,17 @@ CREATE TABLE JOB_CATEGORY_MAP (
   PRIMARY KEY (jobPostId, catId),
   FOREIGN KEY (jobPostId) REFERENCES JOBPOSTING(jobPostId) ON DELETE CASCADE,
   FOREIGN KEY (catId)     REFERENCES JOBCATEGORY(catId)
+);
+
+-- [NMAIex] Yêu cầu ngôn ngữ của Job (N-N, REQUIRED vs PREFERRED)
+-- Lưu ý: tiếng Việt ('vi') không cần chỉ định vì là mặc định của thị trường VN
+-- Chỉ cần khai báo khi Job yêu cầu ngoại ngữ hoặc yêu cầu tiếng Việt ở level đặc biệt
+CREATE TABLE JOB_LANG_REQUIREMENT (
+    jobPostId  INT         NOT NULL REFERENCES JOBPOSTING(jobPostId) ON DELETE CASCADE,
+    langId     INT         NOT NULL REFERENCES LANGUAGE(langId),
+    reqType    VARCHAR(10) NOT NULL CHECK (reqType IN ('REQUIRED', 'PREFERRED')),
+    minLevel   VARCHAR(20) CHECK (minLevel IN ('BASIC','INTERMEDIATE','ADVANCED','FLUENT','NATIVE')),
+    PRIMARY KEY (jobPostId, langId)
 );
  
 CREATE TABLE SKILL (
@@ -174,7 +197,28 @@ CREATE TABLE CANDIDATESKILL (
   FOREIGN KEY (userId) REFERENCES CANDIDATE(userId),
   FOREIGN KEY (skillId) REFERENCES SKILL(skillId)
 );
- 
+
+-- [NMAIex] Strategy C: Unmatched skills với vector cho fuzzy matching (Tầng 2)
+CREATE TABLE CANDIDATE_SKILL_RAW (
+    rawId      SERIAL PRIMARY KEY,
+    candId     INT NOT NULL REFERENCES CANDIDATE(userId) ON DELETE CASCADE,
+    rawText    VARCHAR(200) NOT NULL,
+    embedding  vector(__NMAIEX_SKILL_EMBEDDING_DIM__),  -- dims từ NMAIEX_SKILL_EMBEDDING_DIMS
+    createdAt  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_cand_skill_raw_cand ON CANDIDATE_SKILL_RAW(candId);
+
+-- [NMAIex] Strategy C: Unmatched skills phía Job (khi HR nhập text-free skill)
+-- Dung cho HR hybrid skill input -> LLM mapper -> unmatched -> embed -> JOB_SKILL_RAW
+CREATE TABLE JOB_SKILL_RAW (
+    rawId      SERIAL PRIMARY KEY,
+    jobPostId  INT NOT NULL REFERENCES JOBPOSTING(jobPostId) ON DELETE CASCADE,
+    rawText    VARCHAR(200) NOT NULL,
+    embedding  vector(__NMAIEX_SKILL_EMBEDDING_DIM__),  -- cùng dims với CANDIDATE_SKILL_RAW
+    createdAt  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_job_skill_raw_job ON JOB_SKILL_RAW(jobPostId);
+
 CREATE TABLE JOBAPPLICATION (
   jobAppId SERIAL PRIMARY KEY,
   candidateId INT NOT NULL,
