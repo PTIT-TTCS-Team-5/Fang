@@ -25,7 +25,7 @@ flowchart TD
     
     I -->|Model cụ thể| J[Gọi đúng 1 adapter<br/> + tenacity retry]
     I -->|auto-lite| K["Chain:<br/> Gemini Flash <br/>→ GPT mini <br/>→ Claude Haiku"]
-    I -->|auto-pro| L["Chain:<br/> Gemini Pro → GPT 5.4"]
+    I -->|auto-pro| L["Chain:<br/> Gemini Pro → GPT 5.5"]
     
     J --> M[Response text + modelVer]
     K --> M

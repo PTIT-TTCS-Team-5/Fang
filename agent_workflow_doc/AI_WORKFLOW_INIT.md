@@ -17,6 +17,7 @@ Mỗi khi tôi yêu cầu khởi tạo ngữ cảnh dự án với tài liệu n
 ### Bước 2: Khảo sát và Tương tác với User
 Sau khi đã nạp ngữ cảnh, **KHÔNG** bắt tay vào viết code ngay. Hãy tương tác với tôi bằng cách đặt các câu hỏi sau để xác định rõ phạm vi công việc:
 1. "Hôm nay bạn muốn làm việc trên dự án nào? (Cho môn TTCS - thực tập cơ sở, hay NMAI - Nhập môn AI? TTCS là FANG + miCareer-mini hiện tại, tên đề tài "Thiết kế và triển khai AI Layer dựa trên kiến trúc Retrieval-Augmented Generation (RAG) tích hợp vào hệ thống quản lý tuyển dụng". NMAI là một extension vào FANG, tên đề tài "Xây dựng hệ thống AI gợi ý việc làm và xếp hạng ứng viên trên website tuyển dụng". Lý do FANG là core AI xử lý tất cả mọi việc và miCareer-mini là thin client là vì mục đích của dự án, tích hợp vào web tuyển dụng -> web chỉ cần gọi API từ FANG, không chứa logic nghiệp vụ)"
+Cập nhật: 9/5/2026 - 2 dự án nmaiex và ttcs đã chính thức được gộp làm 1. Tên gọi ttcs và nmaiex, folder ttcs/nmaiex trên cloudinary và API key tạm thời vẫn giữ để dễ phân biệt khi dev Fang và miCareer-mini.
 2. "Tiến độ hiện tại của dự án ra sao và mục tiêu/task hôm nay của bạn là gì?"
 3. Chủ động đặt thêm 1-2 câu hỏi kỹ thuật chuyên sâu để làm rõ các yêu cầu bị thiếu (nếu có).
 

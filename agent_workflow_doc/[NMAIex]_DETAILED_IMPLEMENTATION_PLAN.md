@@ -129,7 +129,6 @@ Tác vụ Mapping (chuyển String → ID) bản chất là một bước thuộ
 # Thư mục đã tạo sẵn trên Cloudinary Home: Home/ttcs và Home/nmaiex
 # CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_UPLOAD_FOLDER → đặt tại .env gốc
 # Thay đổi giá trị CLOUDINARY_UPLOAD_FOLDER khi switch project (ttcs ↔ nmaiex)
-# Không cần khai báo riêng ở .env.nmaiex vì NMAIex là phần của AI layer hỗ trợ
 
 # --- Static Weights Giai Đoạn 1 (không Calibration) ---
 # LƯU Ý: Tổng w_rrf + w_skill < 1 là CÓ CHỦ Ý.

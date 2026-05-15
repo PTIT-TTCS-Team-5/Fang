@@ -214,3 +214,4 @@ gitleaks.exe
 gitleaks_report.json
 gitleaks_*.zip
 .gitleaks/
+models_available.json
