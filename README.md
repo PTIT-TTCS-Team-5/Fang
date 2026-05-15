@@ -43,7 +43,7 @@ Cả Parser và Generator đều sử dụng chung một cơ chế **5-Tier Fall
 2.  GPT-5.4 mini (`gpt-5.4-mini`)
 3.  Claude 4.5 Haiku (`claude-4.5-haiku`)
 
-**🟠 Pro tier (Chỉ kích hoạt khi Lite gặp sự cố hạ tầng hoặc chất lượng output quá kém):**
+**🟠 Pro tier (Chỉ kích hoạt khi Lite chất lượng output quá kém):**
 4.  Gemini 3.1 Pro (`gemini-3.1-pro-preview`)
 5.  GPT-5.4 (`gpt-5.4`)
 
