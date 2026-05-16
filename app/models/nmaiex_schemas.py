@@ -134,4 +134,64 @@ class JobContentUpdateRequest(BaseModel):
 class CandidateCvUpdateRequest(BaseModel):
     """Request body cho cập nhật CV gốc của Candidate."""
 
-    cvUrl: str
+    cvUrl: Optional[str] = None
+    bio: Optional[str] = None
+
+
+# ============================================================
+# Job Detail Response (Mục 1.5 — Phase 1.5 luồng HR Job Mgmt)
+# ============================================================
+
+
+class JobDetailResponse(BaseModel):
+    """Chi tiết công việc kèm structured NMAIex data."""
+
+    job_id: int
+    title: str
+    description: str
+    min_salary: Optional[int] = None
+    max_salary: Optional[int] = None
+    work_loc: Optional[str] = None
+    work_mode: Optional[str] = None
+    prov_id: Optional[str] = None
+    prov_name: Optional[str] = None
+    company_id: int
+    company_name: str
+    created_at: str
+    exp_at: str
+    # NMAIex structured data
+    level_ids: list[int] = Field(default_factory=list)
+    level_names: list[str] = Field(default_factory=list)
+    category_ids: list[int] = Field(default_factory=list)
+    category_names: list[str] = Field(default_factory=list)
+    skill_ids: list[int] = Field(default_factory=list)
+    skill_names: list[str] = Field(default_factory=list)
+    custom_skills: list[str] = Field(
+        default_factory=list, description="HR text-free skills"
+    )
+
+
+# ============================================================
+# Candidate Detail Response (Mục 1.5 — Update Candidate Profile)
+# ============================================================
+
+
+class CandidateDetailResponse(BaseModel):
+    """Chi tiết ứng viên."""
+
+    candidate_id: int
+    user_id: int
+    first_name: str
+    last_name: str
+    email: str
+    phone: Optional[str] = None
+    prov_id: Optional[str] = None
+    prov_name: Optional[str] = None
+    bio: Optional[str] = None
+    cv_url: Optional[str] = None
+    dob: Optional[str] = None
+    exp_years: Optional[int] = None
+    # Candidate structured data
+    skill_ids: list[int] = Field(default_factory=list)
+    skill_names: list[str] = Field(default_factory=list)
+    custom_skills: list[str] = Field(default_factory=list)

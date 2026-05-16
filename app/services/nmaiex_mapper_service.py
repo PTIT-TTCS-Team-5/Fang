@@ -162,10 +162,10 @@ async def embed_and_store_raw_skills(
 
     if entity_type == "candidate":
         table = "CANDIDATE_SKILL_RAW"
-        id_col = "candId"
+        id_col = "candid"
     elif entity_type == "job":
         table = "JOB_SKILL_RAW"
-        id_col = "jobPostId"
+        id_col = "jobpostid"
     else:
         raise ValueError(
             f"Invalid entity_type: '{entity_type}'. Must be 'candidate' or 'job'."
@@ -185,7 +185,7 @@ async def embed_and_store_raw_skills(
     ]
 
     await conn.executemany(
-        f'INSERT INTO {table} ("{id_col}", "rawText", embedding) VALUES ($1, $2, $3::vector)',
+        f"INSERT INTO {table} ({id_col}, rawtext, embedding) VALUES ($1, $2, $3::vector)",
         records,
     )
 
