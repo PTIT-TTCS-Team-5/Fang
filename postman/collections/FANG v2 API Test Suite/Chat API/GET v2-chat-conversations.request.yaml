@@ -1,0 +1,13 @@
+$kind: http-request
+name: 'GET /v2/chat/conversations'
+method: GET
+url: '{{base_url}}/v2/chat/conversations'
+order: 2000
+queryParams:
+  - key: hrId
+    value: '1'
+  - key: limit
+    value: '20'
+  - key: offset
+    value: '0'
+description: Get list of conversations for an HR

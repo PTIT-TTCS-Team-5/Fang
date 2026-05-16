@@ -1,0 +1,6 @@
+$kind: http-request
+name: 'GET /v2/nmaiex/master/levels'
+method: GET
+url: '{{base_url}}/v2/nmaiex/master/levels'
+order: 2000
+description: Get job level hierarchy (Intern, Fresher, Junior, ..., Director)

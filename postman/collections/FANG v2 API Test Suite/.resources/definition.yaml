@@ -1,0 +1,7 @@
+$kind: collection
+name: FANG v2 API Test Suite
+description: Complete API test collection for FANG v2 (Chat, Ingestion, NMAIex Ranking, Master Data)
+variables:
+  - key: base_url
+    value: 'http://localhost:8000'
+    type: string

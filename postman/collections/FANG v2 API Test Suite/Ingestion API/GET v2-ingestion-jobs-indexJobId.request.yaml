@@ -1,0 +1,9 @@
+$kind: http-request
+name: 'GET /v2/ingestion/jobs/{indexJobId}'
+method: GET
+url: '{{base_url}}/v2/ingestion/jobs/550e8400-e29b-41d4-a716-446655440000'
+order: 2000
+pathVariables:
+  - key: indexJobId
+    value: 550e8400-e29b-41d4-a716-446655440000
+description: Check ingestion job status (PENDING, PROCESSING, SUCCESS, FAILED)

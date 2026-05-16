@@ -1,0 +1,6 @@
+$kind: http-request
+name: 'GET /v2/nmaiex/master/provinces'
+method: GET
+url: '{{base_url}}/v2/nmaiex/master/provinces'
+order: 1000
+description: Get list of 34 provinces/regions (after 2025 merger)

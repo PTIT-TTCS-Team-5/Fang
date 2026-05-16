@@ -1,0 +1,18 @@
+$kind: http-request
+name: 'POST /v2/chat/conversations/{id}/summarize'
+method: POST
+url: '{{base_url}}/v2/chat/conversations/a1b2c3d4-5e6f-7890-abcd-ef1234567890/summarize'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "conversationId": "a1b2c3d4-5e6f-7890-abcd-ef1234567890"
+    }
+pathVariables:
+  - key: id
+    value: a1b2c3d4-5e6f-7890-abcd-ef1234567890
+description: Summarize old conversation history to reduce token usage

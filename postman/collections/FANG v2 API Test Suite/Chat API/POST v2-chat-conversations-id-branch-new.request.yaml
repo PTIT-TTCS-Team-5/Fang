@@ -1,0 +1,19 @@
+$kind: http-request
+name: 'POST /v2/chat/conversations/{id}/branch-new'
+method: POST
+url: '{{base_url}}/v2/chat/conversations/a1b2c3d4-5e6f-7890-abcd-ef1234567890/branch-new'
+order: 5000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "conversationId": "a1b2c3d4-5e6f-7890-abcd-ef1234567890",
+        "hrId": 1
+    }
+pathVariables:
+  - key: id
+    value: a1b2c3d4-5e6f-7890-abcd-ef1234567890
+description: Create a new conversation with summary from old one
