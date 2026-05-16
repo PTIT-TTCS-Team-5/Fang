@@ -1,0 +1,6 @@
+$kind: http-request
+name: 'GET /v2/nmaiex/master/skills'
+method: GET
+url: '{{base_url}}/v2/nmaiex/master/skills'
+order: 4000
+description: Get system skill catalog (used by LLM skill mapper)

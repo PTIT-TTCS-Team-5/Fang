@@ -1,0 +1,6 @@
+$kind: http-request
+name: Test Health Check
+method: GET
+url: '{{base_url}}/health'
+order: 1000
+description: Verify API is running

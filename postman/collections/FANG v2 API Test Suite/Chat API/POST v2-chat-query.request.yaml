@@ -1,0 +1,19 @@
+$kind: http-request
+name: 'POST /v2/chat/query'
+method: POST
+url: '{{base_url}}/v2/chat/query'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "jobAppId": 1,
+        "hrId": 1,
+        "prompt": "Ứng viên này có kinh nghiệm AI/ML không?",
+        "conversationId": null,
+        "modelMode": "auto-lite"
+    }
+description: Send a query to FANG chat with RAG context

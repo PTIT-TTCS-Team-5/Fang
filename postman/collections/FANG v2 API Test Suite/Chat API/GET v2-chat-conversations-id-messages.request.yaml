@@ -1,0 +1,9 @@
+$kind: http-request
+name: 'GET /v2/chat/conversations/{id}/messages'
+method: GET
+url: '{{base_url}}/v2/chat/conversations/a1b2c3d4-5e6f-7890-abcd-ef1234567890/messages'
+order: 3000
+pathVariables:
+  - key: id
+    value: a1b2c3d4-5e6f-7890-abcd-ef1234567890
+description: Get message history for a conversation

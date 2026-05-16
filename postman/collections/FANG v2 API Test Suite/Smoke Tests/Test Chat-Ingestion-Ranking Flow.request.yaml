@@ -1,0 +1,21 @@
+$kind: http-request
+name: Test Chat → Ingestion → Ranking Flow
+method: POST
+url: '{{base_url}}/v2/chat/query'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "description": "Full pipeline test: Parse CV → Store → Query Chat → Get Ranking",
+        "steps": [
+            "1. POST /v2/ingestion/jobs (parse CV)",
+            "2. GET /v2/ingestion/jobs/{id} (wait for SUCCESS)",
+            "3. POST /v2/chat/query (query with context)",
+            "4. GET /v2/nmaiex/ranking/candidates/{job_id} (verify ranking)"
+        ]
+    }
+description: Manual test flow (follow steps in body)
