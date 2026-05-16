@@ -1,0 +1,20 @@
+$kind: http-request
+name: 'PATCH /v2/nmaiex/management/jobs/{job_id}/content'
+method: PATCH
+url: '{{base_url}}/v2/nmaiex/management/jobs/1/content'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "title": "Senior Backend Engineer (Go/Python)",
+        "description": "Chúng tôi tìm kiếm kỹ sư backend có kinh nghiệm với Go hoặc Python. Ứng viên cần có khả năng thiết kế hệ thống phân tán, kinh nghiệm với PostgreSQL và Redis, biết Docker/Kubernetes. Môi trường làm việc năng động, cơ hội phát triển cao."
+    }
+description: |-
+  Cập nhật nội dung Job Posting (title + description).
+  Trigger background re-ingestion: chunk JD → embed → lưu vào AIDOCUMENTCHUNK (sourceType=JOB).
+  Expected: 202 Accepted { "status": "accepted", "message": "...re-ingestion started..." }
+  Note: Re-ingestion chạy background, không chờ kết quả ngay.

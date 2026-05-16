@@ -100,3 +100,38 @@ class MasterDataItem(BaseModel):
     description: Optional[str] = None
     # Extra fields tùy loại data
     extra: Optional[dict] = None
+
+
+# ============================================================
+# Management Models (Phase 1.5)
+# ============================================================
+
+
+class JobStructuredUpdateRequest(BaseModel):
+    """Request body cho cập nhật cài đặt Job (không cần re-ingest)."""
+
+    provId: Optional[str] = None
+    levelIds: list[int] = Field(default_factory=list)
+    catIds: list[int] = Field(default_factory=list)
+    skillIds: list[int] = Field(
+        default_factory=list, description="IDs của skill từ catalog"
+    )
+    custom_skills: list[str] = Field(
+        default_factory=list, description="Text tự do HR nhập thêm"
+    )
+    minSalary: Optional[int] = None
+    maxSalary: Optional[int] = None
+    workMode: Optional[str] = None
+
+
+class JobContentUpdateRequest(BaseModel):
+    """Request body cho cập nhật nội dung Job (cần re-ingest)."""
+
+    title: str
+    description: str
+
+
+class CandidateCvUpdateRequest(BaseModel):
+    """Request body cho cập nhật CV gốc của Candidate."""
+
+    cvUrl: str

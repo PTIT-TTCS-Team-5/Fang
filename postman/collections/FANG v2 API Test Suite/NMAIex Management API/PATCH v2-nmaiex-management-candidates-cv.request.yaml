@@ -1,0 +1,19 @@
+$kind: http-request
+name: 'PATCH /v2/nmaiex/management/candidates/{candidate_id}/cv'
+method: PATCH
+url: '{{base_url}}/v2/nmaiex/management/candidates/1/cv'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "cvUrl": "https://res.cloudinary.com/micareer/image/upload/v1234567890/ttcs/cv_updated.pdf"
+    }
+description: |-
+  Cập nhật URL CV gốc cho ứng viên.
+  Chỉ cập nhật trường cvUrl trong bảng CANDIDATE, không trigger re-ingestion.
+  (Re-ingestion CV vẫn dùng luồng POST /v2/ingestion/jobs)
+  Expected: 200 OK { "status": "success", "message": "Candidate CV URL updated" }

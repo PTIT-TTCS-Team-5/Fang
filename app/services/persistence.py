@@ -235,3 +235,107 @@ async def _delete_document_chunks(conn: Any, job_app_id: int, source_type: str) 
         job_app_id,
         source_type,
     )
+
+
+async def update_job_structured_data(
+    job_id: int,
+    prov_id: Optional[str] = None,
+    min_salary: Optional[int] = None,
+    max_salary: Optional[int] = None,
+    work_mode: Optional[str] = None,
+    level_ids: Optional[list[int]] = None,
+    cat_ids: Optional[list[int]] = None,
+    skill_ids: Optional[list[int]] = None,
+) -> None:
+    """Update job structured data (no re-ingest needed)."""
+    async with acquire_conn() as conn:
+        async with conn.transaction():
+            # Update JOBPOSTING
+            updates = []
+            values: list[Any] = [job_id]
+            idx = 2
+            if prov_id is not None:
+                updates.append(f"provId = ${idx}")
+                values.append(prov_id)
+                idx += 1
+            if min_salary is not None:
+                updates.append(f"minSalary = ${idx}")
+                values.append(min_salary)
+                idx += 1
+            if max_salary is not None:
+                updates.append(f"maxSalary = ${idx}")
+                values.append(max_salary)
+                idx += 1
+            if work_mode is not None:
+                updates.append(f"workMode = ${idx}")
+                values.append(work_mode)
+                idx += 1
+
+            if updates:
+                q = f"UPDATE JOBPOSTING SET {', '.join(updates)} WHERE jobPostId = $1"
+                await conn.execute(q, *values)
+
+            # Update JOB_LEVEL_MAP
+            if level_ids is not None:
+                await conn.execute(
+                    "DELETE FROM JOB_LEVEL_MAP WHERE jobPostId = $1", job_id
+                )
+                if level_ids:
+                    records = [(job_id, lid) for lid in level_ids]
+                    await conn.executemany(
+                        "INSERT INTO JOB_LEVEL_MAP (jobPostId, levelId) VALUES ($1, $2)",
+                        records,
+                    )
+
+            # Update JOB_CATEGORY_MAP
+            if cat_ids is not None:
+                await conn.execute(
+                    "DELETE FROM JOB_CATEGORY_MAP WHERE jobPostId = $1", job_id
+                )
+                if cat_ids:
+                    records = [(job_id, cid) for cid in cat_ids]
+                    await conn.executemany(
+                        "INSERT INTO JOB_CATEGORY_MAP (jobPostId, catId) VALUES ($1, $2)",
+                        records,
+                    )
+
+            # Update JOBREQUIREMENT
+            if skill_ids is not None:
+                await conn.execute(
+                    "DELETE FROM JOBREQUIREMENT WHERE jobPostId = $1", job_id
+                )
+                if skill_ids:
+                    records = [(job_id, sid) for sid in skill_ids]
+                    await conn.executemany(
+                        "INSERT INTO JOBREQUIREMENT (jobPostId, skillId) VALUES ($1, $2)",
+                        records,
+                    )
+
+            # Clear JOB_SKILL_RAW if we are updating skills
+            # (The custom_skills will be populated via embed_and_store_raw_skills in the API layer)
+            if skill_ids is not None:
+                await conn.execute(
+                    "DELETE FROM JOB_SKILL_RAW WHERE jobPostId = $1", job_id
+                )
+
+
+async def update_job_content_data(job_id: int, title: str, description: str) -> None:
+    """Update job content (title, description), which requires re-ingestion."""
+    query = """
+        UPDATE JOBPOSTING
+        SET title = $2, description = $3
+        WHERE jobPostId = $1;
+    """
+    async with acquire_conn() as conn:
+        await conn.execute(query, job_id, title, description)
+
+
+async def update_candidate_cv_url(candidate_id: int, cv_url: str) -> None:
+    """Update the original CV URL for a candidate."""
+    query = """
+        UPDATE CANDIDATE
+        SET cvUrl = $2
+        WHERE userId = $1;
+    """
+    async with acquire_conn() as conn:
+        await conn.execute(query, candidate_id, cv_url)

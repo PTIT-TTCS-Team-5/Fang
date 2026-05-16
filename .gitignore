@@ -215,3 +215,10 @@ gitleaks_report.json
 gitleaks_*.zip
 .gitleaks/
 models_available.json
+.postman/resources.yaml
+fang_gitleaks_full_report.json
+fang_gitleaks_report.json
+micareer_gitleaks_report.json
+list_models.py
+.continue
+.vscode

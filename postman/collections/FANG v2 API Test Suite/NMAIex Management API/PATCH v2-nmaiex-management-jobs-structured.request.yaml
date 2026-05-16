@@ -1,0 +1,27 @@
+$kind: http-request
+name: 'PATCH /v2/nmaiex/management/jobs/{job_id}/structured'
+method: PATCH
+url: '{{base_url}}/v2/nmaiex/management/jobs/1/structured'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "provId": "HANOI",
+        "levelIds": [2, 3],
+        "catIds": [1],
+        "skillIds": [1, 5, 12],
+        "custom_skills": ["Kubernetes", "ArgoCD"],
+        "minSalary": 15000000,
+        "maxSalary": 30000000,
+        "workMode": "HYBRID"
+    }
+description: |-
+  Cập nhật dữ liệu cấu trúc Job (không cần re-ingest).
+  - levelIds/catIds/skillIds: ID từ catalog DB
+  - custom_skills: text tự do, sẽ được embed vào JOB_SKILL_RAW
+  - workMode: ONSITE | REMOTE | HYBRID
+  Expected: 200 OK { "status": "success" }
