@@ -1,8 +1,11 @@
+import logging
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 
+from app.api.routes_ingestion import process_ingestion_task
 from app.core.database import acquire_conn
+from app.models.ingestion import IngestionJobRequest
 from app.models.nmaiex_schemas import (
     CandidateCvUpdateRequest,
     CandidateDetailResponse,
@@ -16,6 +19,9 @@ from app.services.nmaiex_ranking_service import (
     rank_candidates_for_job,
     rank_jobs_for_candidate,
 )
+from app.services.persistence import create_index_job
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -496,7 +502,11 @@ async def api_get_candidate_detail(candidate_id: int):
     "/candidates/{candidate_id}",
     tags=["NMAIex Candidate Management"],
 )
-async def api_update_candidate(candidate_id: int, payload: CandidateCvUpdateRequest):
+async def api_update_candidate(
+    candidate_id: int,
+    payload: CandidateCvUpdateRequest,
+    background_tasks: BackgroundTasks,
+):
     """
     Cập nhật CV URL và bio của Candidate.
 
@@ -523,6 +533,37 @@ async def api_update_candidate(candidate_id: int, payload: CandidateCvUpdateRequ
                 )
                 updated_fields.append("cvUrl")
 
+                # Update cvSnapUrl in the latest JOBAPPLICATION and trigger background ingestion
+                latest_app = await conn.fetchrow(
+                    """
+                    SELECT jobAppId
+                    FROM JOBAPPLICATION
+                    WHERE candidateId = $1
+                    ORDER BY appliedAt DESC
+                    LIMIT 1
+                    """,
+                    candidate_id,
+                )
+                if latest_app:
+                    job_app_id = latest_app["jobappid"]
+                    await conn.execute(
+                        "UPDATE JOBAPPLICATION SET cvSnapUrl = $1 WHERE jobAppId = $2",
+                        payload.cvUrl,
+                        job_app_id,
+                    )
+
+                    # Create index job and spawn background ingestion task
+                    index_job_id = await create_index_job(job_app_id)
+                    ingest_req = IngestionJobRequest(
+                        jobAppId=job_app_id, cvSnapUrl=payload.cvUrl
+                    )
+                    background_tasks.add_task(
+                        process_ingestion_task, index_job_id, ingest_req
+                    )
+                    logger.info(
+                        f"[NMAIex] Candidate cvUrl updated. Triggered background CV re-ingestion: "
+                        f"candidate_id={candidate_id}, job_app_id={job_app_id}, index_job_id={index_job_id}"
+                    )
             # Update bio
             if payload.bio is not None:
                 await conn.execute(

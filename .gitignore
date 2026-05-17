@@ -222,3 +222,5 @@ micareer_gitleaks_report.json
 list_models.py
 .continue
 .vscode
+server_log.txt
+/scratch

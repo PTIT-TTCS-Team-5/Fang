@@ -22,6 +22,8 @@ File duy nhất trong dự án được viết thủ công :b
 - Cài chrome-devtools-mcp trong antigravity
 - Cài postman MCP trong antigravity để Agent test API 
 
+- Chỉ dẫn Agent dùng psql với tham số xem trong .env
+
 ## Quan trọng lắm này
 - Làm việc với Agent, ít nhất là ở thời điểm hiện tại thì chưa thể tin tưởng được chúng nó đâu =))
     - Phải duyệt phương án triển khai, chiến lược rất kỹ. Đôi khi sửa đi sửa lại chục lần
