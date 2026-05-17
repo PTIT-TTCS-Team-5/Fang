@@ -6,6 +6,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Optional
 
+from app.core.config import settings
 from app.core.database import acquire_conn
 from app.core.nmaiex_config import nmaiex_settings
 
@@ -20,6 +21,33 @@ logger = logging.getLogger(__name__)
 def clip_score(score: float) -> float:
     """Clip về [0, 1] — tránh điểm âm (penalty lớn) hoặc > 1 (bonus tương lai)."""
     return max(0.0, min(1.0, score))
+
+
+def safe_int(val: Any) -> Optional[int]:
+    if val is None:
+        return None
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        try:
+            return int(float(val))
+        except (ValueError, TypeError):
+            return None
+
+
+def load_json_field(val: Any) -> Any:
+    if val is None:
+        return []
+    if isinstance(val, (list, dict)):
+        return val
+    if isinstance(val, str):
+        try:
+            import json
+
+            return json.loads(val)
+        except Exception:
+            return []
+    return []
 
 
 # ============================================================
@@ -359,6 +387,7 @@ async def rank_candidates_for_job(
 
         filter_sql = " AND ".join(filter_parts)
 
+        vec_type = settings.embedding_vector_type  # 'halfvec' or 'vector'
         # Truy vấn HNSW vector search + full-text search đồng thời
         candidates_query = f"""
             WITH LatestApp AS (
@@ -368,7 +397,7 @@ async def rank_candidates_for_job(
             ),
             VectorRank AS (
                 SELECT c.jobAppId,
-                       MIN(c.embedding <=> $1::halfvec) as vector_distance
+                       MIN(c.embedding <=> $1::{vec_type}) as vector_distance
                 FROM AIDOCUMENTCHUNK c
                 GROUP BY c.jobAppId
             )
@@ -376,16 +405,16 @@ async def rank_candidates_for_job(
                 u.userId as candidate_id,
                 u.fName || ' ' || u.lName as candidate_name,
                 c.expyears,
-                cv.rawText,
+                COALESCE(cv.rawText, c.bio) as rawText,
                 vr.vector_distance,
                 ts_rank(
-                    to_tsvector('english', COALESCE(cv.rawText, '')),
+                    to_tsvector('english', COALESCE(cv.rawText, c.bio, '')),
                     plainto_tsquery('english', $2)
                 ) as text_rank
             FROM "user" u
             JOIN CANDIDATE c ON u.userId = c.userId
             JOIN LatestApp la ON u.userId = la.candidateId
-            JOIN CVPARSED cv ON la.latest_app_id = cv.jobAppId
+            LEFT JOIN CVPARSED cv ON la.latest_app_id = cv.jobAppId
             LEFT JOIN VectorRank vr ON la.latest_app_id = vr.jobAppId
             WHERE {filter_sql}
         """
@@ -518,12 +547,12 @@ async def rank_jobs_for_candidate(
             SELECT 
                 u.fName, u.lName, u.provId, c.expyears, c.bio, 
                 cv.rawText, 
-                cv.parsedData -> 'experience' as experiences,
-                cv.parsedData -> 'certificates' as certificates_list,
-                cv.parsedData -> 'education' as education_list,
-                cv.parsedData -> 'languages' as languages,
-                cv.parsedData -> 'expectedSalaryMin' as exp_sal_min,
-                cv.parsedData -> 'expectedSalaryMax' as exp_sal_max
+                cv.parsedJson -> 'experience' as experiences,
+                cv.parsedJson -> 'certificates' as certificates_list,
+                cv.parsedJson -> 'education' as education_list,
+                cv.parsedJson -> 'languages' as languages,
+                cv.parsedJson -> 'expectedSalaryMin' as exp_sal_min,
+                cv.parsedJson -> 'expectedSalaryMax' as exp_sal_max
             FROM "user" u
             JOIN CANDIDATE c ON u.userId = c.userId
             LEFT JOIN LatestApp la ON u.userId = la.candidateId
@@ -546,26 +575,14 @@ async def rank_jobs_for_candidate(
         )
         c_skills = {r["skillid"] for r in c_skills_rows}
 
-    import json
-
-    experiences = (
-        json.loads(candidate_row["experiences"]) if candidate_row["experiences"] else []
-    )
+    experiences = load_json_field(candidate_row["experiences"])
     recent_titles = [
         e.get("title")
         for e in experiences[:3]
         if isinstance(e, dict) and e.get("title")
     ]
-    certs = (
-        json.loads(candidate_row["certificates_list"])
-        if candidate_row["certificates_list"]
-        else []
-    )
-    edu_list = (
-        json.loads(candidate_row["education_list"])
-        if candidate_row["education_list"]
-        else []
-    )
+    certs = load_json_field(candidate_row["certificates_list"])
+    edu_list = load_json_field(candidate_row["education_list"])
     edu_degrees = [
         e.get("degree") for e in edu_list if isinstance(e, dict) and e.get("degree")
     ]
@@ -592,8 +609,8 @@ async def rank_jobs_for_candidate(
     recent_titles_text = " ".join(recent_titles) if recent_titles else candidate_text
 
     # Prepare salary expectation
-    exp_min = candidate_row["exp_sal_min"]
-    exp_max = candidate_row["exp_sal_max"]
+    exp_min = safe_int(candidate_row["exp_sal_min"])
+    exp_max = safe_int(candidate_row["exp_sal_max"])
     c_expyears = candidate_row["expyears"] or 0
     if exp_min is None and exp_max is None:
         expected_salary = estimate_expected_salary(
@@ -605,11 +622,9 @@ async def rank_jobs_for_candidate(
             exp_min = exp_max
         if exp_max is None:
             exp_max = exp_min
-        expected_salary = (exp_min + exp_max) / 2
+        expected_salary = int((exp_min + exp_max) / 2)
 
-    cand_languages = (
-        json.loads(candidate_row["languages"]) if candidate_row["languages"] else []
-    )
+    cand_languages = load_json_field(candidate_row["languages"])
 
     async with acquire_conn() as conn:
         filter_parts = ["p.expAt > CURRENT_TIMESTAMP"]

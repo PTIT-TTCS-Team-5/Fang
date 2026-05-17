@@ -13,14 +13,14 @@ async def setup_mock_data() -> int:
     logger.info("Ensuring mock relational data exists", extra={"jobAppId": mock_id})
 
     mock_queries = [
-        """INSERT INTO "user" (userId, userName, pwd, fName, lName, email, prov, ward, street, role)
-           VALUES ($1, 'mock_candidate', 'mock_pwd', 'Candidate', 'Mock', 'mock@test.com', 'HN', 'CG', '123 Test', 'CANDIDATE')
+        """INSERT INTO "user" (userId, userName, pwd, fName, lName, email, provId, ward, street, role)
+           VALUES ($1, 'mock_candidate', 'mock_pwd', 'Candidate', 'Mock', 'mock@test.com', 'HANOI', 'CG', '123 Test', 'CANDIDATE')
            ON CONFLICT (userId) DO NOTHING;""",
         """INSERT INTO CANDIDATE (userId)
            VALUES ($1)
            ON CONFLICT (userId) DO NOTHING;""",
-        """INSERT INTO COMPANY (compId, compName, prov, ward, street)
-           VALUES ($1, 'Mock AI Company', 'HN', 'CG', '123 Test')
+        """INSERT INTO COMPANY (compId, compName, provId, ward, street)
+           VALUES ($1, 'Mock AI Company', 'HANOI', 'CG', '123 Test')
            ON CONFLICT (compId) DO NOTHING;""",
         """INSERT INTO JOBPOSTING (jobPostId, title, description, expAt, compId)
            VALUES ($1, 'Mock AI Engineer', 'Mock Description', CURRENT_TIMESTAMP + INTERVAL '30 days', $1)

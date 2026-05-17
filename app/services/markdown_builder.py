@@ -76,9 +76,18 @@ def convert_json_to_markdown(parsed_cv: ParsedCV) -> str:
 
     if parsed.languages:
         sections.append("## Languages")
-        sections.extend(
-            f"- {language}" for language in _clean_string_list(parsed.languages)
-        )
+        formatted_langs = []
+        seen_langs = set()
+        for lang_entry in parsed.languages:
+            lang = _clean_text(lang_entry.language)
+            prof = _clean_text(lang_entry.proficiency)
+            if lang and lang.lower() not in seen_langs:
+                seen_langs.add(lang.lower())
+                if prof:
+                    formatted_langs.append(f"{lang} ({prof})")
+                else:
+                    formatted_langs.append(lang)
+        sections.extend(f"- {fl}" for fl in formatted_langs)
 
     return "\n".join(sections).strip()
 

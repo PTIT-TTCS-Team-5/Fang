@@ -121,11 +121,11 @@ async def _ensure_mock_job_application(job_app_id: int, cv_source: str) -> None:
     mock_queries = [
         """
         INSERT INTO "user" (
-            userId, userName, pwd, fName, lName, email, prov, ward, street, role
+            userId, userName, pwd, fName, lName, email, provId, ward, street, role
         )
         VALUES (
             $1, 'mock_candidate', 'mock_pwd', 'Candidate', 'Mock',
-            'mock@test.com', 'HN', 'CG', '123 Test', 'CANDIDATE'
+            'mock@test.com', 'HANOI', 'CG', '123 Test', 'CANDIDATE'
         )
         ON CONFLICT (userId) DO NOTHING;
         """,
@@ -135,8 +135,8 @@ async def _ensure_mock_job_application(job_app_id: int, cv_source: str) -> None:
         ON CONFLICT (userId) DO NOTHING;
         """,
         """
-        INSERT INTO COMPANY (compId, compName, prov, ward, street)
-        VALUES ($1, 'Mock AI Company', 'HN', 'CG', '123 Test')
+        INSERT INTO COMPANY (compId, compName, provId, ward, street)
+        VALUES ($1, 'Mock AI Company', 'HANOI', 'CG', '123 Test')
         ON CONFLICT (compId) DO NOTHING;
         """,
         """
