@@ -28,7 +28,7 @@ class IngestionFlowTests(IsolatedAsyncioTestCase):
             "education": [],
             "skills": ["Python", "FastAPI"],
             "certificates": [],
-            "languages": ["English"],
+            "languages": [{"language": "English", "proficiency": "FLUENT"}],
             "rawText": "Sample raw CV text",
             "parserVer": "gemini:test",
         }

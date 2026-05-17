@@ -39,7 +39,10 @@ def build_sample_parsed_cv(description: str) -> ParsedCV:
             ],
             "skills": ["Python", "FastAPI", "PostgreSQL", "pgvector"],
             "certificates": ["AWS SAA"],
-            "languages": ["Vietnamese", "English"],
+            "languages": [
+                {"language": "Vietnamese", "proficiency": "NATIVE"},
+                {"language": "English", "proficiency": "ADVANCED"},
+            ],
             "rawText": "Sample raw CV text",
             "parserVer": "gemini:test",
         }
