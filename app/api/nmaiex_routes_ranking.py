@@ -564,7 +564,6 @@ async def api_update_candidate(
                         f"[NMAIex] Candidate cvUrl updated. Triggered background CV re-ingestion: "
                         f"candidate_id={candidate_id}, job_app_id={job_app_id}, index_job_id={index_job_id}"
                     )
-
             # Update bio
             if payload.bio is not None:
                 await conn.execute(
