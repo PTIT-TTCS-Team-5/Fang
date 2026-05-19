@@ -1,18 +1,17 @@
 $kind: http-request
-name: 'POST /v2/ingestion/jobs'
+name: POST /v2/ingestion/jobs
 method: POST
-url: '{{base_url}}/v2/ingestion/jobs'
+url: "{{base_url}}/v2/ingestion/jobs"
 order: 1000
 headers:
-  - key: Content-Type
-    value: application/json
+  Content-Type: application/json
 body:
   type: json
   content: |-
     {
-        "cvUrl": "https://res.cloudinary.com/micareer/image/upload/v1234567890/cv_abc123.pdf",
-        "candidateId": 1,
-        "jobAppId": 1,
+        "cvUrl": "https://res.cloudinary.com/dfwkw1guc/raw/upload/v1777525993/ttcs/sample",
+        "candidateId": 26,
+        "jobAppId": 40,
         "modelMode": "auto-lite"
     }
 description: Trigger CV processing (parse -> chunk -> embed)

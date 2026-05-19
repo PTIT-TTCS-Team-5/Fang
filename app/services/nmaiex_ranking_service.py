@@ -377,8 +377,8 @@ async def rank_candidates_for_job(
     async with acquire_conn() as conn:
         # Hard filter
         filter_parts = ["u.stat = 'ACTIVE'"]
-        params: list = [vector_str, job_text]
-        param_idx = 3
+        params: list = [vector_str, job_text, job_id]
+        param_idx = 4
 
         if province_id:
             filter_parts.append(f"u.provId = ${param_idx}")
@@ -393,6 +393,7 @@ async def rank_candidates_for_job(
             WITH LatestApp AS (
                 SELECT candidateId, MAX(jobAppId) as latest_app_id
                 FROM JOBAPPLICATION
+                WHERE jobPostId = $3
                 GROUP BY candidateId
             ),
             VectorRank AS (
@@ -640,6 +641,13 @@ async def rank_jobs_for_candidate(
             filter_parts.append(f"p.workMode = ${param_idx}")
             params.append(work_mode)
             param_idx += 1
+
+        # Loại bỏ các job đã ứng tuyển
+        filter_parts.append(
+            f"p.jobPostId NOT IN (SELECT jobPostId FROM JOBAPPLICATION WHERE candidateId = ${param_idx})"
+        )
+        params.append(candidate_id)
+        param_idx += 1
 
         filter_sql = " AND ".join(filter_parts)
 

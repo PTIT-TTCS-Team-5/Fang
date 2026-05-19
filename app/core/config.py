@@ -6,9 +6,9 @@ class Settings(BaseSettings):
     database_url: str
 
     # --- Embedding ---
-    embedding_dim: int = 1024
-    embedding_provider: str = "openai"
-    embedding_model: str = "text-embedding-3-small"
+    embedding_dim: int = 1536  # gemini-embedding-001 native dim
+    embedding_provider: str = "gemini"
+    embedding_model: str = "gemini-embedding-001"
     embedding_batch_size: int = 32
     embedding_vector_type: str = "halfvec"
 
