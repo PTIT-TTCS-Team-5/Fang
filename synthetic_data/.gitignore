@@ -1,0 +1,4 @@
+# Synthetic data outputs (LLM-generated cache, không commit)
+output/
+*.json
+!.gitkeep

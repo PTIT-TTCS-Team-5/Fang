@@ -87,7 +87,7 @@ async def main():
                 base_dir / "schema_web_core.sql",
                 base_dir / "schema_ai_core.sql",
                 base_dir / "root_data.sql",
-                base_dir / "seed_data.sql",
+                base_dir / "seed_synth.sql",  # synthetic data infrastructure seed
             ]
 
             for sql_file in sql_files:
@@ -98,45 +98,10 @@ async def main():
                         f"SQL file not found (make sure you are running from project root): {sql_file}"
                     )
 
-            logger.info(
-                "Updating the Cloudinary URL for Nguyễn Hải Hưng's test job application"
-            )
-
-            # Find the jobAppId for Nguyễn Hải Hưng applying to the AI position
-            fetch_id_sql = """
-            SELECT ja.jobAppId 
-            FROM JOBAPPLICATION ja
-            JOIN "user" u ON ja.candidateId = u.userId
-            JOIN JOBPOSTING jp ON ja.jobPostId = jp.jobPostId
-            WHERE u.userName = 'nguyenhaihung' AND jp.title LIKE '%AI Engineer%'
-            LIMIT 1;
-            """
-            target_job_app_id = await conn.fetchval(fetch_id_sql)
-
-            if target_job_app_id:
-                await conn.execute(
-                    "UPDATE JOBAPPLICATION SET cvSnapUrl = $1 WHERE jobAppId = $2",
-                    MOCK_CLOUDINARY_URL,
-                    target_job_app_id,
-                )
-                logger.info(
-                    f"Successfully updated jobAppId = {target_job_app_id} with mock Cloudinary URL"
-                )
-
-                # Write to a quick hint file so the user knows what ID to test with in Postman
-                logger.info(
-                    f"--> LƯU Ý: Vui lòng sử dụng jobAppId: {target_job_app_id} để test trên Postman / .http"
-                )
-            else:
-                logger.warning(
-                    "No JOBAPPLICATION for 'nguyenhaihung' applying to 'AI Engineer' was found. Fallback to updating jobAppId = 1."
-                )
-                await conn.execute(
-                    "UPDATE JOBAPPLICATION SET cvSnapUrl = $1 WHERE jobAppId = 1",
-                    MOCK_CLOUDINARY_URL,
-                )
-
             logger.info("DB Reset and Seed completed successfully!")
+            logger.info(
+                "Infrastructure: 15 Companies + 15 HRs ready for synthetic pipeline."
+            )
     except Exception as e:
         logger.error(f"An error occurred during DB initialization: {str(e)}")
     finally:
