@@ -11,6 +11,8 @@ import logging
 import sys
 from pathlib import Path
 
+from app.core.database import acquire_conn, db
+
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -26,8 +28,6 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 logger = logging.getLogger("redistribute")
-
-from app.core.database import acquire_conn, db
 
 
 async def redistribute():

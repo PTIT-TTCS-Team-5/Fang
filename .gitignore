@@ -225,3 +225,9 @@ list_models.py
 server_log.txt
 /scratch
 /nmaiex_tuning/.tmp.driveupload
+*.db
+nmaiex_tuning/output/backup/.env.nmaiex_20260520_231245
+nmaiex_tuning/output/backup/.env.nmaiex_20260521_002131
+.env.nmaiex.backup_20260520_195429
+.env.nmaiex.backup_20260521_040458
+/nmaiex_tuning/output

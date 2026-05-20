@@ -17,6 +17,20 @@ from typing import Dict, List, Set, Tuple
 
 import optuna
 
+import app.services.embedding
+import app.services.nmaiex_mapper_service
+from app.core.config import settings
+from app.core.database import acquire_conn, db
+from app.core.nmaiex_config import nmaiex_settings
+from app.services.nmaiex_mapper_service import PROFICIENCY_LEVELS
+from app.services.nmaiex_ranking_service import (
+    compute_salary_adjustment,
+    estimate_expected_salary,
+    load_json_field,
+    safe_int,
+)
+from synthetic_data.config import NINE_ROUTER_KEY, NINE_ROUTER_URL
+
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -45,9 +59,6 @@ async def embed_chunks_9router(
         return []
 
     import httpx
-
-    from app.core.config import settings
-    from synthetic_data.config import NINE_ROUTER_KEY, NINE_ROUTER_URL
 
     normalized_chunks = [c.strip() for c in chunks if isinstance(c, str) and c.strip()]
     if not normalized_chunks:
@@ -93,24 +104,8 @@ async def embed_chunks_9router(
 
 
 # Monkey patch embedding service immediately
-import app.services.embedding
-import app.services.nmaiex_mapper_service
-
 app.services.embedding.embed_chunks = embed_chunks_9router
 app.services.nmaiex_mapper_service.embed_chunks = embed_chunks_9router
-
-from app.core.config import settings
-
-# Now load database, settings, and other services
-from app.core.database import acquire_conn, db
-from app.core.nmaiex_config import nmaiex_settings
-from app.services.nmaiex_mapper_service import PROFICIENCY_LEVELS
-from app.services.nmaiex_ranking_service import (
-    compute_salary_adjustment,
-    estimate_expected_salary,
-    load_json_field,
-    safe_int,
-)
 
 # File configurations
 PROJECT_ROOT = Path(__file__).parent.parent
