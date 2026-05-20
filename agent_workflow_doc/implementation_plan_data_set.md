@@ -522,3 +522,16 @@ Thay vì dùng LLM qua 9Router cực kỳ tốn chi phí và chậm chạp, chú
 Chúng ta đã có dữ liệu kỹ năng cấu trúc (CANDIDATESKILL), kỹ năng thô (CANDIDATE_SKILL_RAW), số năm kinh nghiệm, địa điểm của 500 ứng viên và 20 jobs trong Postgres.
 Chúng ta sẽ chạy script `scripts/redistribute_applications.py` cục bộ. Script này sẽ tính toán điểm tương thích giữa từng ứng viên và cả 20 công việc dựa trên bộ tham số tối ưu.
 Mỗi ứng viên sẽ tự động "Apply" vào Top công việc có điểm so khớp cao nhất. Việc này giúp phân bổ 500 ứng viên một cách cực kỳ thực tế và tự nhiên!
+
+---
+
+## Cập nhật v4: Mở khóa tính năng Chat RAG (Fake Ingestion Status)
+
+### Lý do thực hiện
+1. **Khắc phục điểm nghẽn giao diện (UI Block):** FANG quản lý trạng thái nạp dữ liệu (ingestion) của mỗi ứng viên thông qua bảng `AIINDEXJOB`. Trong quá trình tạo dữ liệu giả lập (synthetic data), do chúng ta ghi trực tiếp embeddings và chunks vào bảng `AIDOCUMENTCHUNK` để tối ưu hóa hiệu suất, hệ thống đã thiếu các bản ghi kiểm soát trạng thái tương ứng trong bảng `AIINDEXJOB`. Hệ quả là giao diện Frontend của FANG luôn hiểu rằng CV chưa được xử lý xong và khóa tính năng Chat RAG đối với các ứng viên này.
+2. **Kích hoạt tính năng tức thời không tốn tài nguyên:** Bằng cách bổ sung tự động bản ghi trạng thái `SUCCESS` giả lập vào bảng `AIINDEXJOB`, giao diện Streamlit/Frontend sẽ ngay lập tức nhận diện trạng thái hoàn thành nạp dữ liệu 100%, qua đó mở khóa hoàn toàn nút "Chat RAG" để người dùng trải nghiệm tính năng hỏi đáp trực tiếp trên CV ứng viên.
+
+### Phương án triển khai
+Khi chạy script `scripts/redistribute_applications.py`, chúng ta sẽ đồng thời thực hiện chèn tự động 500 bản ghi trạng thái `SUCCESS` tương ứng với 500 Job Applications mới vào bảng `AIINDEXJOB`. 
+
+Kết quả: Ngay sau khi chạy xong script, UI sẽ hiển thị trạng thái hoàn thành nạp tài liệu 100% và mở khóa hoàn toàn nút Chat RAG để bạn chat trực tiếp với CV ứng viên một cách mượt mà và trực quan!
