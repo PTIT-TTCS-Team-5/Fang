@@ -75,6 +75,11 @@ class NMAIexSettings(BaseSettings):
     nmaiex_lang_preferred_bonus: float = 0.08  # Có PREFERRED lang đủ level → +0.08
     nmaiex_lang_bonus_cap: float = 0.15  # Tổng bonus ngôn ngữ tối đa
 
+    # ----------------------------------------------------------------
+    # Score Clipping Control
+    # ----------------------------------------------------------------
+    nmaiex_enable_score_clip: bool = True
+
     model_config = SettingsConfigDict(
         env_file=".env.nmaiex", env_file_encoding="utf-8", extra="ignore"
     )

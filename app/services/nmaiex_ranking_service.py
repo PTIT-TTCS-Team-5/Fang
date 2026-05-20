@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 
 def clip_score(score: float) -> float:
     """Clip về [0, 1] — tránh điểm âm (penalty lớn) hoặc > 1 (bonus tương lai)."""
+    if not nmaiex_settings.nmaiex_enable_score_clip:
+        return score
     return max(0.0, min(1.0, score))
 
 

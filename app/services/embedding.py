@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import List, Optional
 
+# pyrefly: ignore [missing-import]
 import google.genai as genai
 
 from app.core.config import settings

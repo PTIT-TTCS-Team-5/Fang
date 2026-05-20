@@ -76,8 +76,8 @@ flowchart LR
 ```
 
 **Model Tiering**:
-- `gemini/gemini-3.1-flash-lite-preview` (via 9Router) — Sinh CV số lượng lớn (batch 5-10)
-- `gemini/gemini-3.1-pro-preview` (via 9Router) — Sinh Job Description + QA Validate
+- `gemini/gemini-3.1-flash-lite` (via 9Router) — Sinh CV số lượng lớn (batch 5-10)
+- `gemini/gemini-3.5-flash` (via 9Router) — Sinh Job Description + QA Validate
 - `gemini-embedding-001` (via Google API trực tiếp) — Embedding (RAG + skill)
 
 ---
@@ -337,8 +337,8 @@ def generate_manifest(total_cv: int = 500) -> list[dict]:
 #### [NEW] [generator.py](file:///c:/Users/os/Desktop/cur_prj/Fang/synthetic_data/generator.py)
 
 - **Endpoint**: `http://localhost:20128/v1/chat/completions` (9Router)
-- **Model CV**: `gemini/gemini-3.1-flash-lite-preview` (Round Robin qua 5 keys)
-- **Model Job**: `gemini/gemini-3.1-pro-preview`
+- **Model CV**: `gemini/gemini-3.1-flash-lite` (Round Robin qua 5 keys)
+- **Model Job**: `gemini/gemini-3.5-flash`
 - **Batch size**: 5 CV/request (tối ưu JSON size vs call count = 100 calls cho 500 CV)
 - **Structured Output**: `response_format: { type: "json_object" }` + JSON schema trong prompt
 - **Rate limiting**: Exponential backoff (reuse pattern `cv_parser.py`)

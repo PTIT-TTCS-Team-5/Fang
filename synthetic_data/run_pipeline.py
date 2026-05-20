@@ -15,13 +15,89 @@ import argparse
 import asyncio
 import logging
 
-# --- Setup logging trÆ°á»›c khi import project modules ---
+# --- Setup logging trước khi import project modules ---
+import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 logging.basicConfig(
     level=logging.INFO,
     format='{"asctime": "%(asctime)s", "levelname": "%(levelname)s", "name": "%(name)s", "message": "%(message)s"}',
     datefmt="%Y-%m-%d %H:%M:%S",
+    encoding="utf-8",
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
+
+
+# --- Monkey Patching Embedding Service to use 9Router ---
+async def embed_chunks_9router(
+    chunks: list[str],
+    dimensions: int | None = None,
+) -> list[list[float]]:
+    """Monkey-patched embed_chunks that uses 9Router API proxy to bypass original API quotas."""
+    if not chunks:
+        return []
+
+    import httpx
+
+    from app.core.config import settings
+    from synthetic_data.config import NINE_ROUTER_KEY, NINE_ROUTER_URL
+
+    normalized_chunks = [c.strip() for c in chunks if isinstance(c, str) and c.strip()]
+    if not normalized_chunks:
+        return []
+
+    effective_dims = dimensions if dimensions is not None else settings.embedding_dim
+    batch_size = (
+        settings.embedding_batch_size if settings.embedding_batch_size > 0 else 32
+    )
+    vectors: list[list[float]] = []
+
+    logger.info(
+        f"[9Router Monkey-Patch] Embedding {len(normalized_chunks)} chunks via 9Router proxy "
+        f"({effective_dims} dimensions requested)"
+    )
+
+    async with httpx.AsyncClient() as http_client:
+        for start_index in range(0, len(normalized_chunks), batch_size):
+            batch = normalized_chunks[start_index : start_index + batch_size]
+            headers = {
+                "Authorization": f"Bearer {NINE_ROUTER_KEY}",
+                "Content-Type": "application/json",
+            }
+            payload = {"model": settings.embedding_model, "input": batch}
+            resp = await http_client.post(
+                f"{NINE_ROUTER_URL}/embeddings",
+                json=payload,
+                headers=headers,
+                timeout=60.0,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            for item in data["data"]:
+                v = item["embedding"]
+                # Truncate to effective_dims to match pgvector expected size
+                vectors.append(v[:effective_dims])
+
+    if len(vectors) != len(normalized_chunks):
+        raise RuntimeError(
+            f"9Router returned {len(vectors)} vectors for {len(normalized_chunks)} chunks."
+        )
+
+    return vectors
+
+
+import app.services.embedding
+import app.services.job_ingestion_service
+import app.services.nmaiex_mapper_service
+
+app.services.embedding.embed_chunks = embed_chunks_9router
+app.services.nmaiex_mapper_service.embed_chunks = embed_chunks_9router
+app.services.job_ingestion_service.embed_chunks = embed_chunks_9router
 
 # --- Project imports ---
 from app.core.database import db

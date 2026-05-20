@@ -36,8 +36,7 @@ CREATE TABLE AIDOCUMENTCHUNK (
   --   2. halfvec_cosine_ops -> vector_cosine_ops
   --   3. EMBEDDING_VECTOR_TYPE=vector trong env
   embedding halfvec(__TTCS_EMBEDDING_DIM__),
-  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (jobAppId) REFERENCES JOBAPPLICATION(jobAppId)
+  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_aidocumentchunk_hnsw_cosine

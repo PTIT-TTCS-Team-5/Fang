@@ -9,6 +9,7 @@ Batch CV/Job generation với:
 import asyncio
 import json
 import logging
+import re
 from pathlib import Path
 
 import httpx
@@ -35,6 +36,15 @@ from synthetic_data.prompts import build_cv_batch_prompt, build_job_batch_prompt
 logger = logging.getLogger(__name__)
 
 
+def clean_json_response(raw: str) -> str:
+    """Clean markdown code block wrapping from LLM JSON response."""
+    raw = raw.strip()
+    match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", raw)
+    if match:
+        return match.group(1).strip()
+    return raw
+
+
 # ============================================================
 # Core LLM Call
 # ============================================================
@@ -56,6 +66,7 @@ async def _call_llm(
         ],
         "response_format": {"type": "json_object"},
         "temperature": 0.8,
+        "stream": False,
     }
     headers = {
         "Authorization": f"Bearer {NINE_ROUTER_KEY}",
@@ -71,13 +82,25 @@ async def _call_llm(
                 timeout=LLM_TIMEOUT_SECONDS,
             )
             resp.raise_for_status()
-            data = resp.json()
+            try:
+                data = resp.json()
+            except Exception as e:
+                logger.error(
+                    f"Failed to decode response as JSON. Status code: {resp.status_code}. Content: {resp.text}"
+                )
+                raise e
             content = data["choices"][0]["message"]["content"]
             return content
-        except (httpx.HTTPStatusError, httpx.RequestError, KeyError) as e:
+        except (
+            httpx.HTTPStatusError,
+            httpx.RequestError,
+            KeyError,
+            json.JSONDecodeError,
+        ) as e:
             wait = min(RETRY_BASE_SECONDS * (2**retry), RETRY_MAX_SECONDS)
             logger.warning(
                 f"LLM call failed (retry {retry+1}/{MAX_RETRIES}): {e}. Wait {wait}s"
+                f" Details: {type(e).__name__}"
             )
             if retry < MAX_RETRIES - 1:
                 await asyncio.sleep(wait)
@@ -158,7 +181,8 @@ async def generate_cv_batch(
 
     # Parse + validate
     try:
-        parsed = CVBatchResponse.model_validate_json(raw_response)
+        clean_raw = clean_json_response(raw_response)
+        parsed = CVBatchResponse.model_validate_json(clean_raw)
         cvs = parsed.cvs
     except Exception as e:
         logger.error(f"Pydantic validation failed for {batch_id}: {e}")
@@ -440,7 +464,8 @@ async def generate_all_jobs(
             )
 
             try:
-                parsed = JobBatchResponse.model_validate_json(raw)
+                clean_raw = clean_json_response(raw)
+                parsed = JobBatchResponse.model_validate_json(clean_raw)
                 jobs = parsed.jobs
             except Exception as e:
                 logger.error(f"Job validation failed for {batch_id}: {e}")

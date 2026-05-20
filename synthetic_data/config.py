@@ -8,9 +8,11 @@ NINE_ROUTER_URL = "http://localhost:20128/v1"
 NINE_ROUTER_KEY = "sk-ad63867957b503e7-nrt4w0-b687b29d"
 
 # Model tiering
-MODEL_CV_GENERATION = "gemini/gemini-3-flash-preview"  # Batch CV sinh số lượng lớn (sử dụng model tốt hơn)
-MODEL_JOB_GENERATION = "gemini/gemini-3.1-pro-preview"  # Job Description chất lượng cao
-MODEL_QA_VALIDATE = "gemini/gemini-3.1-pro-preview"  # QA validate
+MODEL_CV_GENERATION = (
+    "gemini/gemini-3.1-flash-lite"  # Batch CV sinh số lượng lớn (sử dụng model tốt hơn)
+)
+MODEL_JOB_GENERATION = "gemini/gemini-3.5-flash"  # Job Description chất lượng cao
+MODEL_QA_VALIDATE = "gemini/gemini-3.5-flash"  # QA validate
 
 # ============================================================
 # Pipeline Parameters
