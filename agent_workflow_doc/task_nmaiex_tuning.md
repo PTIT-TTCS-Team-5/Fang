@@ -20,10 +20,10 @@
   - [x] Sửa logic clip điểm trong `app/services/nmaiex_ranking_service.py`
   - [x] Cập nhật Frontend miCareer-mini để hiển thị điểm thô ở Dev mode
 
-- [ ] **5. Tối Ưu Hóa Bằng Optuna (50,000 Trials)**
-  - [ ] Tạo file `nmaiex_tuning/tune_nmaiex_hyperparams.py`
-  - [ ] Cài đặt Study J→C (MRR) và C→J (nDCG@10)
-  - [ ] Chạy tối ưu hóa trên CPU và xuất bộ tham số tối ưu ra `.env.nmaiex`
+- [/] **5. Tối Ưu Hóa Bằng Optuna (50,000 Trials)**
+  - [x] Tạo file `nmaiex_tuning/tune_nmaiex_hyperparams.py`
+  - [/] Cài đặt Study J→C (MRR) và C→J (nDCG@10) (Hoàn thành Phase 1 J→C)
+  - [/] Chạy tối ưu hóa trên CPU và xuất bộ tham số tối ưu ra `.env.nmaiex` (Đã lưu optimal parameters Phase 1)
 
 - [ ] **6. Nghiệm Thu & Đánh Giá**
   - [ ] Khởi động lại hệ thống và gọi API ranking thực tế để nghiệm thu

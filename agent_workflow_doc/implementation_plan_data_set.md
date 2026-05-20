@@ -506,3 +506,19 @@ UNION ALL SELECT 'JOB_SKILL_RAW', COUNT(*) FROM JOB_SKILL_RAW;
 - Spot-check 5-10 CV trong DB xem dữ liệu realistic
 - Kiểm tra trên frontend NMAIex dashboard
 - Verify Chat RAG trả lời có trích dẫn đúng từ synthetic data
+
+---
+
+## Cập nhật v3: Phân bổ thông minh 500 ứng viên vào 20 Jobs (Zero API Cost)
+
+### Lý do thực hiện
+1. **Tối ưu chi phí và hiệu năng (Zero API Cost):** Việc sử dụng LLM qua 9Router để phân bổ 500 ứng viên vào 20 công việc sẽ tiêu tốn lượng token khổng lồ và rất dễ gặp lỗi rate limit / timeout.
+2. **Tính thực tế và nhất quán:** Tận dụng chính thuật toán so khớp Job ↔ Candidate đã được tối ưu hóa ở Phase 1 (xem [implementation_plan_nmaiex_tuning.md](file:///c:/Users/os/Desktop/cur_prj/Fang/agent_workflow_doc/implementation_plan_nmaiex_tuning.md)) của FANG để chọn ra những công việc phù hợp nhất với từng ứng viên. Điều này vừa giúp phân bổ ứng viên một cách tự nhiên, vừa phản ánh đúng năng lực của bộ so khớp trong thực tế.
+3. **Đa dạng hóa phân bổ:** Tránh tình trạng toàn bộ ứng viên dồn vào Job 1, giúp phân phối đều 500 ứng viên vào 20 công việc khác nhau dựa trên mức độ phù hợp thực tế.
+
+### Phương án triển khai
+Thay vì dùng LLM qua 9Router cực kỳ tốn chi phí và chậm chạp, chúng ta sẽ áp dụng một giải pháp cực kỳ thông minh: Sử dụng chính thuật toán xếp hạng J→C đã tối ưu của FANG ở Phase 1 để tự so khớp!
+
+Chúng ta đã có dữ liệu kỹ năng cấu trúc (CANDIDATESKILL), kỹ năng thô (CANDIDATE_SKILL_RAW), số năm kinh nghiệm, địa điểm của 500 ứng viên và 20 jobs trong Postgres.
+Chúng ta sẽ chạy script `scripts/redistribute_applications.py` cục bộ. Script này sẽ tính toán điểm tương thích giữa từng ứng viên và cả 20 công việc dựa trên bộ tham số tối ưu.
+Mỗi ứng viên sẽ tự động "Apply" vào Top công việc có điểm so khớp cao nhất. Việc này giúp phân bổ 500 ứng viên một cách cực kỳ thực tế và tự nhiên!

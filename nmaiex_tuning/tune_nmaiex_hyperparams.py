@@ -754,58 +754,80 @@ def compute_ndcg_at_k(
 
 
 # ============================================================
-# Optuna Objectives
+# Multi-Process Objective & Parallel Tuning Configuration
 # ============================================================
 
-
-def make_jc_objective(pairs: List[JCPairData], enable_clip: bool):
-    def jc_objective(trial: optuna.Trial) -> float:
-        w_rrf = trial.suggest_float("jc_w_rrf", 0.10, 0.60)
-        w_skill = trial.suggest_float("jc_w_skill", 0.20, 0.70)
-        alpha = trial.suggest_float("skill_alpha", 0.40, 1.00)
-        coef = trial.suggest_float("jc_sen_coef", 0.05, 0.60)
-        overq_ratio = trial.suggest_float("sen_overq_ratio", 0.10, 1.00)
-
-        mrr = compute_mrr(
-            pairs=pairs,
-            w_rrf=w_rrf,
-            w_skill=w_skill,
-            alpha=alpha,
-            coef=coef,
-            overq_ratio=overq_ratio,
-            enable_clip=enable_clip,
-        )
-        return mrr
-
-    return jc_objective
+# Global variables for worker processes on Windows
+GLOBAL_JC_PAIRS: List[JCPairData] = []
+GLOBAL_CJ_PAIRS: List[CJPairData] = []
+GLOBAL_LOCKED_ALPHA: float = 0.80
+GLOBAL_ENABLE_CLIP: bool = False
 
 
-def make_cj_objective(pairs: List[CJPairData], locked_alpha: float, enable_clip: bool):
-    def cj_objective(trial: optuna.Trial) -> float:
-        w_rrf = trial.suggest_float("cj_w_rrf", 0.10, 0.60)
-        w_title = trial.suggest_float("cj_w_title", 0.05, 0.40)
-        w_skill = trial.suggest_float("cj_w_skill", 0.10, 0.60)
+def init_globals(jc_pairs, cj_pairs, locked_alpha, enable_clip):
+    """Initializes global parameters inside the newly spawned worker processes."""
+    global GLOBAL_JC_PAIRS, GLOBAL_CJ_PAIRS, GLOBAL_LOCKED_ALPHA, GLOBAL_ENABLE_CLIP
+    GLOBAL_JC_PAIRS = jc_pairs
+    GLOBAL_CJ_PAIRS = cj_pairs
+    GLOBAL_LOCKED_ALPHA = locked_alpha
+    GLOBAL_ENABLE_CLIP = enable_clip
 
-        lang_req_pen = trial.suggest_float("lang_req_pen", 0.05, 0.50)
-        lang_lvl_pen = trial.suggest_float("lang_lvl_pen", 0.02, 0.30)
-        lang_pref_bon = trial.suggest_float("lang_pref_bon", 0.02, 0.20)
-        lang_bon_cap = trial.suggest_float("lang_bon_cap", 0.05, 0.30)
 
-        ndcg = compute_ndcg_at_k(
-            pairs=pairs,
-            w_rrf=w_rrf,
-            w_title=w_title,
-            w_skill=w_skill,
-            alpha=locked_alpha,
-            lang_req_pen=lang_req_pen,
-            lang_lvl_pen=lang_lvl_pen,
-            lang_pref_bon=lang_pref_bon,
-            lang_bon_cap=lang_bon_cap,
-            enable_clip=enable_clip,
-        )
-        return ndcg
+def jc_objective_proc(trial: optuna.Trial) -> float:
+    """Process-safe objective function for Phase 1 J->C matching."""
+    w_rrf = trial.suggest_float("jc_w_rrf", 0.10, 0.60)
+    w_skill = trial.suggest_float("jc_w_skill", 0.20, 0.70)
+    alpha = trial.suggest_float("skill_alpha", 0.40, 1.00)
+    coef = trial.suggest_float("jc_sen_coef", 0.05, 0.60)
+    overq_ratio = trial.suggest_float("sen_overq_ratio", 0.10, 1.00)
 
-    return cj_objective
+    mrr = compute_mrr(
+        pairs=GLOBAL_JC_PAIRS,
+        w_rrf=w_rrf,
+        w_skill=w_skill,
+        alpha=alpha,
+        coef=coef,
+        overq_ratio=overq_ratio,
+        enable_clip=GLOBAL_ENABLE_CLIP,
+    )
+    return mrr
+
+
+def cj_objective_proc(trial: optuna.Trial) -> float:
+    """Process-safe objective function for Phase 2 C->J matching."""
+    w_rrf = trial.suggest_float("cj_w_rrf", 0.10, 0.60)
+    w_title = trial.suggest_float("cj_w_title", 0.05, 0.40)
+    w_skill = trial.suggest_float("cj_w_skill", 0.10, 0.60)
+
+    lang_req_pen = trial.suggest_float("lang_req_pen", 0.05, 0.50)
+    lang_lvl_pen = trial.suggest_float("lang_lvl_pen", 0.02, 0.30)
+    lang_pref_bon = trial.suggest_float("lang_pref_bon", 0.02, 0.20)
+    lang_bon_cap = trial.suggest_float("lang_bon_cap", 0.05, 0.30)
+
+    ndcg = compute_ndcg_at_k(
+        pairs=GLOBAL_CJ_PAIRS,
+        w_rrf=w_rrf,
+        w_title=w_title,
+        w_skill=w_skill,
+        alpha=GLOBAL_LOCKED_ALPHA,
+        lang_req_pen=lang_req_pen,
+        lang_lvl_pen=lang_lvl_pen,
+        lang_pref_bon=lang_pref_bon,
+        lang_bon_cap=lang_bon_cap,
+        enable_clip=GLOBAL_ENABLE_CLIP,
+    )
+    return ndcg
+
+
+def run_optimize(study_name: str, storage_url: str, objective_type: str, n_trials: int):
+    """Worker entry point loading the SQLite study and performing optimization trials."""
+    # Suppress output inside subprocesses
+    optuna.logging.set_verbosity(optuna.logging.WARNING)
+    study = optuna.load_study(study_name=study_name, storage=storage_url)
+    if objective_type == "jc":
+        study.optimize(jc_objective_proc, n_trials=n_trials)
+    elif objective_type == "cj":
+        study.optimize(cj_objective_proc, n_trials=n_trials)
 
 
 # ============================================================
@@ -814,7 +836,7 @@ def make_cj_objective(pairs: List[CJPairData], locked_alpha: float, enable_clip:
 
 
 def update_env_file(best_params: Dict[str, float]):
-    """Creates a timestamped backup and updates the 12 parameters in .env.nmaiex."""
+    """Creates a timestamped backup and updates the active parameters in .env.nmaiex."""
     if not ENV_NMAIEX_PATH.exists():
         logger.warning(
             f".env.nmaiex does not exist at {ENV_NMAIEX_PATH}. Skipping env update."
@@ -882,19 +904,74 @@ def update_env_file(best_params: Dict[str, float]):
 
 
 # ============================================================
-# Main Orchestrator
+# Main Orchestrator (v2 — Resume + 6-Hour Budget)
 # ============================================================
 
 
-async def main():
-    logger.info("=== STARTING NMAIEX HYPERPARAMETER TUNING ===")
+def parse_args():
+    """Parse command-line arguments for resume and trial budget control."""
+    import argparse
 
-    # Connect DB
+    parser = argparse.ArgumentParser(
+        description="NMAIex Hyperparameter Tuning — Optuna Multiprocess Optimizer"
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Tiếp tục từ SQLite DB hiện tại thay vì bắt đầu lại từ đầu.",
+    )
+    parser.add_argument(
+        "--trials-per-phase",
+        type=int,
+        default=75000,
+        help="Số trials MỚI cho mỗi phase (mặc định: 75000, khít ~5 tiếng).",
+    )
+    return parser.parse_args()
+
+
+async def main():
+    args = parse_args()
+    logger.info("=== STARTING NMAIEX HYPERPARAMETER TUNING ===")
+    logger.info(f"Mode: {'RESUME' if args.resume else 'FRESH'}")
+    logger.info(f"Target trials per phase: {args.trials_per_phase}")
+
+    # Connect DB to precompute static data
     await db.connect()
     try:
         jc_pairs, cj_pairs = await precompute_all_pairs()
     finally:
         await db.disconnect()
+
+    # Setup SQLite storage engine to share optimization state between processes
+    import shutil
+
+    DB_DIR = PROJECT_ROOT / "nmaiex_tuning" / "output"
+    DB_DIR.mkdir(parents=True, exist_ok=True)
+    db_file = DB_DIR / "nmaiex_tuning.db"
+    SQLITE_URL = f"sqlite:///{db_file.as_posix()}?timeout=60"
+
+    # ── Automatic Backup ──
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_dir = DB_DIR / "backup"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    if db_file.exists():
+        backup_db = backup_dir / f"nmaiex_tuning_{timestamp}.db"
+        shutil.copy2(db_file, backup_db)
+        logger.info(f"Backed up SQLite DB → {backup_db}")
+
+    if ENV_NMAIEX_PATH.exists():
+        backup_env = backup_dir / f".env.nmaiex_{timestamp}"
+        shutil.copy2(ENV_NMAIEX_PATH, backup_env)
+        logger.info(f"Backed up .env.nmaiex → {backup_env}")
+
+    # ── Fresh or Resume ──
+    if not args.resume and db_file.exists():
+        try:
+            db_file.unlink()
+            logger.info("Removed existing SQLite DB for a fresh run.")
+        except Exception as e:
+            logger.warning(f"Could not remove SQLite database: {e}")
 
     # Load baseline settings
     baseline_params = {
@@ -942,24 +1019,86 @@ async def main():
     logger.info(f"  J->C MRR (HR Mode): {baseline_mrr:.4f}")
     logger.info(f"  C->J nDCG@10 (Candidate Mode): {baseline_ndcg:.4f}")
 
-    # Optuna settings
-    optuna.logging.set_verbosity(optuna.logging.WARNING)
+    # Parallel multiprocessing workers count (Using 85% of available logical CPU cores)
+    import multiprocessing
+    from concurrent.futures import ProcessPoolExecutor
 
-    # ------------------------------------------------------------
-    # Phase 1: J->C (HR Search, MRR) - 25,000 trials
-    # ------------------------------------------------------------
-    logger.info("=== STARTING PHASE 1: J->C OPTIMIZATION (25,000 TRIALS) ===")
-    start_time = time.time()
-
-    study_jc = optuna.create_study(
-        direction="maximize",
-        sampler=optuna.samplers.TPESampler(n_startup_trials=200, seed=42),
+    num_cores = multiprocessing.cpu_count()
+    num_workers = max(1, int(num_cores * 0.85))
+    logger.info(
+        f"Detected {num_cores} cores. Spawning {num_workers} parallel worker processes..."
     )
-    study_jc.optimize(make_jc_objective(jc_pairs, enable_clip), n_trials=25000)
 
-    phase1_time = time.time() - start_time
-    logger.info(f"Phase 1 finished in {phase1_time:.2f} seconds.")
-    logger.info(f"Best J->C Trial: {study_jc.best_value:.4f}")
+    # Upgraded sampler with multivariate joint distribution modeling
+    sampler = optuna.samplers.TPESampler(
+        n_startup_trials=1000,
+        multivariate=True,
+        group=True,
+        seed=42,
+    )
+
+    # ============================================================
+    # Phase 1: J->C (HR Search, MRR) — Continue / Resume
+    # ============================================================
+    study_jc = optuna.create_study(
+        study_name="jc_study",
+        direction="maximize",
+        storage=SQLITE_URL,
+        load_if_exists=True,
+        sampler=sampler,
+    )
+
+    existing_jc = len(study_jc.trials)
+    if args.resume and existing_jc > 0:
+        remaining_jc = max(0, args.trials_per_phase - existing_jc)
+        logger.info(
+            f"Phase 1 RESUME: {existing_jc} trials đã có, cần chạy thêm {remaining_jc} trials."
+        )
+    else:
+        remaining_jc = args.trials_per_phase
+        logger.info(f"Phase 1 FRESH: sẽ chạy {remaining_jc} trials.")
+
+    if remaining_jc > 0:
+        trials_per_worker_jc = max(1, remaining_jc // num_workers)
+        actual_jc = trials_per_worker_jc * num_workers
+        logger.info(
+            f"=== STARTING PHASE 1: J->C OPTIMIZATION ({actual_jc} NEW TRIALS) ==="
+        )
+        start_time = time.time()
+
+        with ProcessPoolExecutor(
+            max_workers=num_workers,
+            initializer=init_globals,
+            initargs=(jc_pairs, cj_pairs, baseline_params["skill_alpha"], enable_clip),
+        ) as executor:
+            futures = [
+                executor.submit(
+                    run_optimize,
+                    study_name="jc_study",
+                    storage_url=SQLITE_URL,
+                    objective_type="jc",
+                    n_trials=trials_per_worker_jc,
+                )
+                for _ in range(num_workers)
+            ]
+            for idx, future in enumerate(futures):
+                try:
+                    future.result()
+                except Exception as exc:
+                    logger.error(f"Worker {idx} error in Phase 1: {exc}")
+
+        phase1_time = time.time() - start_time
+        logger.info(
+            f"Phase 1 finished in {phase1_time:.2f} seconds ({phase1_time/60:.1f} min)."
+        )
+    else:
+        logger.info("Phase 1: Đã đủ trials, bỏ qua chạy thêm.")
+
+    # Reload study to get best results
+    study_jc = optuna.load_study(study_name="jc_study", storage=SQLITE_URL)
+    total_jc = len(study_jc.trials)
+    logger.info(f"Phase 1 TOTAL trials: {total_jc}")
+    logger.info(f"Best J->C Trial MRR: {study_jc.best_value:.4f}")
     logger.info("Optimal parameters from Phase 1:")
     for k, v in study_jc.best_params.items():
         logger.info(f"  {k}: {v:.4f}")
@@ -967,23 +1106,72 @@ async def main():
     locked_alpha = study_jc.best_params["skill_alpha"]
     logger.info(f"LOCKED nmaiex_skill_alpha for Phase 2 = {locked_alpha:.4f}")
 
-    # ------------------------------------------------------------
-    # Phase 2: C->J (Job Search, nDCG@10) - 25,000 trials
-    # ------------------------------------------------------------
-    logger.info("=== STARTING PHASE 2: C->J OPTIMIZATION (25,000 TRIALS) ===")
-    start_time = time.time()
+    # --- IMMEDIATE SAVE: Persist Phase 1 optimal parameters to .env.nmaiex ---
+    logger.info("=== SAVING PHASE 1 OPTIMAL PARAMETERS TO .ENV ===")
+    update_env_file(study_jc.best_params)
 
+    # ============================================================
+    # Phase 2: C->J (Job Search, nDCG@10) — Continue / Resume
+    # ============================================================
     study_cj = optuna.create_study(
+        study_name="cj_study",
         direction="maximize",
-        sampler=optuna.samplers.TPESampler(n_startup_trials=200, seed=42),
-    )
-    study_cj.optimize(
-        make_cj_objective(cj_pairs, locked_alpha, enable_clip), n_trials=25000
+        storage=SQLITE_URL,
+        load_if_exists=True,
+        sampler=sampler,
     )
 
-    phase2_time = time.time() - start_time
-    logger.info(f"Phase 2 finished in {phase2_time:.2f} seconds.")
-    logger.info(f"Best C->J Trial: {study_cj.best_value:.4f}")
+    existing_cj = len(study_cj.trials)
+    if args.resume and existing_cj > 0:
+        remaining_cj = max(0, args.trials_per_phase - existing_cj)
+        logger.info(
+            f"Phase 2 RESUME: {existing_cj} trials đã có, cần chạy thêm {remaining_cj} trials."
+        )
+    else:
+        remaining_cj = args.trials_per_phase
+        logger.info(f"Phase 2 FRESH: sẽ chạy {remaining_cj} trials.")
+
+    if remaining_cj > 0:
+        trials_per_worker_cj = max(1, remaining_cj // num_workers)
+        actual_cj = trials_per_worker_cj * num_workers
+        logger.info(
+            f"=== STARTING PHASE 2: C->J OPTIMIZATION ({actual_cj} NEW TRIALS) ==="
+        )
+        start_time = time.time()
+
+        with ProcessPoolExecutor(
+            max_workers=num_workers,
+            initializer=init_globals,
+            initargs=(jc_pairs, cj_pairs, locked_alpha, enable_clip),
+        ) as executor:
+            futures = [
+                executor.submit(
+                    run_optimize,
+                    study_name="cj_study",
+                    storage_url=SQLITE_URL,
+                    objective_type="cj",
+                    n_trials=trials_per_worker_cj,
+                )
+                for _ in range(num_workers)
+            ]
+            for idx, future in enumerate(futures):
+                try:
+                    future.result()
+                except Exception as exc:
+                    logger.error(f"Worker {idx} error in Phase 2: {exc}")
+
+        phase2_time = time.time() - start_time
+        logger.info(
+            f"Phase 2 finished in {phase2_time:.2f} seconds ({phase2_time/60:.1f} min)."
+        )
+    else:
+        logger.info("Phase 2: Đã đủ trials, bỏ qua chạy thêm.")
+
+    # Reload study to get best results
+    study_cj = optuna.load_study(study_name="cj_study", storage=SQLITE_URL)
+    total_cj = len(study_cj.trials)
+    logger.info(f"Phase 2 TOTAL trials: {total_cj}")
+    logger.info(f"Best C->J Trial nDCG@10: {study_cj.best_value:.4f}")
     logger.info("Optimal parameters from Phase 2:")
     for k, v in study_cj.best_params.items():
         logger.info(f"  {k}: {v:.4f}")
@@ -994,25 +1182,26 @@ async def main():
     best_params.update(study_cj.best_params)
     best_params["skill_alpha"] = locked_alpha
 
-    # ------------------------------------------------------------
-    # Final Summary and verification comparison
-    # ------------------------------------------------------------
+    # ============================================================
+    # Final Summary
+    # ============================================================
     tuned_mrr = study_jc.best_value
     tuned_ndcg = study_cj.best_value
 
     logger.info("============================================================")
     logger.info("=== OPTIMIZATION SUMMARY ===")
     logger.info("============================================================")
+    logger.info(f"Total Trials: Phase 1 = {total_jc}, Phase 2 = {total_cj}")
     logger.info("Metrics Improvement:")
     logger.info("  J->C MRR (HR Search):")
     logger.info(f"    Baseline: {baseline_mrr:.4f}")
     logger.info(
-        f"    Tuned:    {tuned_mrr:.4f} (+{(tuned_mrr - baseline_mrr)*100:.2f}%)"
+        f"    Tuned:    {tuned_mrr:.4f} ({(tuned_mrr - baseline_mrr)*100:+.2f}%)"
     )
     logger.info("  C->J nDCG@10 (Job Search):")
     logger.info(f"    Baseline: {baseline_ndcg:.4f}")
     logger.info(
-        f"    Tuned:    {tuned_ndcg:.4f} (+{(tuned_ndcg - baseline_ndcg)*100:.2f}%)"
+        f"    Tuned:    {tuned_ndcg:.4f} ({(tuned_ndcg - baseline_ndcg)*100:+.2f}%)"
     )
     logger.info("------------------------------------------------------------")
     logger.info("Optimal Parameters to apply:")
@@ -1033,8 +1222,9 @@ async def main():
         logger.info(f"  {env_key}: {best_params[param_name]:.4f}")
     logger.info("============================================================")
 
-    # Apply the optimal params back to the env file
+    # Apply the final optimal params back to the env file
     update_env_file(best_params)
+    logger.info("=== TUNING COMPLETE ===")
 
 
 if __name__ == "__main__":

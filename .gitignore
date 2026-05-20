@@ -224,3 +224,4 @@ list_models.py
 .vscode
 server_log.txt
 /scratch
+/nmaiex_tuning/.tmp.driveupload
