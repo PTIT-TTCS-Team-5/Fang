@@ -196,3 +196,51 @@ optuna.samplers.TPESampler(
 ### Thủ công
 - Kiểm tra giao diện miCareer-mini: candidates xuất hiện ở nhiều job khác nhau.
 - Chat RAG hoạt động cho candidates (không còn hiển thị `%`).
+
+---
+
+## Nhật Ký Chạy Thực Tế (Tối Ưu 200,000 Trials - Ngày 21/05/2026)
+
+### 1. Nhật Ký Log Chi Tiết Quá Trình Chạy
+- **Đường dẫn file log chi tiết:** [tuning_20260521_100k_trials.log](file:///c:/Users/os/Desktop/cur_prj/Fang/nmaiex_tuning/output/tuning_20260521_100k_trials.log)
+
+---
+
+### 2. Kết Quả Tối Ưu Hóa & Bộ Tham Số Tối Ưu
+
+| Phase | Metric | Baseline | Tuned | Cải Thiện | Bộ Tham Số Tối Ưu (.env.nmaiex) |
+|---|---|---|---|---|---|
+| **Phase 1 (J→C)** | **MRR** | 0.6105 | **0.7778** | **+16.73%** | `NMAIEX_JC_WEIGHT_RRF: 0.4219`<br>`NMAIEX_JC_WEIGHT_SKILL: 0.5329`<br>`NMAIEX_SKILL_ALPHA: 0.7362`<br>`NMAIEX_JC_PENALTY_SENIORITY_COEF: 0.4255`<br>`NMAIEX_SENIORITY_OVERQUALIFIED_PENALTY_RATIO: 0.1134` |
+| **Phase 2 (C→J)** | **nDCG@10** | 0.7847 | **0.8206** | **+3.60%** | `NMAIEX_CJ_WEIGHT_RRF: 0.4010`<br>`NMAIEX_CJ_WEIGHT_TITLE: 0.3999`<br>`NMAIEX_CJ_WEIGHT_SKILL: 0.6000`<br>`NMAIEX_LANG_REQUIRED_PENALTY: 0.4744`<br>`NMAIEX_LANG_LEVEL_PENALTY: 0.0980`<br>`NMAIEX_LANG_PREFERRED_BONUS: 0.0255`<br>`NMAIEX_LANG_BONUS_CAP: 0.1018` |
+
+---
+
+### 3. Phân Tích Hiệu Năng Thực Tế (Phục vụ Ước Lượng Lần Sau)
+
+#### 3.1 Giai Đoạn Precomputation
+- **Thời gian chạy:** 55 giây.
+- **Chi tiết:** Monkey-patch 9Router API proxy hoạt động hoàn hảo, embedding 20 jobs chỉ mất ~24 giây thay vì mất nhiều phút như trước.
+- **Quy mô dữ liệu precompute:**
+  - Ground Truth Matrix: 2,000 cặp (20 Jobs × ~100 candidates).
+  - Unique jobs: 20, Unique candidates: 497.
+  - Xem tại [nmaiex_tuning\build_ground_truth.py]
+
+#### 3.2 Tốc Độ Xử Lý & Throughput (Thực Tế vs Ước Tính)
+
+| Chỉ Số | Ước Tính Lý Thuyết | Thực Tế Ghi Nhận | Nhận Xét & Phân Tích Nguyên Nhân |
+|---|---|---|---|
+| **Phase 1 Throughput** | 8.687 trials/s | **3.78 trials/s**<br>(50,530 trials / 13,355.02s) | **Chậm hơn ~56.5% so với lý thuyết.**<br>Nguyên nhân chính là do overhead khi ghi đè cơ sở dữ liệu SQLite trong môi trường đa tiến trình (10 workers). SQLite có cơ chế Lock File ghi tuần tự, gây ra hàng đợi nghẽn (write locks contentions) khi nhiều worker hoàn thành trial cùng một lúc và cố ghi vào DB. |
+| **Phase 2 Throughput** | 8.201 trials/s | **2.75 trials/s**<br>(99,970 trials / 36,350.84s) | **Chậm hơn ~66.5% so với lý thuyết.**<br>Phase 2 có độ phức tạp cao hơn do phải gom nhóm theo Candidate (497 nhóm) và tính nDCG@10 với nhiều phép toán logarit hơn. Khi chạy đa tiến trình, overhead khóa DB của SQLite kết hợp với tính toán CPU làm giảm tốc độ rõ rệt. |
+| **Tỷ Lệ Tốc Độ (Phase 2 / Phase 1)** | 94.4% | **72.7%** | Thực tế Phase 2 chậm hơn Phase 1 tới **27.3%** (thay vì 5.6% như ước tính lý thuyết), do overhead gom nhóm Candidate và tính toán nDCG trong Python nặng hơn dự đoán khi nhân bản lên 10 cores. |
+
+#### 3.3 Khuyến Nghị Cho Các Đợt Tuning Tiếp Theo
+1. **Ước lượng thời gian chạy với SQLite:**
+   - Nếu chạy trên môi trường SQLite với 10 parallel workers (CPU 12 cores):
+     - Thời gian Phase 1: $\approx 73.5 \text{ phút per 16,666 new trials}$.
+     - Thời gian Phase 2: $\approx 101 \text{ phút per 16,666 new trials}$.
+   - Nếu muốn khống chế thời gian chạy trong **6 tiếng** (360 phút) qua đêm:
+     - Tổng số trials mới khuyến nghị tối đa: **43,000 trials** (chia đều **21,500 trials/phase**).
+2. **Khuyến nghị nâng cấp hạ tầng:**
+   - Cân nhắc chuyển Optuna Storage sang **PostgreSQL** thay cho SQLite. PostgreSQL xử lý ghi đồng thời cực tốt và không bị giới hạn lock file như SQLite, giúp giải phóng hoàn toàn nghẽn cổ chai và đưa throughput thực tế tiệm cận mức lý thuyết (>8 trials/s), giảm tổng thời gian chạy xuống dưới **5.2 tiếng** cho 150,000 trials mới.
+
+

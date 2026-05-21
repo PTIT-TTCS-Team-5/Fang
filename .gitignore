@@ -231,3 +231,4 @@ nmaiex_tuning/output/backup/.env.nmaiex_20260521_002131
 .env.nmaiex.backup_20260520_195429
 .env.nmaiex.backup_20260521_040458
 /nmaiex_tuning/output
+/synthetic_data/.tmp.driveupload

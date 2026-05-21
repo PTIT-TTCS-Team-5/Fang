@@ -1,0 +1,152 @@
+(venv) PS C:\Users\os\Desktop\cur_prj\Fang> venv\Scripts\python nmaiex_tuning/tune_nmaiex_hyperparams.py --resume --trials-per-phase 100000
+{"asctime": "2026-05-21 00:20:36,084", "levelname": "INFO", "name": "tune_nmaiex", "message": "=== STARTING NMAIEX HYPERPARAMETER TUNING ==="}
+{"asctime": "2026-05-21 00:20:36,084", "levelname": "INFO", "name": "tune_nmaiex", "message": "Mode: RESUME"}
+{"asctime": "2026-05-21 00:20:36,084", "levelname": "INFO", "name": "tune_nmaiex", "message": "Target trials per phase: 100000"}
+{"asctime": "2026-05-21 00:20:36,084", "levelname": "INFO", "name": "root", "message": "Connecting to PostgreSQL pool..."}
+{"asctime": "2026-05-21 00:20:36,190", "levelname": "INFO", "name": "root", "message": "PostgreSQL pool created."}
+{"asctime": "2026-05-21 00:20:36,190", "levelname": "INFO", "name": "tune_nmaiex", "message": "=== STARTING PRECOMPUTATION ==="}
+{"asctime": "2026-05-21 00:20:36,194", "levelname": "INFO", "name": "tune_nmaiex", "message": "Loaded ground truth containing 2000 pairs."}
+{"asctime": "2026-05-21 00:20:36,195", "levelname": "INFO", "name": "tune_nmaiex", "message": "Unique jobs in GT: 20"}
+{"asctime": "2026-05-21 00:20:36,195", "levelname": "INFO", "name": "tune_nmaiex", "message": "Unique candidates in GT: 497"}
+{"asctime": "2026-05-21 00:20:36,195", "levelname": "INFO", "name": "tune_nmaiex", "message": "Fetching jobs from database..."}
+{"asctime": "2026-05-21 00:20:36,217", "levelname": "INFO", "name": "tune_nmaiex", "message": "Fetching job seniority levels..."}
+{"asctime": "2026-05-21 00:20:36,229", "levelname": "INFO", "name": "tune_nmaiex", "message": "Fetching job skills requirements..."}
+{"asctime": "2026-05-21 00:20:36,230", "levelname": "INFO", "name": "tune_nmaiex", "message": "Fetching candidates metadata..."}
+{"asctime": "2026-05-21 00:20:36,279", "levelname": "INFO", "name": "tune_nmaiex", "message": "Fetching candidate catalog skills..."}
+{"asctime": "2026-05-21 00:20:36,284", "levelname": "INFO", "name": "tune_nmaiex", "message": "Fetching fuzzy overlaps using database cross-join..."}
+{"asctime": "2026-05-21 00:20:36,297", "levelname": "INFO", "name": "tune_nmaiex", "message": "Loaded 0 fuzzy overlap values."}
+{"asctime": "2026-05-21 00:20:36,298", "levelname": "INFO", "name": "tune_nmaiex", "message": "Fetching job language requirements..."}
+{"asctime": "2026-05-21 00:20:36,301", "levelname": "INFO", "name": "tune_nmaiex", "message": "Pre-computing J->C vector and text rank positions..."}
+{"asctime": "2026-05-21 00:20:36,303", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:02,724", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:03,035", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:04,093", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:04,145", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:05,205", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:05,248", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:06,284", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:06,325", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:07,476", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:07,516", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:08,513", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:08,549", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:09,599", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:09,674", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:10,680", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:10,716", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:11,927", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:11,984", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:13,075", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:13,151", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:14,184", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:14,221", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:15,350", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:15,392", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:16,421", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:16,481", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:17,576", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:17,624", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:18,621", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:18,625", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:19,610", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:19,720", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:20,731", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:20,735", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:21,847", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:21,881", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:22,989", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:23,047", "levelname": "INFO", "name": "tune_nmaiex", "message": "[9Router Monkey-Patch] Embedding 1 chunks via 9Router proxy (1536 dimensions requested)"}
+{"asctime": "2026-05-21 00:21:24,070", "levelname": "INFO", "name": "httpx", "message": "HTTP Request: POST http://localhost:20128/v1/embeddings \"HTTP/1.1 200 OK\""}
+{"asctime": "2026-05-21 00:21:24,116", "levelname": "INFO", "name": "tune_nmaiex", "message": "Pre-computing C->J text/title rank positions and metadata..."}
+{"asctime": "2026-05-21 00:21:31,239", "levelname": "INFO", "name": "tune_nmaiex", "message": "=== PRECOMPUTATION FINISHED ==="}
+{"asctime": "2026-05-21 00:21:31,239", "levelname": "INFO", "name": "tune_nmaiex", "message": "Pre-computed J->C pairs: 2000"}
+{"asctime": "2026-05-21 00:21:31,240", "levelname": "INFO", "name": "tune_nmaiex", "message": "Pre-computed C->J pairs: 2000"}
+{"asctime": "2026-05-21 00:21:31,244", "levelname": "INFO", "name": "root", "message": "Closing PostgreSQL pool..."}
+{"asctime": "2026-05-21 00:21:31,248", "levelname": "INFO", "name": "root", "message": "PostgreSQL pool closed."}
+{"asctime": "2026-05-21 00:21:31,265", "levelname": "INFO", "name": "tune_nmaiex", "message": "Backed up SQLite DB → C:\\Users\\os\\Desktop\\cur_prj\\Fang\\nmaiex_tuning\\output\\backup\\nmaiex_tuning_20260521_002131.db"}
+{"asctime": "2026-05-21 00:21:31,266", "levelname": "INFO", "name": "tune_nmaiex", "message": "Backed up .env.nmaiex → C:\\Users\\os\\Desktop\\cur_prj\\Fang\\nmaiex_tuning\\output\\backup\\.env.nmaiex_20260521_002131"}
+{"asctime": "2026-05-21 00:21:31,266", "levelname": "INFO", "name": "tune_nmaiex", "message": "Score Clipping enabled: False"}
+{"asctime": "2026-05-21 00:21:31,270", "levelname": "INFO", "name": "tune_nmaiex", "message": "BASELINE METRICS:"}
+{"asctime": "2026-05-21 00:21:31,270", "levelname": "INFO", "name": "tune_nmaiex", "message": "  J->C MRR (HR Mode): 0.6105"}
+{"asctime": "2026-05-21 00:21:31,270", "levelname": "INFO", "name": "tune_nmaiex", "message": "  C->J nDCG@10 (Candidate Mode): 0.7847"}
+{"asctime": "2026-05-21 00:21:31,281", "levelname": "INFO", "name": "tune_nmaiex", "message": "Detected 12 cores. Spawning 10 parallel worker processes..."}
+C:\Users\os\Desktop\cur_prj\Fang\nmaiex_tuning\tune_nmaiex_hyperparams.py:1022: ExperimentalWarning: Argument ``multivariate`` is an experimental feature. The interface can change in the future.
+  sampler = optuna.samplers.TPESampler(
+C:\Users\os\Desktop\cur_prj\Fang\nmaiex_tuning\tune_nmaiex_hyperparams.py:1022: ExperimentalWarning: Argument ``group`` is an experimental feature. The interface can change in the future.
+  sampler = optuna.samplers.TPESampler(
+[I 2026-05-21 00:21:31,858] Using an existing study with name 'jc_study' instead of creating a new one.
+{"asctime": "2026-05-21 00:21:46,699", "levelname": "INFO", "name": "tune_nmaiex", "message": "Phase 1 RESUME: 49461 trials đã có, cần chạy thêm 50539 trials."}
+{"asctime": "2026-05-21 00:21:46,699", "levelname": "INFO", "name": "tune_nmaiex", "message": "=== STARTING PHASE 1: J->C OPTIMIZATION (50530 NEW TRIALS) ==="}
+{"asctime": "2026-05-21 04:04:21,721", "levelname": "INFO", "name": "tune_nmaiex", "message": "Phase 1 finished in 13355.02 seconds (222.6 min)."}
+{"asctime": "2026-05-21 04:04:58,250", "levelname": "INFO", "name": "tune_nmaiex", "message": "Phase 1 TOTAL trials: 99991"}
+{"asctime": "2026-05-21 04:04:58,301", "levelname": "INFO", "name": "tune_nmaiex", "message": "Best J->C Trial MRR: 0.7778"}
+{"asctime": "2026-05-21 04:04:58,301", "levelname": "INFO", "name": "tune_nmaiex", "message": "Optimal parameters from Phase 1:"}
+{"asctime": "2026-05-21 04:04:58,384", "levelname": "INFO", "name": "tune_nmaiex", "message": "  jc_w_rrf: 0.4219"}
+{"asctime": "2026-05-21 04:04:58,384", "levelname": "INFO", "name": "tune_nmaiex", "message": "  jc_w_skill: 0.5329"}
+{"asctime": "2026-05-21 04:04:58,384", "levelname": "INFO", "name": "tune_nmaiex", "message": "  skill_alpha: 0.7362"}
+{"asctime": "2026-05-21 04:04:58,384", "levelname": "INFO", "name": "tune_nmaiex", "message": "  jc_sen_coef: 0.4255"}
+{"asctime": "2026-05-21 04:04:58,384", "levelname": "INFO", "name": "tune_nmaiex", "message": "  sen_overq_ratio: 0.1134"}
+{"asctime": "2026-05-21 04:04:58,460", "levelname": "INFO", "name": "tune_nmaiex", "message": "LOCKED nmaiex_skill_alpha for Phase 2 = 0.7362"}
+{"asctime": "2026-05-21 04:04:58,460", "levelname": "INFO", "name": "tune_nmaiex", "message": "=== SAVING PHASE 1 OPTIMAL PARAMETERS TO .ENV ==="}
+{"asctime": "2026-05-21 04:04:58,548", "levelname": "INFO", "name": "tune_nmaiex", "message": "Created backup of .env.nmaiex at: C:\\Users\\os\\Desktop\\cur_prj\\Fang\\.env.nmaiex.backup_20260521_040458"}
+{"asctime": "2026-05-21 04:04:58,548", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_JC_WEIGHT_RRF from 0.4219 to 0.4219"}
+{"asctime": "2026-05-21 04:04:58,548", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_JC_WEIGHT_SKILL from 0.5329 to 0.5329"}
+{"asctime": "2026-05-21 04:04:58,548", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_JC_PENALTY_SENIORITY_COEF from 0.4255 to 0.4255"}
+{"asctime": "2026-05-21 04:04:58,549", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_SKILL_ALPHA from 0.7362 to 0.7362"}
+{"asctime": "2026-05-21 04:04:58,549", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_SENIORITY_OVERQUALIFIED_PENALTY_RATIO from 0.1134 to 0.1134"}
+{"asctime": "2026-05-21 04:04:58,549", "levelname": "INFO", "name": "tune_nmaiex", "message": "Successfully updated .env.nmaiex with optimal weights!"}
+[I 2026-05-21 04:04:58,583] Using an existing study with name 'cj_study' instead of creating a new one.
+{"asctime": "2026-05-21 04:04:58,606", "levelname": "INFO", "name": "tune_nmaiex", "message": "Phase 2 RESUME: 30 trials đã có, cần chạy thêm 99970 trials."}
+{"asctime": "2026-05-21 04:04:58,607", "levelname": "INFO", "name": "tune_nmaiex", "message": "=== STARTING PHASE 2: C->J OPTIMIZATION (99970 NEW TRIALS) ==="}
+{"asctime": "2026-05-21 14:10:49,452", "levelname": "INFO", "name": "tune_nmaiex", "message": "Phase 2 finished in 36350.84 seconds (605.8 min)."}
+{"asctime": "2026-05-21 14:11:33,599", "levelname": "INFO", "name": "tune_nmaiex", "message": "Phase 2 TOTAL trials: 100000"}
+{"asctime": "2026-05-21 14:11:33,662", "levelname": "INFO", "name": "tune_nmaiex", "message": "Best C->J Trial nDCG@10: 0.8206"}
+{"asctime": "2026-05-21 14:11:33,662", "levelname": "INFO", "name": "tune_nmaiex", "message": "Optimal parameters from Phase 2:"}
+{"asctime": "2026-05-21 14:11:33,730", "levelname": "INFO", "name": "tune_nmaiex", "message": "  cj_w_rrf: 0.4010"}
+{"asctime": "2026-05-21 14:11:33,731", "levelname": "INFO", "name": "tune_nmaiex", "message": "  cj_w_title: 0.3999"}
+{"asctime": "2026-05-21 14:11:33,731", "levelname": "INFO", "name": "tune_nmaiex", "message": "  cj_w_skill: 0.6000"}
+{"asctime": "2026-05-21 14:11:33,731", "levelname": "INFO", "name": "tune_nmaiex", "message": "  lang_req_pen: 0.4744"}
+{"asctime": "2026-05-21 14:11:33,731", "levelname": "INFO", "name": "tune_nmaiex", "message": "  lang_lvl_pen: 0.0980"}
+{"asctime": "2026-05-21 14:11:33,731", "levelname": "INFO", "name": "tune_pref_bon: 0.0255"}
+{"asctime": "2026-05-21 14:11:33,731", "levelname": "INFO", "name": "tune_nmaiex", "message": "  lang_bon_cap: 0.1018"}
+{"asctime": "2026-05-21 14:11:33,989", "levelname": "INFO", "name": "tune_nmaiex", "message": "============================================================"}
+{"asctime": "2026-05-21 14:11:33,989", "levelname": "INFO", "name": "tune_nmaiex", "message": "=== OPTIMIZATION SUMMARY ==="}
+{"asctime": "2026-05-21 14:11:33,989", "levelname": "INFO", "name": "tune_nmaiex", "message": "============================================================"}
+{"asctime": "2026-05-21 14:11:33,989", "levelname": "INFO", "name": "tune_nmaiex", "message": "Total Trials: Phase 1 = 99991, Phase 2 = 100000"}
+{"asctime": "2026-05-21 14:11:33,989", "levelname": "INFO", "name": "tune_nmaiex", "message": "Metrics Improvement:"}
+{"asctime": "2026-05-21 14:11:33,989", "levelname": "INFO", "name": "tune_nmaiex", "message": "  J->C MRR (HR Search):"}
+{"asctime": "2026-05-21 14:11:33,989", "levelname": "INFO", "name": "tune_nmaiex", "message": "    Baseline: 0.6105"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "    Tuned:    0.7778 (+16.73%)"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "  C->J nDCG@10 (Job Search):"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "    Baseline: 0.7847"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "    Tuned:    0.8206 (+3.60%)"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "------------------------------------------------------------"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "Optimal Parameters to apply:"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_JC_WEIGHT_RRF: 0.4219"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_JC_WEIGHT_SKILL: 0.5329"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_SKILL_ALPHA: 0.7362"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_JC_PENALTY_SENIORITY_COEF: 0.4255"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_SENIORITY_OVERQUALIFIED_PENALTY_RATIO: 0.1134"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_CJ_WEIGHT_RRF: 0.4010"}
+{"asctime": "2026-05-21 14:11:33,990", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_CJ_WEIGHT_TITLE: 0.3999"}
+{"asctime": "2026-05-21 14:11:33,991", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_CJ_WEIGHT_SKILL: 0.6000"}
+{"asctime": "2026-05-21 14:11:33,991", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_LANG_REQUIRED_PENALTY: 0.4744"}
+{"asctime": "2026-05-21 14:11:33,991", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_LANG_LEVEL_PENALTY: 0.0980"}
+{"asctime": "2026-05-21 14:11:33,991", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_LANG_PREFERRED_BONUS: 0.0255"}
+{"asctime": "2026-05-21 14:11:33,991", "levelname": "INFO", "name": "tune_nmaiex", "message": "  NMAIEX_LANG_BONUS_CAP: 0.1018"}
+{"asctime": "2026-05-21 14:11:33,991", "levelname": "INFO", "name": "tune_nmaiex", "message": "============================================================"}
+{"asctime": "2026-05-21 14:11:34,009", "levelname": "INFO", "name": "tune_nmaiex", "message": "Created backup of .env.nmaiex at: C:\\Users\\os\\Desktop\\cur_prj\\Fang\\.env.nmaiex.backup_20260521_141133"}
+{"asctime": "2026-05-21 14:11:34,010", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_JC_WEIGHT_RRF from 0.4219 to 0.4219"}
+{"asctime": "2026-05-21 14:11:34,011", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_JC_WEIGHT_SKILL from 0.5329 to 0.5329"}
+{"asctime": "2026-05-21 14:11:34,011", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_JC_PENALTY_SENIORITY_COEF from 0.4255 to 0.4255"}
+{"asctime": "2026-05-21 14:11:34,011", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_CJ_WEIGHT_RRF from 0.35 to 0.4010"}
+{"asctime": "2026-05-21 14:11:34,011", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_CJ_WEIGHT_TITLE from 0.15 to 0.3999"}
+{"asctime": "2026-05-21 14:11:34,011", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_CJ_WEIGHT_SKILL from 0.30 to 0.6000"}
+{"asctime": "2026-05-21 14:11:34,011", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_SKILL_ALPHA from 0.7362 to 0.7362"}
+{"asctime": "2026-05-21 14:11:34,011", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_SENIORITY_OVERQUALIFIED_PENALTY_RATIO from 0.1134 to 0.1134"}
+{"asctime": "2026-05-21 14:11:34,011", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_LANG_REQUIRED_PENALTY from 0.25    # Thiếu REQUIRED language → -0.25 to 0.4744"}
+{"asctime": "2026-05-21 14:11:34,012", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_LANG_LEVEL_PENALTY from 0.10       # Có language nhưng level không đủ → -0.10 to 0.0980"}
+{"asctime": "2026-05-21 14:11:34,013", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_LANG_PREFERRED_BONUS from 0.08     # Có PREFERRED language đủ level → +0.08 to 0.0255"}
+{"asctime": "2026-05-21 14:11:34,013", "levelname": "INFO", "name": "tune_nmaiex", "message": "Updating NMAIEX_LANG_BONUS_CAP from 0.15           # Tổng bonus ngôn ngữ tối đa to 0.1018"}
+{"asctime": "2026-05-21 14:11:34,014", "levelname": "INFO", "name": "tune_nmaiex", "message": "Successfully updated .env.nmaiex with optimal weights!"}
+{"asctime": "2026-05-21 14:11:34,014", "levelname": "INFO", "name": "tune_nmaiex", "message": "=== TUNING COMPLETE ==="}

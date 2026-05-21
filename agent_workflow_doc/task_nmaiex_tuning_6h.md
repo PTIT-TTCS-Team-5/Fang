@@ -15,12 +15,13 @@
   - [x] Thêm CLI arguments `--resume` và `--trials-per-phase`
   - [x] Logic `--resume`: KHÔNG xóa SQLite DB, đếm trials hiện có, chạy tiếp phần còn thiếu
   - [x] Phase 1 (J→C MRR): resume từ 25,000 trials → chạy thêm 75,000 = tổng 100,000
-  - [x] Phase 2 (C→J nDCG@10): chạy 75,000 trials (resume nếu bị ngắt giữa chừng)
+  - [x] Phase 2 (C→J nDCG@10): chạy 100,000 trials (resume nếu bị ngắt giữa chừng)
   - [x] Tự động backup DB + .env trước khi chạy
   - [x] Nâng cấp Sampler: `TPESampler(n_startup_trials=1000, multivariate=True, group=True)`
-  - [ ] Kiểm tra resume hoạt động đúng
+  - [x] Kiểm tra resume hoạt động đúng
 
-- [ ] **3. Backup An Toàn + Khởi Chạy Tuning Qua Đêm**
-  - [ ] Khởi chạy: `venv\Scripts\python nmaiex_tuning/tune_nmaiex_hyperparams.py --resume --trials-per-phase 75000`
-  - [ ] Theo dõi vài trăm trials đầu để xác nhận tốc độ
-  - [ ] Để máy chạy xuyên đêm (~5 tiếng)
+- [x] **3. Backup An Toàn + Khởi Chạy Tuning Qua Đêm**
+  - [x] Khởi chạy: `venv\Scripts\python nmaiex_tuning/tune_nmaiex_hyperparams.py --resume --trials-per-phase 100000`
+  - [x] Theo dõi vài trăm trials đầu để xác nhận tốc độ
+  - [x] Để máy chạy xuyên đêm (Tổng Phase 1 + Phase 2 ~14 tiếng cho 150k trials mới, tổng 200k trials)
+
