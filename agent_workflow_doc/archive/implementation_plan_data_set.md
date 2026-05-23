@@ -89,7 +89,7 @@ flowchart LR
 > [!WARNING]
 > **Breaking change cho FANG core** — Phải thực hiện TRƯỚC khi chạy pipeline. Sau bước này, `reset_and_seed_db.py` cần chạy lại để xóa sạch dữ liệu cũ (embedding space khác).
 
-#### [MODIFY] [embedding.py](file:///c:/Users/os/Desktop/cur_prj/Fang/app/services/embedding.py)
+#### [MODIFY] [embedding.py](../../app/services/embedding.py)
 
 Thay thế hoàn toàn OpenAI bằng Google AI:
 
@@ -120,7 +120,7 @@ vectors = [e.values for e in result.embeddings]
 - Không có `dimensions` param → dùng `output_dimensionality` trong config
 - Batch size native tối đa 100 texts/request (tốt hơn OpenAI 2048)
 
-#### [MODIFY] [config.py](file:///c:/Users/os/Desktop/cur_prj/Fang/app/core/config.py)
+#### [MODIFY] [config.py](../../app/core/config.py)
 
 ```python
 # Thay đổi defaults:
@@ -129,7 +129,7 @@ embedding_provider: str = "gemini" # trước: "openai"
 embedding_model: str = "gemini-embedding-001"  # trước: "text-embedding-3-small"
 ```
 
-#### [MODIFY] [.env](file:///c:/Users/os/Desktop/cur_prj/Fang/.env)
+#### [MODIFY] [.env](../../.env)
 
 ```env
 # Embedding Configuration
@@ -142,14 +142,14 @@ EMBEDDING_VECTOR_TYPE=halfvec
 
 > **Không cần thay đổi `GOOGLE_API_KEY`** — đã có sẵn trong `.env`.
 
-#### [MODIFY] [nmaiex_config.py](file:///c:/Users/os/Desktop/cur_prj/Fang/app/core/nmaiex_config.py)
+#### [MODIFY] [nmaiex_config.py](../../app/core/nmaiex_config.py)
 
 ```python
 # Skill embedding dims giữ nguyên 256 (truncated từ 1536 thay vì 1024)
 nmaiex_skill_embedding_dims: int = 256  # Vẫn OK, 256 < 1536
 ```
 
-#### [MODIFY] [schema_ai_core.sql](file:///c:/Users/os/Desktop/cur_prj/Fang/database/schema_ai_core.sql)
+#### [MODIFY] [schema_ai_core.sql](../../database/schema_ai_core.sql)
 
 Cập nhật dimension placeholder (nếu hardcoded). Schema hiện tại dùng `__TTCS_EMBEDDING_DIM__` → inject lúc chạy → **không cần sửa SQL**, chỉ cần `.env` đúng là OK.
 
@@ -157,7 +157,7 @@ Cập nhật dimension placeholder (nếu hardcoded). Schema hiện tại dùng 
 
 ### Phase 1: DB Seed Mới
 
-#### [NEW] [seed_synth.sql](file:///c:/Users/os/Desktop/cur_prj/Fang/database/seed_synth.sql)
+#### [NEW] [seed_synth.sql](../../database/seed_synth.sql)
 
 Thay thế `seed_data.sql`. Chỉ seed **infrastructure data** (companies, HRs, admin user phụ):
 
@@ -179,7 +179,7 @@ INSERT INTO COMPANY (compName, taxCode, webUrl, logoUrl, contactEmail, provId, w
 -- → Pipeline sẽ tự sinh toàn bộ
 ```
 
-#### [MODIFY] [reset_and_seed_db.py](file:///c:/Users/os/Desktop/cur_prj/Fang/scripts/reset_and_seed_db.py)
+#### [MODIFY] [reset_and_seed_db.py](../../scripts/reset_and_seed_db.py)
 
 ```python
 sql_files = [
@@ -219,7 +219,7 @@ synthetic_data/
 
 ### Phase 3: Pydantic Models
 
-#### [NEW] [models.py](file:///c:/Users/os/Desktop/cur_prj/Fang/synthetic_data/models.py)
+#### [NEW] [models.py](../../synthetic_data/models.py)
 
 ```python
 from pydantic import BaseModel
@@ -264,7 +264,7 @@ class JobBatchResponse(BaseModel):
 
 ### Phase 4: Deterministic Persona Manifest
 
-#### [NEW] [personas.py](file:///c:/Users/os/Desktop/cur_prj/Fang/synthetic_data/personas.py)
+#### [NEW] [personas.py](../../synthetic_data/personas.py)
 
 **8 Persona Types** với phân bố xác suất cố định:
 
@@ -334,7 +334,7 @@ def generate_manifest(total_cv: int = 500) -> list[dict]:
 
 ### Phase 5: LLM Generation
 
-#### [NEW] [generator.py](file:///c:/Users/os/Desktop/cur_prj/Fang/synthetic_data/generator.py)
+#### [NEW] [generator.py](../../synthetic_data/generator.py)
 
 - **Endpoint**: `http://localhost:20128/v1/chat/completions` (9Router)
 - **Model CV**: `gemini/gemini-3.1-flash-lite` (Round Robin qua 5 keys)
@@ -368,7 +368,7 @@ Quy tắc:
 
 ### Phase 6: DB Writer (reuse FANG services)
 
-#### [NEW] [db_writer.py](file:///c:/Users/os/Desktop/cur_prj/Fang/synthetic_data/db_writer.py)
+#### [NEW] [db_writer.py](../../synthetic_data/db_writer.py)
 
 **Flow cho mỗi CV** (sử dụng FANG service functions):
 
@@ -423,7 +423,7 @@ async def write_cv_to_db(cv: ParsedCV, user_data: dict):
 
 ### Phase 7: Embedder Integration
 
-#### [NEW] [embedder.py](file:///c:/Users/os/Desktop/cur_prj/Fang/synthetic_data/embedder.py)
+#### [NEW] [embedder.py](../../synthetic_data/embedder.py)
 
 Thin wrapper, reuse trực tiếp:
 - `app.services.chunking.process_document_to_chunks()` — CV markdown + Job description
@@ -436,7 +436,7 @@ Thin wrapper, reuse trực tiếp:
 
 ### Phase 8: CLI + Verifier
 
-#### [NEW] [run_pipeline.py](file:///c:/Users/os/Desktop/cur_prj/Fang/synthetic_data/run_pipeline.py)
+#### [NEW] [run_pipeline.py](../../synthetic_data/run_pipeline.py)
 
 ```bash
 # Dry run — sinh 3 CV + 2 Job, không ghi DB
@@ -452,7 +452,7 @@ python -m synthetic_data.run_pipeline --mode full --cv-count 500 --job-count 15
 python -m synthetic_data.run_pipeline --mode full --resume
 ```
 
-#### [NEW] [verifier.py](file:///c:/Users/os/Desktop/cur_prj/Fang/synthetic_data/verifier.py)
+#### [NEW] [verifier.py](../../synthetic_data/verifier.py)
 
 Post-pipeline health check:
 ```sql
@@ -513,7 +513,7 @@ UNION ALL SELECT 'JOB_SKILL_RAW', COUNT(*) FROM JOB_SKILL_RAW;
 
 ### Lý do thực hiện
 1. **Tối ưu chi phí và hiệu năng (Zero API Cost):** Việc sử dụng LLM qua 9Router để phân bổ 500 ứng viên vào 20 công việc sẽ tiêu tốn lượng token khổng lồ và rất dễ gặp lỗi rate limit / timeout.
-2. **Tính thực tế và nhất quán:** Tận dụng chính thuật toán so khớp Job ↔ Candidate đã được tối ưu hóa ở Phase 1 (xem [implementation_plan_nmaiex_tuning.md](file:///c:/Users/os/Desktop/cur_prj/Fang/agent_workflow_doc/archive/implementation_plan_nmaiex_tuning.md)) của FANG để chọn ra những công việc phù hợp nhất với từng ứng viên. Điều này vừa giúp phân bổ ứng viên một cách tự nhiên, vừa phản ánh đúng năng lực của bộ so khớp trong thực tế.
+2. **Tính thực tế và nhất quán:** Tận dụng chính thuật toán so khớp Job ↔ Candidate đã được tối ưu hóa ở Phase 1 (xem [implementation_plan_nmaiex_tuning.md](implementation_plan_nmaiex_tuning.md)) của FANG để chọn ra những công việc phù hợp nhất với từng ứng viên. Điều này vừa giúp phân bổ ứng viên một cách tự nhiên, vừa phản ánh đúng năng lực của bộ so khớp trong thực tế.
 3. **Đa dạng hóa phân bổ:** Tránh tình trạng toàn bộ ứng viên dồn vào Job 1, giúp phân phối đều 500 ứng viên vào 20 công việc khác nhau dựa trên mức độ phù hợp thực tế.
 
 ### Phương án triển khai

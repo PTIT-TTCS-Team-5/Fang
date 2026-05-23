@@ -90,7 +90,7 @@ $$\text{Phase 2 throughput} = 8.687 \times (1 - 0.036 - 0.02) = 8.687 \times 0.9
 
 ### 1. Nâng cấp Script Tuning với Resume + CLI
 
-#### [MODIFY] [tune_nmaiex_hyperparams.py](file:///c:/Users/os/Desktop/cur_prj/Fang/nmaiex_tuning/tune_nmaiex_hyperparams.py)
+#### [MODIFY] [tune_nmaiex_hyperparams.py](../../nmaiex_tuning/tune_nmaiex_hyperparams.py)
 
 **1.1 Thêm CLI Arguments:**
 ```python
@@ -147,7 +147,7 @@ optuna.samplers.TPESampler(
 
 ### 2. Phân Bổ Ứng Viên Thông Minh + Mở Khóa Chat RAG
 
-#### [MODIFY] [redistribute_applications.py](file:///c:/Users/os/Desktop/cur_prj/Fang/scripts/redistribute_applications.py)
+#### [MODIFY] [redistribute_applications.py](../../scripts/redistribute_applications.py)
 
 **Thay đổi cốt lõi so với phiên bản hiện tại:**
 
@@ -202,7 +202,7 @@ optuna.samplers.TPESampler(
 ## Nhật Ký Chạy Thực Tế (Tối Ưu 200,000 Trials - Ngày 21/05/2026)
 
 ### 1. Nhật Ký Log Chi Tiết Quá Trình Chạy
-- **Đường dẫn file log chi tiết:** [tuning_20260521_100k_trials.log](file:///c:/Users/os/Desktop/cur_prj/Fang/nmaiex_tuning/output/tuning_20260521_100k_trials.log)
+- **Đường dẫn file log chi tiết:** [tuning_20260521_100k_trials.log](../../nmaiex_tuning/output/tuning_20260521_100k_trials.log)
 
 ---
 
