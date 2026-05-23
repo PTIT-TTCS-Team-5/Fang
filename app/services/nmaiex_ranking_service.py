@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def clip_score(score: float) -> float:
-    """Clip về [0, 1] — tránh điểm âm (penalty lớn) hoặc > 1 (bonus tương lai)."""
+    """Optionally clip score for legacy display behavior; raw score is default."""
     if not nmaiex_settings.nmaiex_enable_score_clip:
         return score
     return max(0.0, min(1.0, score))
@@ -547,9 +547,9 @@ async def rank_jobs_for_candidate(
                 WHERE candidateId = $1
                 GROUP BY candidateId
             )
-            SELECT 
-                u.fName, u.lName, u.provId, c.expyears, c.bio, 
-                cv.rawText, 
+            SELECT
+                u.fName, u.lName, u.provId, c.expyears, c.bio,
+                cv.rawText,
                 cv.parsedJson -> 'experience' as experiences,
                 cv.parsedJson -> 'certificates' as certificates_list,
                 cv.parsedJson -> 'education' as education_list,

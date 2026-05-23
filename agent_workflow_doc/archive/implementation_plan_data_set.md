@@ -513,7 +513,7 @@ UNION ALL SELECT 'JOB_SKILL_RAW', COUNT(*) FROM JOB_SKILL_RAW;
 
 ### Lý do thực hiện
 1. **Tối ưu chi phí và hiệu năng (Zero API Cost):** Việc sử dụng LLM qua 9Router để phân bổ 500 ứng viên vào 20 công việc sẽ tiêu tốn lượng token khổng lồ và rất dễ gặp lỗi rate limit / timeout.
-2. **Tính thực tế và nhất quán:** Tận dụng chính thuật toán so khớp Job ↔ Candidate đã được tối ưu hóa ở Phase 1 (xem [implementation_plan_nmaiex_tuning.md](file:///c:/Users/os/Desktop/cur_prj/Fang/agent_workflow_doc/implementation_plan_nmaiex_tuning.md)) của FANG để chọn ra những công việc phù hợp nhất với từng ứng viên. Điều này vừa giúp phân bổ ứng viên một cách tự nhiên, vừa phản ánh đúng năng lực của bộ so khớp trong thực tế.
+2. **Tính thực tế và nhất quán:** Tận dụng chính thuật toán so khớp Job ↔ Candidate đã được tối ưu hóa ở Phase 1 (xem [implementation_plan_nmaiex_tuning.md](file:///c:/Users/os/Desktop/cur_prj/Fang/agent_workflow_doc/archive/implementation_plan_nmaiex_tuning.md)) của FANG để chọn ra những công việc phù hợp nhất với từng ứng viên. Điều này vừa giúp phân bổ ứng viên một cách tự nhiên, vừa phản ánh đúng năng lực của bộ so khớp trong thực tế.
 3. **Đa dạng hóa phân bổ:** Tránh tình trạng toàn bộ ứng viên dồn vào Job 1, giúp phân phối đều 500 ứng viên vào 20 công việc khác nhau dựa trên mức độ phù hợp thực tế.
 
 ### Phương án triển khai

@@ -24,4 +24,3 @@
   - [x] Khởi chạy: `venv\Scripts\python nmaiex_tuning/tune_nmaiex_hyperparams.py --resume --trials-per-phase 100000`
   - [x] Theo dõi vài trăm trials đầu để xác nhận tốc độ
   - [x] Để máy chạy xuyên đêm (Tổng Phase 1 + Phase 2 ~14 tiếng cho 150k trials mới, tổng 200k trials)
-

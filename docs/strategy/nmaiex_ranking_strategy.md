@@ -60,7 +60,7 @@ flowchart TD
     H -->|J→C| I[Seniority Penalty\nAsymmetric Buffer]
     H -->|C→J| J[Title Score\n+ Salary Adjustment\n+ Language Score]
 
-    I --> K["Late Fusion\nfinal_score= clip(w_rrf × rrf\n+ w_skill × skill \n− penalty, 0, 1)"]
+    I --> K["Late Fusion\nraw_score= w_rrf × rrf\n+ w_skill × skill \n− penalty"]
     J --> K
 
     K --> L[Sort → Top-N\n+ score_breakdown]
@@ -111,11 +111,11 @@ Giai đoạn Retrieval lấy `K = limit × 5` ứng viên/job thay vì chỉ l�
 
 **Scoring**:
 ```
-final_score = clip(
+raw_score = (
     w_rrf × rrf_score_norm
   + w_skill × skill_score
   − seniority_penalty
-, 0.0, 1.0)
+)
 ```
 
 Trọng số mặc định: `w_rrf=0.30`, `w_skill=0.40`. Skill chiếm nhiều hơn vì đây là chiều HR cần **precision** — ứng viên phải thực sự có kỹ năng công việc yêu cầu.
@@ -136,14 +136,14 @@ Trọng số mặc định: `w_rrf=0.30`, `w_skill=0.40`. Skill chiếm nhiều 
 
 **Scoring**:
 ```
-final_score = clip(
+raw_score = (
     w_rrf × rrf_score_norm
   + w_title × title_score
   + w_skill × skill_score
   + salary_adjustment      (âm = penalty, dương = bonus)
   − lang_penalty
   + lang_bonus
-, 0.0, 1.0)
+)
 ```
 
 Trọng số: `w_rrf=0.35`, `w_title=0.15`, `w_skill=0.30`. Skill thấp hơn J→C (0.30 vs 0.40) vì C→J cần **recall** — không muốn bỏ sót job chỉ vì ứng viên chưa đủ kỹ năng một vài mục.
@@ -163,7 +163,7 @@ Nếu chỉ dùng catalog skill cố định (Closed-World), mọi kỹ năng kh
 - `matched_ids` → lưu `CANDIDATESKILL` / `JOBREQUIREMENT` → dùng cho **Exact Overlap**.
 
 **Tầng 2 — Open-World (Embedding Fallback)**:
-- `unmatched_texts` được embed bằng `text-embedding-3-small` (256 dims, Matryoshka) → lưu vào `CANDIDATE_SKILL_RAW` / `JOB_SKILL_RAW`.
+- `unmatched_texts` được embed bằng Gemini `gemini-embedding-001` với `output_dimensionality=256` (Matryoshka-compatible) → lưu vào `CANDIDATE_SKILL_RAW` / `JOB_SKILL_RAW`.
 - Dùng CROSS JOIN trên PostgreSQL để tính `avg_max_cosine` → **Fuzzy Overlap**.
 - Chi phí embed text ngắn rẻ hơn ~5x so với gọi LLM để map từng skill.
 
@@ -180,7 +180,7 @@ skill_score = α × exact_overlap + (1 − α) × fuzzy_overlap
 
 ### 6.3 Tại Sao 256 Dims Cho Skill
 
-TTCS dùng `halfvec(1024)` cho document chunks — cần semantic depth cho toàn bộ đoạn văn. Skills là **text rất ngắn** (1–5 từ). `text-embedding-3-small` hỗ trợ Matryoshka — truyền `dimensions=256` lúc gọi API để cắt bớt chiều mà không cần post-process. Kết quả: rẻ hơn 4x, đủ chất lượng cho matching skill ngắn.
+TTCS dùng `halfvec(1536)` cho document chunks — cần semantic depth cho toàn bộ đoạn văn. Skills là **text rất ngắn** (1–5 từ). Gemini `gemini-embedding-001` hỗ trợ rút gọn chiều bằng `output_dimensionality`; truyền `dimensions=256` lúc gọi `embed_chunks()` để giảm chi phí/lưu trữ mà không cần post-process. Kết quả: rẻ hơn đáng kể, đủ chất lượng cho matching skill ngắn.
 
 ---
 
@@ -255,7 +255,15 @@ PROFICIENCY_LEVELS = {
     "BASIC": 1, "INTERMEDIATE": 2, "ADVANCED": 3, "FLUENT": 4, "NATIVE": 5
 }
 ```
-Trình độ thô từ CV (e.g. `"N3"`, `"IELTS 7.5"`, `"Business level"`) được chuẩn hóa qua `normalize_proficiency()` (LLM auto-lite) trước khi so sánh. Fast path: nếu đã là chuẩn → return ngay, không gọi LLM.
+Trình độ thô từ CV (e.g. `"N3"`, `"IELTS 7.5"`, `"Business level"`) theo thiết kế được chuẩn hóa qua `normalize_proficiency()` (LLM auto-lite) trước khi so sánh.
+> [!WARNING]
+> **Active Discrepancy / Gap:** Mặc dù `normalize_proficiency()` đã được implement trong `nmaiex_mapper_service.py`, trong thực tế code của Ranking Service (`app/services/nmaiex_ranking_service.py` dòng 176-177), hàm này **chưa được tích hợp gọi**.
+> Code hiện tại đang tra cứu trực tiếp bằng dictionary:
+> ```python
+> prof = cl.get("proficiency", "BASIC")
+> cand_lang_map[code] = PROFICIENCY_LEVELS.get(prof, 1)
+> ```
+> Kết quả là các chuỗi trình độ thô (ví dụ `"N3"`, `"Fluent"`) không khớp chính xác với key chuẩn sẽ bị silent fallback về level 1 (`"BASIC"`). Gap này được lên kế hoạch xử lý ở phase sau. Fast path khi tích hợp: nếu đã là chuẩn → return ngay, không gọi LLM.
 
 **Logic scoring**:
 ```
@@ -276,7 +284,7 @@ Tiếng Việt không được đưa vào hệ thống scoring vì đây là web
 
 ---
 
-## 9. Late Fusion & Clip [0, 1]
+## 9. Late Fusion & Raw Score
 
 ### 9.1 Tại Sao Tổng Trọng Số Không Bằng 1
 
@@ -290,14 +298,13 @@ Tổng trọng số **cố tình nhỏ hơn 1**. Khoảng dư (room) được d�
 | J→C | 0.30 | 0.40 | — | 0.70 | 0.30 (seniority penalty) |
 | C→J | 0.35 | 0.30 | 0.15 | 0.80 | 0.20 (salary + language) |
 
-### 9.2 Tại Sao Cần Clip [0, 1]
+### 9.2 Vì Sao Không Clip Raw Score Mặc Định
 
-**Phía âm**: Seniority penalty `0.25 × gap` — ứng viên lệch 4 năm trả penalty = 1.0, có thể kéo điểm xuống âm.
+**Phía âm**: Seniority penalty `0.25 × gap` có thể kéo điểm xuống dưới 0. Giữ raw score giúp hệ thống vẫn phân biệt được ứng viên hơi lệch và ứng viên lệch rất nặng.
 
-**Phía dương**: Dù tổng weights < 1, nhưng nếu về sau thêm bonus (location match, ATS score) có thể vượt 1.
+**Phía dương**: Bonus từ salary/language hoặc tín hiệu tương lai có thể đẩy điểm vượt 1. Giữ raw score giúp không mất tín hiệu "quá khớp" khi xếp hạng.
 
-**Clip** đảm bảo output luôn nằm trong `[0, 1]` — trực quan, nhất quán với cách UI hiển thị ("87% Mức độ phù hợp"), và bảo vệ hệ thống trước mọi thay đổi công thức tương lai.
-* NOTE FROM USER: Cần xem xét, nếu điểm có âm thì cũng có âm nhiều âm ít -> Nếu clip hết thì có chăng mất đi khả năng xếp loại ở nhóm được đánh giá là tệ, trong thực tế mình nghiêng về việc chủ ý cho điểm rơi vào khoảng (0, 1) nhưng nếu có rơi ra ngoài -> Cũng nên giữ để có tính xếp loại cho những trường hợp quá tệ hoặc quá khớp (cái này cần). 
+Vì vậy ranking score mặc định là raw score không clip. Nếu UI cần hiển thị dạng phần trăm `[0, 1]`, frontend hoặc một field display score riêng nên normalize/clip ở lớp hiển thị thay vì làm mất tín hiệu sắp xếp lõi. Config `NMAIEX_ENABLE_SCORE_CLIP=false` giữ mặc định này; chỉ bật `true` cho compatibility với UI legacy cần score bounded.
 ---
 
 ## 10. Master Data & Địa Lý Chuẩn Hóa
@@ -315,7 +322,7 @@ Cả TTCS và NMAIex dùng chung một tài khoản Cloudinary. Tách biệt qua
 - `Home/ttcs/` — CV và tài liệu của hệ thống TTCS gốc.
 - `Home/nmaiex/` — CV snapshot khi ứng viên apply Job trong NMAIex.
 
-**Config:** Biến `CLOUDINARY_UPLOAD_FOLDER` (đặt tại `.env` gốc) kiểm soát folder đích. 
+**Config:** Biến `CLOUDINARY_UPLOAD_FOLDER` (đặt tại `.env` gốc) kiểm soát folder đích.
 - Thay giá trị `"ttcs"` hay `"nmaiex"` khi cần switch project.
 - Vì NMAIex là phần của AI layer hỗ trợ TTCS, không cần config riêng biệt.
 
@@ -323,7 +330,7 @@ Cả TTCS và NMAIex dùng chung một tài khoản Cloudinary. Tách biệt qua
 
 ## 11. Cấu Hình & Tuning
 
-* Chưa qua tranning để tune tham số -> Các giá trị dưới đây chỉ là tạm ước. 
+* Chưa qua tranning để tune tham số -> Các giá trị dưới đây chỉ là tạm ước.
 * Tất cả tham số công thức được externalize ra `.env.nmaiex` — không hardcode trong code. Điều này cho phép tune mà không cần redeploy:
 
 | Nhóm | Ví dụ tham số | Giá trị tạm gán |
@@ -349,7 +356,7 @@ Cả TTCS và NMAIex dùng chung một tài khoản Cloudinary. Tách biệt qua
 | `GET` | `/v2/nmaiex/master/categories` | Danh sách danh mục JOBCATEGORY |
 | `GET` | `/v2/nmaiex/master/skills` | Danh sách kỹ năng SKILL (catalog cho LLM mapper) |
 
-> **Lưu ý**: Endpoint `/v2/nmaiex/master/languages` chưa được triển khai — bảng `LANGUAGE` tồn tại trong DB nhưng chưa có route riêng. Khi cần, thêm vào `nmaiex_routes_ranking.py` tương tự pattern master data khác.
+> **Lưu ý**: Endpoint `/v2/nmaiex/master/languages` **chưa được triển khai (Planned / Do not call)** — bảng `LANGUAGE` tồn tại trong DB nhưng chưa có route riêng. Khi cần, thêm vào `nmaiex_routes_ranking.py` tương tự pattern master data khác.
 
 Query params ranking: `?limit=20&province_id=HANOI&work_mode=REMOTE`
 
