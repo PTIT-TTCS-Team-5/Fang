@@ -81,6 +81,12 @@ class NMAIexSettings(BaseSettings):
     # ----------------------------------------------------------------
     nmaiex_enable_score_clip: bool = False
 
+    # ----------------------------------------------------------------
+    # Candidate enrichment retry/backfill
+    # ----------------------------------------------------------------
+    nmaiex_enrichment_retry_max_attempts: int = 5
+    nmaiex_enrichment_retry_base_seconds: int = 300
+
     model_config = SettingsConfigDict(
         env_file=".env.nmaiex", env_file_encoding="utf-8", extra="ignore"
     )

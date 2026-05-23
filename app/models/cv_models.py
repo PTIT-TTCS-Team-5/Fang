@@ -75,6 +75,25 @@ class LanguageEntry(CVBaseModel):
     )
 
 
+class ParserSelfReport(CVBaseModel):
+    """Optional model-reported confidence metadata for parser quality review."""
+
+    confidence: float | None = Field(
+        None,
+        ge=0,
+        le=1,
+        description="Model self-reported confidence in [0, 1].",
+    )
+    issues: list[str] = Field(
+        default_factory=list,
+        description="Short quality or uncertainty issues reported by the parser model.",
+    )
+    uncertainFields: list[str] = Field(
+        default_factory=list,
+        description="Field names the parser model considers uncertain.",
+    )
+
+
 class ParsedCV(CVBaseModel):
     """The root model representing the entire parsed content of a CV."""
 
@@ -115,4 +134,8 @@ class ParsedCV(CVBaseModel):
     expectedSalaryMax: int | None = Field(
         None,
         description="Expected maximum salary (VND). None if not stated in CV.",
+    )
+    parserSelfReport: ParserSelfReport | None = Field(
+        None,
+        description="Optional parser self-report used as an extra quality signal.",
     )

@@ -1,8 +1,5 @@
-import datetime
-
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 
-from app.core.database import acquire_conn
 from app.core.logging import logger
 from app.models.cv_models import ParsedCV
 from app.models.ingestion import (
@@ -18,7 +15,9 @@ from app.services.markdown_builder import (
     convert_json_to_markdown,
     extract_global_metadata,
 )
-from app.services.nmaiex_mapper_service import embed_and_store_raw_skills, map_skills
+from app.services.nmaiex_candidate_enrichment import (
+    enqueue_and_run_candidate_enrichment,
+)
 from app.services.persistence import (
     create_index_job,
     get_index_job_status,
@@ -57,9 +56,8 @@ def _build_chunk_metadata(
 
 
 async def process_ingestion_task(index_job_id: int, request: IngestionJobRequest):
-    """
-    Background task to orchestrate the ingestion pipeline.
-    """
+    """Background task to orchestrate the primary CV ingestion pipeline."""
+
     logger.info(
         f"Starting background ingestion for indexJobId={index_job_id}, jobAppId={request.jobAppId}"
     )
@@ -110,90 +108,15 @@ async def process_ingestion_task(index_job_id: int, request: IngestionJobRequest
             replace_existing=True,
         )
 
-        # Update candidate's structured expyears, skills (matched and unmatched) in DB
         try:
-            # Calculate experience years from parsed CV experience entries
-            total_months = 0
-            for exp in parsed_cv.experience:
-                if not exp.startDate:
-                    continue
-                try:
-                    start_year, start_month = map(int, exp.startDate.split("-"))
-                    start_date = datetime.date(start_year, start_month, 1)
-
-                    if not exp.endDate or exp.endDate == "present":
-                        end_date = datetime.date.today()
-                    else:
-                        end_year, end_month = map(int, exp.endDate.split("-"))
-                        end_date = datetime.date(end_year, end_month, 1)
-
-                    months = (end_date.year - start_date.year) * 12 + (
-                        end_date.month - start_date.month
-                    )
-                    if months > 0:
-                        total_months += months
-                except Exception:
-                    continue
-            computed_exp_years = max(
-                0, total_months // 12
-            )  # 0 is valid for Fresher/Intern
-
-            async with acquire_conn() as conn:
-                # Find candidateId
-                cand_row = await conn.fetchrow(
-                    "SELECT candidateId FROM JOBAPPLICATION WHERE jobAppId = $1",
-                    request.jobAppId,
-                )
-                if cand_row:
-                    cand_id = cand_row["candidateid"]
-
-                    # 1. Update expyears in CANDIDATE table
-                    await conn.execute(
-                        "UPDATE CANDIDATE SET expyears = $1 WHERE userId = $2",
-                        computed_exp_years,
-                        cand_id,
-                    )
-                    logger.info(
-                        f"[INGESTION] Calculated and updated expyears={computed_exp_years} for candidate_id={cand_id}"
-                    )
-
-                    # 2. Extract CV skills and map them
-                    if parsed_cv.skills:
-                        mapping_result = await map_skills(parsed_cv.skills)
-
-                        # Clear and insert into CANDIDATESKILL (Tầng 1)
-                        await conn.execute(
-                            "DELETE FROM CANDIDATESKILL WHERE userId = $1", cand_id
-                        )
-                        for skill_id in mapping_result.matched_ids:
-                            await conn.execute(
-                                """
-                                INSERT INTO CANDIDATESKILL (userId, skillId)
-                                VALUES ($1, $2)
-                                ON CONFLICT DO NOTHING
-                                """,
-                                cand_id,
-                                skill_id,
-                            )
-
-                        # Clear and insert into CANDIDATE_SKILL_RAW (Tầng 2)
-                        await conn.execute(
-                            "DELETE FROM CANDIDATE_SKILL_RAW WHERE candId = $1", cand_id
-                        )
-                        if mapping_result.unmatched_texts:
-                            await embed_and_store_raw_skills(
-                                entity_type="candidate",
-                                entity_id=cand_id,
-                                unmatched_texts=mapping_result.unmatched_texts,
-                                conn=conn,
-                            )
-                        logger.info(
-                            f"[INGESTION] Successfully mapped and updated candidate skills in DB "
-                            f"(matched: {len(mapping_result.matched_ids)}, unmatched: {len(mapping_result.unmatched_texts)})"
-                        )
+            await enqueue_and_run_candidate_enrichment(
+                index_job_id=index_job_id,
+                job_app_id=request.jobAppId,
+                cv_parsed_id=cv_parsed_id,
+            )
         except Exception as exp_err:
             logger.error(
-                f"[INGESTION] Failed to update candidate expyears/skills: {exp_err}",
+                f"[INGESTION] NMAIex candidate enrichment failed: {exp_err}",
                 exc_info=True,
             )
 

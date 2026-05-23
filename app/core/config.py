@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     parser_retry_max_seconds: float = 8.0
     parser_quality_min_rawtext_length: int = 120
     parser_quality_min_section_signals: int = 1
+    parser_quality_min_self_confidence: float = 0.55
 
     # --- RAG Query (v2) ---
     rag_top_k_chunks: int = 3

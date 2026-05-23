@@ -1,6 +1,6 @@
 import unittest
 
-from app.models.cv_models import CandidateInfo, Experience, ParsedCV
+from app.models.cv_models import CandidateInfo, Experience, ParsedCV, ParserSelfReport
 from app.services.cv_parser import (
     CVParserOrchestrator,
     ParserPolicyConfig,
@@ -35,6 +35,7 @@ def build_policy(*, retry_enabled: bool, sleep_recorder):
         retry_max_seconds=0,
         min_rawtext_length=40,
         min_section_signals=1,
+        min_self_confidence=0.55,
         sleep=sleep_recorder,
     )
 
@@ -63,6 +64,16 @@ def build_good_cv(parser_ver: str | None = None) -> ParsedCV:
         rawText="Nguyen Van A Backend Engineer Python FastAPI miCareer parser workflow",
         parserVer=parser_ver,
     )
+
+
+def build_good_cv_with_self_report(confidence: float) -> ParsedCV:
+    cv = build_good_cv()
+    cv.parserSelfReport = ParserSelfReport(
+        confidence=confidence,
+        issues=[],
+        uncertainFields=[],
+    )
+    return cv
 
 
 def build_low_quality_cv() -> ParsedCV:
@@ -188,6 +199,75 @@ class ParserPolicyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(parsed_json["parserVer"], "mock-two:tier2-model")
         self.assertEqual(tier1_provider.call_count, 1)
         self.assertEqual(sleep_calls, [])
+
+    async def test_low_self_confidence_falls_back(self):
+        async def fake_sleep(seconds: float):
+            return None
+
+        tier1_provider = MockProvider("mock-one", [build_good_cv_with_self_report(0.2)])
+        tier2_provider = MockProvider("mock-two", [build_good_cv_with_self_report(0.9)])
+
+        orchestrator = CVParserOrchestrator(
+            tiers=[
+                ParserTier(1, "tier1-model", tier1_provider),
+                ParserTier(2, "tier2-model", tier2_provider),
+            ],
+            policy=build_policy(retry_enabled=True, sleep_recorder=fake_sleep),
+        )
+
+        _, parsed_json = await orchestrator.parse(b"pdf-bytes")
+        parser_trace = get_last_parse_trace()
+
+        self.assertEqual(parsed_json["parserVer"], "mock-two:tier2-model")
+        self.assertIsNotNone(parser_trace)
+        self.assertIn(
+            "parser_self_confidence_below_threshold",
+            parser_trace["attempts"][0]["quality_reasons"],
+        )
+        self.assertEqual(parser_trace["attempts"][0]["parser_confidence"], 0.2)
+
+    async def test_missing_self_report_does_not_fail_quality_gate(self):
+        async def fake_sleep(seconds: float):
+            return None
+
+        tier1_provider = MockProvider("mock-one", [build_good_cv()])
+        orchestrator = CVParserOrchestrator(
+            tiers=[ParserTier(1, "tier1-model", tier1_provider)],
+            policy=build_policy(retry_enabled=True, sleep_recorder=fake_sleep),
+        )
+
+        _, parsed_json = await orchestrator.parse(b"pdf-bytes")
+
+        self.assertEqual(parsed_json["parserVer"], "mock-one:tier1-model")
+
+    async def test_high_self_confidence_does_not_override_deterministic_failure(self):
+        async def fake_sleep(seconds: float):
+            return None
+
+        low_quality = build_low_quality_cv()
+        low_quality.parserSelfReport = ParserSelfReport(
+            confidence=0.99,
+            issues=[],
+            uncertainFields=[],
+        )
+        tier1_provider = MockProvider("mock-one", [low_quality])
+        tier2_provider = MockProvider("mock-two", [build_good_cv_with_self_report(0.9)])
+        orchestrator = CVParserOrchestrator(
+            tiers=[
+                ParserTier(1, "tier1-model", tier1_provider),
+                ParserTier(2, "tier2-model", tier2_provider),
+            ],
+            policy=build_policy(retry_enabled=True, sleep_recorder=fake_sleep),
+        )
+
+        _, parsed_json = await orchestrator.parse(b"pdf-bytes")
+        parser_trace = get_last_parse_trace()
+
+        self.assertEqual(parsed_json["parserVer"], "mock-two:tier2-model")
+        self.assertIn(
+            "raw_text_below_min_length",
+            parser_trace["attempts"][0]["quality_reasons"],
+        )
 
 
 if __name__ == "__main__":
