@@ -4,12 +4,10 @@ import json
 
 from app.models.cv_models import ParsedCV
 from synthetic_data.models import SyntheticJob
-
-# ============================================================
-# JSON Schema helpers
-# ============================================================
+from synthetic_data.personas import SKILL_CATALOG
 
 
+# Helper functions to get JSON schemas
 def _cv_schema_str() -> str:
     """Lấy JSON Schema của ParsedCV để embed vào prompt."""
     return json.dumps(ParsedCV.model_json_schema(), ensure_ascii=False, indent=2)
@@ -19,6 +17,12 @@ def _job_schema_str() -> str:
     """Lấy JSON Schema của SyntheticJob để embed vào prompt."""
     return json.dumps(SyntheticJob.model_json_schema(), ensure_ascii=False, indent=2)
 
+
+# Flatten and extract all standard catalog skills
+all_catalog = []
+for skills in SKILL_CATALOG.values():
+    all_catalog.extend(skills)
+UNIQUE_CATALOG_SKILLS = sorted(list(set(all_catalog)))
 
 # ============================================================
 # CV Batch Prompt
@@ -35,16 +39,22 @@ OUTPUT FORMAT (bắt buộc):
 JSON Schema cho mỗi ParsedCV:
 {cv_schema}
 
-QUY TẮC BẮT BUỘC:
+QUY TẮC VỀ KỸ NĂNG (BẮT BUỘC):
+Danh mục kỹ năng chuẩn của hệ thống tuyển dụng:
+{catalog_skills_list}
+
+1. Đối với mỗi CV spec có chỉ thị "allow_out_of_catalog: TRUE": Bạn PHẢI sinh từ 1 đến vài kỹ năng thô, chuyên sâu và mang tính thực tế cao nằm NGOÀI danh mục chuẩn bên trên (nhưng phải cực kỳ tương thích và bổ trợ chặt chẽ cho phần mô tả kinh nghiệm/tự giới thiệu của ứng viên, ví dụ: thay vì ghi "ReactJS" trong catalog thì ghi "React compound components pattern", "asynchronous state management with Redux", hoặc thay vì "Git" thì ghi "Git Gitflow Workflow"). Ít nhất 60% kỹ năng còn lại phải lấy từ skill_pool được cấp.
+2. Đối với mỗi CV spec có chỉ thị "allow_out_of_catalog: FALSE": Toàn bộ kỹ năng của ứng viên trong CV BẮT BUỘC chỉ được lấy chính xác từ danh sách skill_pool được cấp, tuyệt đối không được sinh bất kỳ kỹ năng nào ngoài danh mục chuẩn.
+
+QUY TẮC BẮT BUỘC KHÁC:
 1. Tên ứng viên (fullName trong candidateInfo) PHẢI DÙNG CHÍNH XÁC tên đã cho trong manifest
-2. Skills PHẢI lấy từ skill_pool đã chỉ định (không tự bịa skill ngoài danh sách)
-3. exp_years quyết định số năm kinh nghiệm — timeline PHẢI hợp lý (endDate - startDate khớp exp_years)
-4. rawText: 200-800 từ, viết tự nhiên như CV thật, ngôn ngữ Tiếng Việt
-5. expectedSalaryMin/Max: theo salary_range đã cho (hoặc null nếu persona là intern/fresher không đề cập lương)
-6. Date format: "YYYY-MM" hoặc "present" — KHÔNG được dùng format khác
-7. Nếu persona có noise_level > 0, một số CV có thể có: lỗi chính tả nhỏ trong rawText, thiếu 1-2 field phụ, hoặc skill ngoài pool (nhưng ít nhất 60% skill phải từ skill_pool)
-8. KHÔNG thêm field ngoài schema, KHÔNG bỏ field bắt buộc (rawText là bắt buộc)
-9. Output phải là valid JSON — không có trailing comma, không có comment"""
+2. exp_years quyết định số năm kinh nghiệm — timeline PHẢI hợp lý (endDate - startDate khớp exp_years)
+3. rawText: 200-800 từ, viết tự nhiên như CV thật, ngôn ngữ Tiếng Việt
+4. expectedSalaryMin/Max: theo salary_range đã cho (hoặc null nếu persona là intern/fresher không đề cập lương)
+5. Date format: "YYYY-MM" hoặc "present" — KHÔNG được dùng format khác
+6. Nếu persona có noise_level > 0, một số CV có thể có: lỗi chính tả nhỏ trong rawText, thiếu 1-2 field phụ (nhưng ít nhất 60% skill phải từ skill_pool)
+7. KHÔNG thêm field ngoài schema, KHÔNG bỏ field bắt buộc (rawText là bắt buộc)
+8. Output phải là valid JSON — không có trailing comma, không có comment"""
 
 
 def build_cv_batch_prompt(manifest_batch: list[dict]) -> tuple[str, str]:
@@ -56,6 +66,7 @@ def build_cv_batch_prompt(manifest_batch: list[dict]) -> tuple[str, str]:
     system = CV_SYSTEM_PROMPT.format(
         batch_size=batch_size,
         cv_schema=_cv_schema_str(),
+        catalog_skills_list=", ".join(UNIQUE_CATALOG_SKILLS),
     )
 
     # Build per-CV spec
@@ -67,11 +78,13 @@ def build_cv_batch_prompt(manifest_batch: list[dict]) -> tuple[str, str]:
             if sal
             else "null (không đề cập trong CV)"
         )
+        allow_out = "TRUE" if entry["cv_index"] % 15 == 0 else "FALSE"
         specs.append(
             f"CV #{i+1} (index={entry['cv_index']}):\n"
             f"  - fullName: {entry['full_name']}\n"
             f"  - persona: {entry['persona']} (exp={entry['exp_years']} năm)\n"
             f"  - skill_pool: {', '.join(entry['skill_pool'])}\n"
+            f"  - allow_out_of_catalog: {allow_out}\n"
             f"  - expected_salary: {sal_str}\n"
             f"  - province: {entry['province']}"
         )

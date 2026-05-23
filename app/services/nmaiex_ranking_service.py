@@ -100,25 +100,24 @@ def compute_salary_adjustment(
     lower_tolerance = expected_salary * nmaiex_settings.nmaiex_salary_tolerance_lower
     upper_target = expected_salary * nmaiex_settings.nmaiex_salary_tolerance_upper
 
-    # 0.20 là base weight (room còn lại của w_rrf + w_title + w_skill)
-    # Vì total weights hiện tại = 0.35 + 0.15 + 0.30 = 0.80
-    base_weight = 0.20
+    # Loại bỏ base_weight gán cứng để trả về raw ratio sạch
+    scale_factor = 1.0
 
     if mid_salary < lower_tolerance * 0.8:
         # Very low
         gap_ratio = (lower_tolerance * 0.8 - mid_salary) / expected_salary
-        return -base_weight * min(gap_ratio, 1.0)
+        return -scale_factor * min(gap_ratio, 1.0)
     elif mid_salary < lower_tolerance:
         # Low
         gap_ratio = (lower_tolerance - mid_salary) / expected_salary
-        return -base_weight * 0.5 * gap_ratio
+        return -scale_factor * 0.5 * gap_ratio
     elif mid_salary < upper_target:
         # Acceptable (Neutral)
         return 0.0
     else:
         # High (Bonus)
         bonus_ratio = (mid_salary - upper_target) / expected_salary
-        bonus = base_weight * 0.2 * bonus_ratio
+        bonus = scale_factor * 0.2 * bonus_ratio
         return min(bonus, nmaiex_settings.nmaiex_salary_bonus_cap)
 
 
@@ -440,7 +439,7 @@ async def rank_candidates_for_job(
         rrf_k = nmaiex_settings.nmaiex_rrf_k
         w_rrf = nmaiex_settings.nmaiex_jc_weight_rrf
         w_skill = nmaiex_settings.nmaiex_jc_weight_skill
-        alpha = nmaiex_settings.nmaiex_skill_alpha
+        alpha = nmaiex_settings.nmaiex_skill_alpha_jc
 
         vec_sorted = sorted(
             candidates,
@@ -684,7 +683,8 @@ async def rank_jobs_for_candidate(
         w_rrf = nmaiex_settings.nmaiex_cj_weight_rrf
         w_title = nmaiex_settings.nmaiex_cj_weight_title
         w_skill = nmaiex_settings.nmaiex_cj_weight_skill
-        alpha = nmaiex_settings.nmaiex_skill_alpha
+        w_salary = nmaiex_settings.nmaiex_cj_weight_salary
+        alpha = nmaiex_settings.nmaiex_skill_alpha_cj
 
         text_sorted = sorted(
             jobs,
@@ -737,7 +737,7 @@ async def rank_jobs_for_candidate(
                 w_rrf * rrf_score_norm
                 + w_title * title_score
                 + w_skill * skill_score
-                + salary_adjustment
+                + w_salary * salary_adjustment
                 - lang_penalty
                 + lang_bonus
             )

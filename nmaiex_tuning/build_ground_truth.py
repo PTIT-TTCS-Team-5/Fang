@@ -38,7 +38,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("build_ground_truth")
 
-from app.core.database import acquire_conn, db
+from app.core.database import acquire_conn, db  # noqa: E402
 
 # Caching Configuration
 OUTPUT_DIR = Path(__file__).parent / "output"
@@ -214,8 +214,8 @@ async def build_matrix():
         logger.info(f"Loaded {len(candidates)} candidates.")
 
     # 4. Generate pairs to rate
-    # To build a highly reliable validation matrix, for each Job we select 100 random Candidates.
-    # Total: 20 jobs * 100 candidates = 2,000 pairs.
+    # To build a highly reliable validation matrix, for each Job we select 150 random Candidates.
+    # Total: 20 jobs * 150 candidates = 3,000 pairs.
     jobs_list = [dict(j) for j in jobs]
     candidates_list = []
     for c in candidates:
@@ -239,8 +239,8 @@ async def build_matrix():
     for job in jobs_list:
         job_id = job["jobpostid"]
 
-        # Sample 100 candidates per job
-        sampled_cands = random.sample(candidates_list, min(100, len(candidates_list)))
+        # Sample 150 candidates per job
+        sampled_cands = random.sample(candidates_list, min(150, len(candidates_list)))
 
         # Split into batches of 10
         for i in range(0, len(sampled_cands), BATCH_SIZE):

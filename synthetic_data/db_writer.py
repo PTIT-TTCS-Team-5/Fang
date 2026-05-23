@@ -242,6 +242,45 @@ async def write_candidate_cv(
             replace_existing=True,
         )
 
+        # --- 6. Persist Candidate Skills (Tier 1 & Tier 2) ---
+        skills = parsed_cv.skills or []
+        if skills:
+            skill_id_map = await fetch_skill_id_map()
+            matched_ids = []
+            unmatched_texts = []
+            for skill_name in skills:
+                clean_name = skill_name.strip().lower()
+                if clean_name in skill_id_map:
+                    matched_ids.append(skill_id_map[clean_name])
+                else:
+                    unmatched_texts.append(skill_name.strip())
+
+            async with acquire_conn() as conn:
+                await conn.execute(
+                    "DELETE FROM CANDIDATESKILL WHERE userId = $1", user_id
+                )
+                for skill_id in matched_ids:
+                    await conn.execute(
+                        """
+                        INSERT INTO CANDIDATESKILL (userId, skillId)
+                        VALUES ($1, $2)
+                        ON CONFLICT DO NOTHING
+                        """,
+                        user_id,
+                        skill_id,
+                    )
+
+                await conn.execute(
+                    "DELETE FROM CANDIDATE_SKILL_RAW WHERE candId = $1", user_id
+                )
+                if unmatched_texts:
+                    await embed_and_store_raw_skills(
+                        entity_type="candidate",
+                        entity_id=user_id,
+                        unmatched_texts=unmatched_texts,
+                        conn=conn,
+                    )
+
         logger.info(f"CV written: jobAppId={job_app_id}, persona={entry['persona']}")
         return job_app_id
 
@@ -268,7 +307,7 @@ async def write_job_posting(
     try:
         async with acquire_conn() as conn:
             # --- 1. Get HR user for this company ---
-            hr_row = await conn.fetchrow(
+            _hr_row = await conn.fetchrow(
                 'SELECT u.userId FROM "user" u '
                 "JOIN HR h ON h.userId = u.userId "
                 "WHERE h.compId = $1 LIMIT 1",

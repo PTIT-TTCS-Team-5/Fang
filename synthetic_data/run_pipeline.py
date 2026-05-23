@@ -156,8 +156,9 @@ async def cmd_generate_cvs(args) -> None:
 
 
 async def cmd_write_cvs(args) -> None:
-    """Load cached CVs and persist to DB."""
-    logger.info("=== WRITE CVS TO DB ===")
+    """Load cached CVs and persist to DB. Supports --start-index to skip already-written batches."""
+    start_index: int = getattr(args, "start_index", 0)
+    logger.info(f"=== WRITE CVS TO DB (start_index={start_index}) ===")
     await db.connect()
 
     try:
@@ -170,10 +171,16 @@ async def cmd_write_cvs(args) -> None:
         manifest = generate_manifest(args.total, args.seed)
 
         # Load from cache
-        written, failed = 0, 0
+        written, failed, skipped = 0, 0, 0
         for i in range(0, len(manifest), CV_BATCH_SIZE):
             batch = manifest[i : i + CV_BATCH_SIZE]
             batch_id = batch[0]["batch_id"]
+
+            # Skip batches with all cv_index < start_index (already in DB)
+            if all(entry["cv_index"] < start_index for entry in batch):
+                skipped += len(batch)
+                continue
+
             cache_path = CV_OUTPUT_DIR / f"{batch_id}.json"
 
             if not cache_path.exists():
@@ -185,13 +192,19 @@ async def cmd_write_cvs(args) -> None:
             cvs = [ParsedCV.model_validate(d) for d in data]
 
             for entry, cv in zip(batch, cvs):
+                # Double-check: skip individual entries below start_index
+                if entry["cv_index"] < start_index:
+                    skipped += 1
+                    continue
                 job_app_id = await write_candidate_cv(entry, cv)
                 if job_app_id:
                     written += 1
                 else:
                     failed += 1
 
-        logger.info(f"=== WRITE CVS DONE: written={written}, failed={failed} ===")
+        logger.info(
+            f"=== WRITE CVS DONE: written={written}, skipped={skipped}, failed={failed} ==="
+        )
     finally:
         await db.disconnect()
 
@@ -315,6 +328,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_write_cv = subparsers.add_parser("write-cvs", help="Write cached CVs to DB")
     p_write_cv.add_argument("--total", type=int, default=500)
     p_write_cv.add_argument("--seed", type=int, default=42)
+    p_write_cv.add_argument(
+        "--start-index",
+        type=int,
+        default=0,
+        dest="start_index",
+        help="Skip CVs with cv_index < start_index (default: 0, write all). "
+        "Use --start-index 500 to only write the 500 new CVs (index 500-999).",
+    )
     p_write_cv.set_defaults(func=cmd_write_cvs)
 
     # generate-jobs

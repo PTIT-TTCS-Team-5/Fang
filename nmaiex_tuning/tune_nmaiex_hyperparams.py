@@ -673,6 +673,7 @@ def compute_ndcg_at_k(
     w_rrf: float,
     w_title: float,
     w_skill: float,
+    w_salary: float,
     alpha: float,
     lang_req_pen: float,
     lang_lvl_pen: float,
@@ -709,7 +710,7 @@ def compute_ndcg_at_k(
             w_rrf * rrf_score_norm
             + w_title * title_score
             + w_skill * skill_score
-            + p.salary_adjustment
+            + w_salary * p.salary_adjustment
             - lang_penalty
             + lang_bonus
         )
@@ -772,7 +773,7 @@ def jc_objective_proc(trial: optuna.Trial) -> float:
     """Process-safe objective function for Phase 1 J->C matching."""
     w_rrf = trial.suggest_float("jc_w_rrf", 0.10, 0.60)
     w_skill = trial.suggest_float("jc_w_skill", 0.20, 0.70)
-    alpha = trial.suggest_float("skill_alpha", 0.40, 1.00)
+    alpha_jc = trial.suggest_float("skill_alpha_jc", 0.40, 1.00)
     coef = trial.suggest_float("jc_sen_coef", 0.05, 0.60)
     overq_ratio = trial.suggest_float("sen_overq_ratio", 0.10, 1.00)
 
@@ -780,7 +781,7 @@ def jc_objective_proc(trial: optuna.Trial) -> float:
         pairs=GLOBAL_JC_PAIRS,
         w_rrf=w_rrf,
         w_skill=w_skill,
-        alpha=alpha,
+        alpha=alpha_jc,
         coef=coef,
         overq_ratio=overq_ratio,
         enable_clip=GLOBAL_ENABLE_CLIP,
@@ -793,6 +794,8 @@ def cj_objective_proc(trial: optuna.Trial) -> float:
     w_rrf = trial.suggest_float("cj_w_rrf", 0.10, 0.60)
     w_title = trial.suggest_float("cj_w_title", 0.05, 0.40)
     w_skill = trial.suggest_float("cj_w_skill", 0.10, 0.60)
+    w_salary = trial.suggest_float("cj_w_salary", 0.0, 0.50)
+    alpha_cj = trial.suggest_float("skill_alpha_cj", 0.40, 1.00)
 
     lang_req_pen = trial.suggest_float("lang_req_pen", 0.05, 0.50)
     lang_lvl_pen = trial.suggest_float("lang_lvl_pen", 0.02, 0.30)
@@ -804,7 +807,8 @@ def cj_objective_proc(trial: optuna.Trial) -> float:
         w_rrf=w_rrf,
         w_title=w_title,
         w_skill=w_skill,
-        alpha=GLOBAL_LOCKED_ALPHA,
+        w_salary=w_salary,
+        alpha=alpha_cj,
         lang_req_pen=lang_req_pen,
         lang_lvl_pen=lang_lvl_pen,
         lang_pref_bon=lang_pref_bon,
@@ -853,12 +857,14 @@ def update_env_file(best_params: Dict[str, float]):
     env_keys_mapping = {
         "jc_w_rrf": "NMAIEX_JC_WEIGHT_RRF",
         "jc_w_skill": "NMAIEX_JC_WEIGHT_SKILL",
-        "skill_alpha": "NMAIEX_SKILL_ALPHA",
+        "skill_alpha_jc": "NMAIEX_SKILL_ALPHA_JC",
         "jc_sen_coef": "NMAIEX_JC_PENALTY_SENIORITY_COEF",
         "sen_overq_ratio": "NMAIEX_SENIORITY_OVERQUALIFIED_PENALTY_RATIO",
         "cj_w_rrf": "NMAIEX_CJ_WEIGHT_RRF",
         "cj_w_title": "NMAIEX_CJ_WEIGHT_TITLE",
         "cj_w_skill": "NMAIEX_CJ_WEIGHT_SKILL",
+        "cj_w_salary": "NMAIEX_CJ_WEIGHT_SALARY",
+        "skill_alpha_cj": "NMAIEX_SKILL_ALPHA_CJ",
         "lang_req_pen": "NMAIEX_LANG_REQUIRED_PENALTY",
         "lang_lvl_pen": "NMAIEX_LANG_LEVEL_PENALTY",
         "lang_pref_bon": "NMAIEX_LANG_PREFERRED_BONUS",
@@ -972,12 +978,14 @@ async def main():
     baseline_params = {
         "jc_w_rrf": 0.30,
         "jc_w_skill": 0.40,
-        "skill_alpha": 0.80,
+        "skill_alpha_jc": 0.80,
         "jc_sen_coef": 0.25,
         "sen_overq_ratio": 0.50,
         "cj_w_rrf": 0.35,
         "cj_w_title": 0.15,
         "cj_w_skill": 0.30,
+        "cj_w_salary": 0.20,
+        "skill_alpha_cj": 0.80,
         "lang_req_pen": 0.25,
         "lang_lvl_pen": 0.10,
         "lang_pref_bon": 0.08,
@@ -992,7 +1000,7 @@ async def main():
         pairs=jc_pairs,
         w_rrf=baseline_params["jc_w_rrf"],
         w_skill=baseline_params["jc_w_skill"],
-        alpha=baseline_params["skill_alpha"],
+        alpha=baseline_params["skill_alpha_jc"],
         coef=baseline_params["jc_sen_coef"],
         overq_ratio=baseline_params["sen_overq_ratio"],
         enable_clip=enable_clip,
@@ -1002,7 +1010,8 @@ async def main():
         w_rrf=baseline_params["cj_w_rrf"],
         w_title=baseline_params["cj_w_title"],
         w_skill=baseline_params["cj_w_skill"],
-        alpha=baseline_params["skill_alpha"],
+        w_salary=baseline_params["cj_w_salary"],
+        alpha=baseline_params["skill_alpha_cj"],
         lang_req_pen=baseline_params["lang_req_pen"],
         lang_lvl_pen=baseline_params["lang_lvl_pen"],
         lang_pref_bon=baseline_params["lang_pref_bon"],
@@ -1064,7 +1073,12 @@ async def main():
         with ProcessPoolExecutor(
             max_workers=num_workers,
             initializer=init_globals,
-            initargs=(jc_pairs, cj_pairs, baseline_params["skill_alpha"], enable_clip),
+            initargs=(
+                jc_pairs,
+                cj_pairs,
+                baseline_params["skill_alpha_jc"],
+                enable_clip,
+            ),
         ) as executor:
             futures = [
                 executor.submit(
@@ -1098,8 +1112,8 @@ async def main():
     for k, v in study_jc.best_params.items():
         logger.info(f"  {k}: {v:.4f}")
 
-    locked_alpha = study_jc.best_params["skill_alpha"]
-    logger.info(f"LOCKED nmaiex_skill_alpha for Phase 2 = {locked_alpha:.4f}")
+    locked_alpha = study_jc.best_params["skill_alpha_jc"]
+    logger.info(f"LOCKED nmaiex_skill_alpha_jc for Phase 2 = {locked_alpha:.4f}")
 
     # --- IMMEDIATE SAVE: Persist Phase 1 optimal parameters to .env.nmaiex ---
     logger.info("=== SAVING PHASE 1 OPTIMAL PARAMETERS TO .ENV ===")
@@ -1175,7 +1189,6 @@ async def main():
     best_params = {}
     best_params.update(study_jc.best_params)
     best_params.update(study_cj.best_params)
-    best_params["skill_alpha"] = locked_alpha
 
     # ============================================================
     # Final Summary
@@ -1203,12 +1216,14 @@ async def main():
     for param_name, env_key in {
         "jc_w_rrf": "NMAIEX_JC_WEIGHT_RRF",
         "jc_w_skill": "NMAIEX_JC_WEIGHT_SKILL",
-        "skill_alpha": "NMAIEX_SKILL_ALPHA",
+        "skill_alpha_jc": "NMAIEX_SKILL_ALPHA_JC",
         "jc_sen_coef": "NMAIEX_JC_PENALTY_SENIORITY_COEF",
         "sen_overq_ratio": "NMAIEX_SENIORITY_OVERQUALIFIED_PENALTY_RATIO",
         "cj_w_rrf": "NMAIEX_CJ_WEIGHT_RRF",
         "cj_w_title": "NMAIEX_CJ_WEIGHT_TITLE",
         "cj_w_skill": "NMAIEX_CJ_WEIGHT_SKILL",
+        "cj_w_salary": "NMAIEX_CJ_WEIGHT_SALARY",
+        "skill_alpha_cj": "NMAIEX_SKILL_ALPHA_CJ",
         "lang_req_pen": "NMAIEX_LANG_REQUIRED_PENALTY",
         "lang_lvl_pen": "NMAIEX_LANG_LEVEL_PENALTY",
         "lang_pref_bon": "NMAIEX_LANG_PREFERRED_BONUS",

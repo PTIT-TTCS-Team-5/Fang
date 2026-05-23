@@ -19,7 +19,7 @@ class NMAIexSettings(BaseSettings):
     nmaiex_cj_weight_rrf: float = 0.35
     nmaiex_cj_weight_title: float = 0.15  # title match (recent job titles vs job.title)
     nmaiex_cj_weight_skill: float = 0.30  # [Phase 2.5a] riêng CJ, thấp hơn JC (0.40)
-    # Room 0.20 còn lại = salary_adjustment (âm=penalty, dương=bonus); clip(0,1) bảo vệ
+    nmaiex_cj_weight_salary: float = 0.20  # [Phase 2.0] Trọng số hiệu chỉnh lương động
 
     # ----------------------------------------------------------------
     # RRF
@@ -34,7 +34,9 @@ class NMAIexSettings(BaseSettings):
     nmaiex_skill_embedding_dims: int = (
         256  # 256 đủ cho text ngắn, rẻ hơn 4x so với 1024
     )
-    nmaiex_skill_alpha: float = 0.8  # exact_overlap weight; (1-alpha) = fuzzy
+    nmaiex_skill_alpha: float = 0.8  # Trọng số fallback
+    nmaiex_skill_alpha_jc: float = 0.8  # Alpha riêng cho luồng J->C
+    nmaiex_skill_alpha_cj: float = 0.8  # Alpha riêng cho luồng C->J
 
     # ----------------------------------------------------------------
     # Seniority Penalty — Asymmetric Buffer-based (Phase 2.5b)
