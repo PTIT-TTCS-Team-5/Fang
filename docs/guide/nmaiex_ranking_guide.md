@@ -44,7 +44,7 @@ Khi một request đến `GET /v2/nmaiex/ranking/candidates/{job_id}`:
 8. **RRF Fusion**: Kết hợp `vector_rank` và `text_rank` → `rrf_score_norm`.
 9. **Tiered Skill Scoring**: Tính `skill_score` từ exact overlap + fuzzy cosine (xem Mục 4).
 10. **Seniority Penalty**: Tính penalty asymmetric dựa vào `c.expyears` so với `[job_min, job_max]`.
-11. **Late Fusion**: `final_score = clip(w_rrf × rrf + w_skill × skill − seniority_penalty, 0, 1)`
+11. **Late Fusion**: `final_score = w_rrf × rrf + w_skill × skill − seniority_penalty` (raw score, không clip mặc định)
 12. **Sort & Return**: Sắp xếp giảm dần `final_score`, cắt theo `limit`, đính kèm `score_breakdown`.
 
 ---
@@ -65,8 +65,8 @@ Khi một request đến `GET /v2/nmaiex/ranking/jobs/{candidate_id}`:
 
 8. **Tiered Skill Scoring**: Tương tự J→C nhưng chiều ngược.
 9. **Salary Adjustment**: `compute_salary_adjustment(job.minSalary, job.maxSalary, expected_salary)` — âm nếu job trả thấp hơn kỳ vọng, dương nếu cao hơn (cap 0.2).
-10. **Language Scoring**: `compute_language_score(job_post_id, cand_languages, conn)` — query `JOB_LANG_REQUIREMENT`, so sánh với proficiency chuẩn hóa của ứng viên.
-11. **Late Fusion**: `final_score = clip(w_rrf×rrf + w_title×title + w_skill×skill + salary_adj − lang_penalty + lang_bonus, 0, 1)`
+10. **Language Scoring**: `compute_language_score(job_post_id, cand_languages, conn)` — query `JOB_LANG_REQUIREMENT` (Đã có DB/Scoring), so sánh với proficiency của ứng viên (Lưu ý: hiện tại code thực tế đang so khớp trực tiếp trong dictionary, chưa gọi LLM normalize_proficiency).
+11. **Late Fusion**: `final_score = w_rrf×rrf + w_title×title + w_skill×skill + salary_adj − lang_penalty + lang_bonus` (raw score, không clip mặc định)
 12. **Sort & Return**: Tương tự J→C.
 
 ---
@@ -121,6 +121,17 @@ skill_score = α × exact_overlap + (1 − α) × fuzzy_overlap
 - **Graceful degradation**: Nếu LLM trả output không hợp lệ → toàn bộ skills chuyển sang `unmatched_texts`, tính tiếp Tầng 2. Không bao giờ crash pipeline.
 
 ### Language Proficiency Normalizer — `normalize_proficiency(raw)`
+> [!WARNING]
+> **Active Discrepancy / Gap:** Hàm `normalize_proficiency()` đã được triển khai dưới dạng helper utility sử dụng LLM auto-lite trong `app/services/nmaiex_mapper_service.py`. Tuy nhiên, trong runtime pipeline hiện tại của Ranking Service (`app/services/nmaiex_ranking_service.py`), hàm này **CHƯA ĐƯỢC GỌI**.
+>
+> Code thực tế thực hiện so khớp trực tiếp bằng dictionary tra cứu:
+> ```python
+> prof = cl.get("proficiency", "BASIC")
+> cand_lang_map[code] = PROFICIENCY_LEVELS.get(prof, 1)
+> ```
+> Do đó, các chuỗi trình độ thô từ CV không khớp chính xác các key chuẩn (`BASIC`, `INTERMEDIATE`, etc.) như `"N3"`, `"IELTS 7.5"` sẽ tự động bị fallback về mức `1` (`"BASIC"`). Đây là một gap đã được ghi nhận để xử lý trong Tier-1 tiếp theo (Phase 2.5 / P0-C).
+
+Dưới đây là thiết kế/quy tắc chuẩn hóa dự kiến khi tích hợp đầy đủ `normalize_proficiency(raw)`:
 - Fast path: Nếu đã là chuẩn (`BASIC|INTERMEDIATE|ADVANCED|FLUENT|NATIVE`) → return ngay, không gọi LLM.
 - LLM map các dạng như `"N3"`, `"IELTS 7.5"`, `"Business level"` → chuẩn hóa. Mapping tham khảo:
 
@@ -151,6 +162,7 @@ Các nhóm cấu hình chính:
 | **Seniority Buffer** | `NMAIEX_BUFFER_JUNIOR=3`, `NMAIEX_BUFFER_SENIOR=5` | Buffer năm cho từng career tier |
 | **Salary** | `NMAIEX_SALARY_BASE_HANOI=15_000_000`, `NMAIEX_SALARY_TOLERANCE_LOWER=0.8` | Baseline và neutral zone |
 | **Language** | `NMAIEX_LANG_REQUIRED_PENALTY=0.25`, `NMAIEX_LANG_PREFERRED_BONUS=0.08` | Penalty/bonus ngôn ngữ |
+| **Score Clip** | `NMAIEX_ENABLE_SCORE_CLIP=false` | Mặc định không clip để giữ khả năng xếp hạng các trường hợp quá thấp/quá cao; chỉ bật cho UI legacy cần score trong `[0, 1]` |
 
 > Thay đổi weights không cần redeploy code — chỉ cần update `.env.nmaiex` và restart server.
 
@@ -239,7 +251,22 @@ Năm endpoint phụ trợ phục vụ frontend dropdown — query thẳng từ D
 | `GET /v2/nmaiex/master/levels` | `JOBLEVEL` | Bao gồm `levelId`, `levelName`, `description` |
 | `GET /v2/nmaiex/master/categories` | `JOBCATEGORY` | Danh mục IT (17 mục) |
 | `GET /v2/nmaiex/master/skills` | `SKILL` | Catalog skill chuẩn cho LLM mapper |
-| `GET /v2/nmaiex/master/languages` | `LANGUAGE` | **Chưa triển khai** — bảng DB đã có, route chưa được tạo |
+| `GET /v2/nmaiex/master/languages` | `LANGUAGE` | **Chưa triển khai (Planned / Do not call)** — bảng DB đã có, route chưa được tạo |
+
+### Management API
+
+| Method | Path | Mô tả |
+|---|---|---|
+| `GET` | `/v2/nmaiex/management/jobs` | Danh sách jobs với filters |
+| `GET` | `/v2/nmaiex/management/jobs/{job_id}` | Chi tiết job |
+| `PUT` | `/v2/nmaiex/management/jobs/{job_id}` | Cập nhật job |
+| `PATCH` | `/v2/nmaiex/management/jobs/{job_id}/content` | **Canonical** — Cập nhật content + re-ingest job embeddings |
+| `GET` | `/v2/nmaiex/management/candidates` | Danh sách candidates với filters |
+| `GET` | `/v2/nmaiex/management/candidates/{candidate_id}` | Chi tiết candidate |
+| `PUT` | `/v2/nmaiex/management/candidates/{candidate_id}` | Cập nhật candidate |
+
+> [!IMPORTANT]
+> Route canonical cho job content update + re-ingestion là `/v2/nmaiex/management/jobs/{job_id}/content`.
 
 ---
 
@@ -252,6 +279,7 @@ Năm endpoint phụ trợ phục vụ frontend dropdown — query thẳng từ D
 **Fuzzy overlap fallback**: Nếu một bên không có `*_SKILL_RAW` records (embeddings), `fuzzy_overlap = 0.0`. Đây là hành vi mong muốn — không ảnh hưởng `exact_overlap`.
 
 **Language scoring**: Chỉ áp dụng trong luồng C→J. J→C hiện không có language scoring (chỉ có seniority penalty). Tiếng Việt không có trong `JOB_LANG_REQUIREMENT` vì là ngôn ngữ mặc định.
+*Lưu ý quan trọng về Code Reality:* Hiện có sự không nhất quán giữa thiết kế tài liệu và thực tế code liên quan đến Language Proficiency. Hàm `normalize_proficiency()` dù đã được implement trong `nmaiex_mapper_service.py` nhưng chưa được gọi tại `compute_language_score()`. Code thực tế thực hiện tra cứu trực tiếp trong dictionary `PROFICIENCY_LEVELS`, dẫn tới các trình độ thô (ví dụ `"N3"`) bị fallback về `"BASIC"` (level 1). Gap này cần được resolve ở phase tiếp theo.
 
 **Hard filter**: `province_id` và `work_mode` là optional — nếu không truyền, hệ thống không lọc theo hai tiêu chí này. Filter áp dụng ngay tại tầng SQL trước vector search.
 

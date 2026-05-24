@@ -19,7 +19,7 @@ class NMAIexSettings(BaseSettings):
     nmaiex_cj_weight_rrf: float = 0.35
     nmaiex_cj_weight_title: float = 0.15  # title match (recent job titles vs job.title)
     nmaiex_cj_weight_skill: float = 0.30  # [Phase 2.5a] riêng CJ, thấp hơn JC (0.40)
-    # Room 0.20 còn lại = salary_adjustment (âm=penalty, dương=bonus); clip(0,1) bảo vệ
+    # Room 0.20 còn lại = salary_adjustment (âm=penalty, dương=bonus)
 
     # ----------------------------------------------------------------
     # RRF
@@ -76,9 +76,16 @@ class NMAIexSettings(BaseSettings):
     nmaiex_lang_bonus_cap: float = 0.15  # Tổng bonus ngôn ngữ tối đa
 
     # ----------------------------------------------------------------
-    # Score Clipping Control
+    # Score clipping is disabled by default so raw ranking deltas remain sortable
+    # even when penalties push scores below 0 or bonuses push scores above 1.
     # ----------------------------------------------------------------
-    nmaiex_enable_score_clip: bool = True
+    nmaiex_enable_score_clip: bool = False
+
+    # ----------------------------------------------------------------
+    # Candidate enrichment retry/backfill
+    # ----------------------------------------------------------------
+    nmaiex_enrichment_retry_max_attempts: int = 5
+    nmaiex_enrichment_retry_base_seconds: int = 300
 
     model_config = SettingsConfigDict(
         env_file=".env.nmaiex", env_file_encoding="utf-8", extra="ignore"

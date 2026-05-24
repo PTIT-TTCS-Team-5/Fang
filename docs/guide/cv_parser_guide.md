@@ -15,7 +15,7 @@ Tài liệu này mô tả chi tiết module parser CV trong FANG v2 với kiến
 | **Tier 2** | Lite | `gpt-5.4-mini` | OpenAI |
 | **Tier 3** | Lite | `claude-4.5-haiku` | Anthropic |
 | **Tier 4** | Pro | `gemini-pro` | Google |
-| **Tier 5** | Pro | `gpt-5.4` | OpenAI |
+| **Tier 5** | Pro | `gpt-5.5` | OpenAI |
 
 ## 3. Cơ chế ProTierGate
 Đây là điểm mới quan trọng trong v2. Hệ thống không chỉ fallback khi gặp lỗi hệ thống (Transient Error), mà còn fallback dựa trên **chất lượng đầu ra**.

@@ -39,6 +39,13 @@ Salary extraction rules (expectedSalaryMin, expectedSalaryMax):
 - Values in millions (M) → multiply by 1,000,000. Values in thousands (K) → multiply by 1,000.
 - If only one figure is stated (e.g. "25M"), set both min and max to the same value.
 - If salary is "negotiable" / "thỏa thuận" or not mentioned → set both to null.
+
+Parser self-report rules (parserSelfReport field):
+- Always include parserSelfReport when possible.
+- confidence must be a number from 0.0 to 1.0 describing confidence in extracted structured fields.
+- issues must contain short strings for important extraction concerns, or [] if none.
+- uncertainFields must contain field names that may be incomplete or uncertain, or [] if none.
+- This self-report is diagnostic only. Do not use it to invent missing CV facts.
 """.strip()
 
 CV_PARSE_SCHEMA = ParsedCV.model_json_schema()

@@ -61,6 +61,10 @@ class IngestionFlowTests(IsolatedAsyncioTestCase):
                 "app.api.routes_ingestion.update_index_job_status",
                 update_status,
             ),
+            patch(
+                "app.api.routes_ingestion.enqueue_and_run_candidate_enrichment",
+                AsyncMock(),
+            ) as enrich_candidate,
         ):
             await process_ingestion_task(88, request)
 
@@ -74,6 +78,11 @@ class IngestionFlowTests(IsolatedAsyncioTestCase):
         )
         embed_chunks.assert_awaited_once()
         save_chunk_payloads.assert_awaited_once()
+        enrich_candidate.assert_awaited_once_with(
+            index_job_id=88,
+            job_app_id=321,
+            cv_parsed_id=77,
+        )
 
         args, kwargs = save_chunk_payloads.await_args
         chunk_payloads = args[2]
@@ -93,6 +102,56 @@ class IngestionFlowTests(IsolatedAsyncioTestCase):
             all(metadata["cvParsedId"] == 77 for metadata in metadata_items)
         )
         self.assertTrue(kwargs["replace_existing"])
+
+    async def test_process_ingestion_task_succeeds_when_enrichment_fails(self) -> None:
+        request = IngestionJobRequest(
+            jobAppId=321,
+            cvSnapUrl="https://example.com/candidate.pdf",
+        )
+        parsed_json = {
+            "candidateInfo": [{"fullName": "Nguyen Van A"}],
+            "summary": "Backend engineer with retrieval experience.",
+            "experience": [],
+            "education": [],
+            "skills": [],
+            "certificates": [],
+            "languages": [],
+            "rawText": "Sample raw CV text",
+            "parserVer": "gemini:test",
+        }
+        update_status = AsyncMock()
+
+        with (
+            patch(
+                "app.api.routes_ingestion.download_cv",
+                AsyncMock(return_value=b"%PDF-test%"),
+            ),
+            patch(
+                "app.api.routes_ingestion.parse_to_raw_and_json",
+                AsyncMock(return_value=("Sample raw CV text", parsed_json)),
+            ),
+            patch(
+                "app.api.routes_ingestion.save_parsed_cv",
+                AsyncMock(return_value=77),
+            ),
+            patch(
+                "app.api.routes_ingestion.embed_chunks",
+                AsyncMock(side_effect=lambda chunks: [[0.1, 0.2] for _ in chunks]),
+            ),
+            patch("app.api.routes_ingestion.save_chunk_payloads", AsyncMock()),
+            patch(
+                "app.api.routes_ingestion.update_index_job_status",
+                update_status,
+            ),
+            patch(
+                "app.api.routes_ingestion.enqueue_and_run_candidate_enrichment",
+                AsyncMock(side_effect=RuntimeError("mapper down")),
+            ),
+        ):
+            await process_ingestion_task(88, request)
+
+        update_status.assert_any_await(88, "PROCESSING")
+        update_status.assert_any_await(88, "SUCCESS")
 
 
 if __name__ == "__main__":

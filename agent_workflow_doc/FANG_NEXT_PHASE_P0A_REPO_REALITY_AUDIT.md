@@ -8,6 +8,7 @@ P0-A dùng model tier 1 để dựng lại bức tranh thực tế của FANG t�
 
 1. Xác định FANG hiện làm gì thật trong code.
 2. Đối chiếu kiến trúc, API, DB, docs, tests và workflow agent hiện có.
+* NOTE FROM USER: đánh dấu những file trong agent_workflow_doc đã xong
 3. Tách rõ:
    - current reality,
    - code-doc drift,
@@ -22,8 +23,9 @@ P0-A dùng model tier 1 để dựng lại bức tranh thực tế của FANG t�
 - Root README.
 - `app/`, `database/`, `tests/`, `smoke_tests/`, `scripts/`.
 - `docs/strategy`, `docs/guide`, `docs/system_architecture.md`, `docs/testing_guide.md`.
-- `agent_workflow_doc` đang điều phối công việc.
+- `agent_workflow_doc` đang điều phối công việc (FANG_NEXT_PHASE là những thứ mới nhất, đang được triển khai)
 - Các điểm giao thoa với NMAIex nếu ảnh hưởng FANG core.
+* NOTE FROM USER: Thực tế nmaiex đã được user quyết định là một phần chính thức của FANG rồi, vẫn giữ tên gọi cũ để dễ nhận biết thôi -> Cần cập nhật các tài liệu coi nmaiex tách biệt khỏi FANG
 
 ### Out of scope
 
@@ -31,6 +33,7 @@ P0-A dùng model tier 1 để dựng lại bức tranh thực tế của FANG t�
 - Không viết lại toàn bộ docs ngay trong P0-A.
 - Không quyết định thay framework agent/LLM provider nếu audit chưa chỉ ra nhu cầu.
 - Không đọc mọi research/archive dài nếu không cần xác nhận drift hoặc bối cảnh quyết định.
+* NOTE FROM USER: Các research thì không nên đọc, research dài và mang tính nhiễu cao, chỉ một phần trong đó được triển khai thực tế. Research chủ yếu hỗ trợ quyết định của user và là ground-of-truth cho các quyết định cho hệ thống chứ không liên quan gì tới hệ thống thật
 
 ## File bắt đầu đọc
 
@@ -51,6 +54,7 @@ Tier 1 được phép tỏa ra các file khác khi cần xác nhận nhận xét
 ## Output bắt buộc
 
 Tạo một tài liệu audit chính và phụ lục khi cần. Tên file do tier 1 đề xuất nhưng phải đặt trong `agent_workflow_doc` hoặc thư mục docs được chỉ định rõ trong report.
+* NOTE FROM USER: Viết bằng tiếng Việt, các thuật ngữ chuyên ngành/đặc thù/rõ nghĩa thì giữ nguyên tiếng Anh
 
 Tài liệu audit chính phải có:
 

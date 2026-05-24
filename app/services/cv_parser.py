@@ -64,6 +64,7 @@ class ParserPolicyConfig:
     retry_max_seconds: float
     min_rawtext_length: int
     min_section_signals: int
+    min_self_confidence: float
     sleep: SleepFn = asyncio.sleep
 
     @classmethod
@@ -75,6 +76,9 @@ class ParserPolicyConfig:
             retry_max_seconds=max(0.0, settings.parser_retry_max_seconds),
             min_rawtext_length=max(1, settings.parser_quality_min_rawtext_length),
             min_section_signals=max(1, settings.parser_quality_min_section_signals),
+            min_self_confidence=max(
+                0.0, min(1.0, settings.parser_quality_min_self_confidence)
+            ),
         )
 
 
@@ -85,6 +89,7 @@ class QualityGateResult:
     section_signals: int
     raw_text_length: int
     has_candidate_signal: bool
+    parser_confidence: float | None
 
 
 @dataclass(frozen=True)
@@ -99,6 +104,7 @@ class ParserAttemptRecord:
     quality_reasons: tuple[str, ...] = ()
     error_type: str | None = None
     error_message: str | None = None
+    parser_confidence: float | None = None
 
 
 @dataclass(frozen=True)
@@ -134,6 +140,7 @@ def _build_quality_gate(
     *,
     min_rawtext_length: int,
     min_section_signals: int,
+    min_self_confidence: float,
 ) -> QualityGateResult:
     raw_text = (parsed_cv.rawText or "").strip()
     raw_text_length = len(raw_text)
@@ -156,6 +163,9 @@ def _build_quality_gate(
             int(bool((parsed_cv.summary or "").strip())),
         ]
     )
+    parser_confidence = None
+    if parsed_cv.parserSelfReport is not None:
+        parser_confidence = parsed_cv.parserSelfReport.confidence
 
     reasons: list[str] = []
     if raw_text_length < min_rawtext_length:
@@ -164,6 +174,8 @@ def _build_quality_gate(
         reasons.append("missing_candidate_identity_signal")
     if section_signals < min_section_signals:
         reasons.append("insufficient_non_empty_sections")
+    if parser_confidence is not None and parser_confidence < min_self_confidence:
+        reasons.append("parser_self_confidence_below_threshold")
 
     return QualityGateResult(
         passed=not reasons,
@@ -171,6 +183,7 @@ def _build_quality_gate(
         section_signals=section_signals,
         raw_text_length=raw_text_length,
         has_candidate_signal=has_candidate_signal,
+        parser_confidence=parser_confidence,
     )
 
 
@@ -254,6 +267,7 @@ class CVParserOrchestrator:
                 "retryMaxSeconds": self.policy.retry_max_seconds,
                 "qualityMinRawTextLength": self.policy.min_rawtext_length,
                 "qualityMinSectionSignals": self.policy.min_section_signals,
+                "qualityMinSelfConfidence": self.policy.min_self_confidence,
                 "cvBytes": len(cv_bytes),
             },
         )
@@ -378,6 +392,7 @@ class CVParserOrchestrator:
                             parsed_cv,
                             min_rawtext_length=self.policy.min_rawtext_length,
                             min_section_signals=self.policy.min_section_signals,
+                            min_self_confidence=self.policy.min_self_confidence,
                         )
                         if not quality.passed:
                             low_quality_attempt = self._build_attempt_record(
@@ -390,6 +405,7 @@ class CVParserOrchestrator:
                                 quality_reasons=quality.reasons,
                                 error_type="LowQualityOutput",
                                 error_message=", ".join(quality.reasons),
+                                parser_confidence=quality.parser_confidence,
                             )
                             attempts.append(low_quality_attempt)
                             self._log_attempt(low_quality_attempt)
@@ -402,6 +418,7 @@ class CVParserOrchestrator:
                             retry_count=retry_count,
                             fallback_reason=None,
                             status="succeeded",
+                            parser_confidence=quality.parser_confidence,
                         )
                         parsed_result = parsed_cv
                     except TransientProviderError as exc:
@@ -456,6 +473,7 @@ class CVParserOrchestrator:
         quality_reasons: tuple[str, ...] = (),
         error_type: str | None = None,
         error_message: str | None = None,
+        parser_confidence: float | None = None,
     ) -> ParserAttemptRecord:
         return ParserAttemptRecord(
             tier_index=tier.tier_index,
@@ -468,6 +486,7 @@ class CVParserOrchestrator:
             quality_reasons=quality_reasons,
             error_type=error_type,
             error_message=error_message,
+            parser_confidence=parser_confidence,
         )
 
     def _log_attempt(self, attempt: ParserAttemptRecord) -> None:
@@ -481,6 +500,7 @@ class CVParserOrchestrator:
                 "fallbackReason": attempt.fallback_reason,
                 "status": attempt.status,
                 "qualityReasons": list(attempt.quality_reasons),
+                "parserConfidence": attempt.parser_confidence,
                 "errorType": attempt.error_type,
             }
         }

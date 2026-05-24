@@ -2,48 +2,57 @@
 
 Tài liệu này giải thích cách sử dụng và cách hoạt động của Embedding Layer trong FANG. Nếu `embedding_strategy.md` tập trung vào quyết định kiến trúc, tài liệu này tập trung vào cách code hiện tại vận hành.
 
+> [!NOTE]
+> Phiên bản trước của tài liệu này mô tả OpenAI `text-embedding-3-small`. Phiên bản cũ đã được archive tại `docs/archive/embedding_guide_openai_legacy.md`.
+
 ## 1. Luồng hoạt động
 
 Quá trình nhúng vector hiện tại gồm các bước:
 
 1. Nhận danh sách chunk văn bản đã được chuẩn hóa.
-2. Kiểm tra cấu hình provider/model/dimension.
-3. Chia danh sách đầu vào thành các batch nhỏ theo `EMBEDDING_BATCH_SIZE`.
-4. Gọi OpenAI Embeddings API bằng `text-embedding-3-small`.
-5. Ghép vector trả về lại theo đúng thứ tự chunk ban đầu.
-6. Chuyển vector sang định dạng chuỗi pgvector để lưu DB.
+2. Kiểm tra cấu hình: provider phải là `gemini`, có `GOOGLE_API_KEY`, `batch_size > 0`.
+3. Validate từng chunk: phải là chuỗi không rỗng.
+4. Chia danh sách đầu vào thành các batch nhỏ theo `EMBEDDING_BATCH_SIZE` (mặc định 32).
+5. Gọi Gemini Embedding API qua `google.genai` SDK — `genai.Client.models.embed_content()` với `output_dimensionality`.
+6. Ghép vector trả về lại theo đúng thứ tự chunk ban đầu.
+7. Validate: số vector == số chunk.
+8. Chuyển vector sang định dạng chuỗi pgvector để lưu DB.
 
 ## 2. Các file chính
 
 * `app/services/embedding.py`
-  * chịu trách nhiệm gọi OpenAI API
-  * validate đầu vào
+  * chịu trách nhiệm gọi Gemini Embedding API
+  * validate đầu vào (5 bước kiểm tra)
   * batch và gom kết quả trả về
+  * dùng `asyncio.to_thread()` để wrap synchronous SDK call
 
 * `app/services/persistence.py`
-  * serialize vector sang định dạng pgvector
-  * quyết định cast kiểu `halfvec` hoặc `vector`
+  * `_serialize_embedding()` — serialize vector sang định dạng pgvector
+  * `_resolve_pgvector_type()` — quyết định cast kiểu `halfvec` hoặc `vector`
   * insert vào `AIDOCUMENTCHUNK`
 
 * `app/core/config.py`
   * định nghĩa các cấu hình embedding dùng ở runtime
 
+* `app/core/nmaiex_config.py`
+  * `NMAIEX_SKILL_EMBEDDING_DIM` — dimension riêng cho NMAIex skill embedding (mặc định 256)
+
 ## 3. Cấu hình cần thiết
 
 Các biến môi trường quan trọng:
 
-* `OPENAI_API_KEY`
-* `EMBEDDING_PROVIDER`
-* `EMBEDDING_MODEL`
-* `EMBEDDING_DIM`
-* `EMBEDDING_BATCH_SIZE`
-* `EMBEDDING_VECTOR_TYPE`
+* `GOOGLE_API_KEY` — API key cho Gemini
+* `EMBEDDING_PROVIDER` — provider embedding (hiện chỉ hỗ trợ `gemini`)
+* `EMBEDDING_MODEL` — tên model (mặc định `gemini-embedding-001`)
+* `EMBEDDING_DIM` — dimension mặc định (mặc định `1536`)
+* `EMBEDDING_BATCH_SIZE` — kích thước batch (mặc định `32`)
+* `EMBEDDING_VECTOR_TYPE` — kiểu lưu trữ pgvector (`halfvec` hoặc `vector`)
 
-Giá trị mặc định hiện tại trong repo:
+Giá trị mặc định hiện tại trong code:
 
-* `EMBEDDING_PROVIDER=openai`
-* `EMBEDDING_MODEL=text-embedding-3-small`
-* `EMBEDDING_DIM=1024`
+* `EMBEDDING_PROVIDER=gemini`
+* `EMBEDDING_MODEL=gemini-embedding-001`
+* `EMBEDDING_DIM=1536`
 * `EMBEDDING_BATCH_SIZE=32`
 * `EMBEDDING_VECTOR_TYPE=halfvec`
 
@@ -51,20 +60,21 @@ Giá trị mặc định hiện tại trong repo:
 
 ### Đầu vào của `embed_chunks`
 
-`embed_chunks(chunks: List[str]) -> List[List[float]]`
+`embed_chunks(chunks: List[str], dimensions: Optional[int] = None) -> List[List[float]]`
 
 Ràng buộc:
 
 * mỗi phần tử phải là chuỗi không rỗng
 * danh sách rỗng thì trả về danh sách rỗng
-* provider hiện chỉ hỗ trợ `openai`
+* provider hiện chỉ hỗ trợ `gemini`
+* `dimensions` cho phép override dimension — dùng cho NMAIex skill embedding (256 dims)
 
 ### Đầu ra
 
 * số vector trả về phải bằng số chunk đầu vào
-* chiều của từng vector phải khớp với `EMBEDDING_DIM`
+* chiều của từng vector khớp với `dimensions` (hoặc `EMBEDDING_DIM` nếu không truyền)
 
-Nếu API trả về thiếu vector hoặc sai số lượng, hàm sẽ ném lỗi thay vì âm thầm bỏ qua.
+Nếu API trả về thiếu vector hoặc sai số lượng, hàm sẽ ném `RuntimeError` thay vì âm thầm bỏ qua.
 
 ## 5. Cách lưu vào PostgreSQL
 
@@ -93,19 +103,22 @@ tùy theo `EMBEDDING_VECTOR_TYPE`.
 
 Các lớp kiểm thử đã có trong repo:
 
-* `test_embedding.py`
-  * mock OpenAI client
+* `tests/unit/unit_test_embedding.py`
+  * mock `FakeGeminiClient` (Gemini SDK)
   * kiểm tra model, batching, dimension
+  * kiểm tra validation (empty chunks, invalid provider)
+  * 7 test cases, tất cả pass
 
-* `test_persistence.py`
+* `tests/unit/unit_test_persistence.py`
   * kiểm tra serialize vector
   * kiểm tra lựa chọn `halfvec` / `vector`
 
-* `test_ingestion_flow.py`
+* `tests/unit/unit_test_ingestion_flow.py`
   * kiểm tra tích hợp route ingestion với chunking và embedding bằng mock
 
-* `test_e2e_pipeline.py`
+* `smoke_tests/test_e2e_pipeline.py`
   * chạy pipeline thật với parser + embedding + DB
+  * expected dimension: 1536
 
 ## 7. Những lỗi thường gặp
 
@@ -116,43 +129,51 @@ Các lớp kiểm thử đã có trong repo:
 Ví dụ:
 
 * runtime đang dùng `EMBEDDING_DIM=1536`
-* schema DB lại đang là `halfvec(1024)`
+* schema DB lại đang là `halfvec(256)`
 
-Khi đó insert sẽ lỗi do vector không khớp chiều.
+Khi đó insert sẽ lỗi do vector không khớp chiều. Dùng `scripts/reset_and_seed_db.py --reset` để khởi tạo lại schema với placeholder injection (`__TTCS_EMBEDDING_DIM__`, `__NMAIEX_SKILL_EMBEDDING_DIM__`).
 
 ### Lệch kiểu vector
 
 Ví dụ:
 
 * runtime cast `::vector`
-* schema DB lại đang là `halfvec(1024)`
+* schema DB lại đang là `halfvec(1536)`
 
 Lúc đó insert hoặc index sẽ không khớp với thiết kế schema hiện tại.
 
-### Thiếu credit hoặc key API
+### Thiếu API key
 
-* parser có thể chạy nhưng embedding fail
-* hoặc embedding thành công nhưng DB fail nếu schema cũ chưa được apply lại
+* `GOOGLE_API_KEY` không được set → `embed_chunks()` raise `ValueError` ngay ở bước validation
+* Parser có thể chạy (dùng key khác) nhưng embedding fail nếu Gemini key thiếu
+
+### Gemini API outage
+
+* Không có fallback provider — toàn bộ embedding bị tê liệt
+* Ingestion task sẽ fail, cần manual re-run
 
 ## 8. Cách chạy nhanh để kiểm chứng
 
-Chạy script E2E:
+Chạy unit test:
 
 ```bash
-python test_e2e_pipeline.py
+venv\Scripts\python -m unittest discover -s tests/unit -p "unit_test_embedding*"
 ```
 
-Khi cần ép đúng cấu hình runtime:
+Chạy script E2E (cần DB + Gemini API key):
 
 ```bash
-EMBEDDING_DIM=1024
-EMBEDDING_VECTOR_TYPE=halfvec
-python test_e2e_pipeline.py
+python smoke_tests/test_e2e_pipeline.py
 ```
 
 Mục tiêu mong đợi:
 
 * parse thành công
 * sinh ra chunk
-* gọi OpenAI embeddings thành công
+* gọi Gemini embedding thành công
 * lưu đủ số chunk và vector vào `AIDOCUMENTCHUNK`
+
+## 9. Tài Liệu Liên Quan
+
+* `docs/strategy/embedding_strategy.md` — Quyết định kiến trúc embedding
+* `agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md` — UC-2 (Text Embedding), UC-9 (Skill Embedding)
