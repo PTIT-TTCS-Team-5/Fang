@@ -12,7 +12,7 @@ Khi một request gửi đến `/v2/chat/query`, hệ thống thực hiện pipe
 5.  **Multi-source Context Fetching**: Tải dữ liệu bổ trợ (JobPosting, Candidate Profile, ATS History).
 
 > [!WARNING]
-> **Trạng thái hiện tạ:** Code chỉ fetch: job title/description, candidate basic fields (tên/email/phone/bio/expyears/location), interview feedback. Các nguồn bổ sung (skills, salary/work mode/level, offers, emails) thuộc phần việc CHAT_FULL_CV và P1_A_B_inc.
+> **Trạng thái hiện tại:** Code chỉ fetch: job title/description, candidate basic fields (tên/email/phone/bio/expyears/location), interview feedback. Các nguồn bổ sung (skills, salary/work mode/level, offers, emails) thuộc phần việc CHAT_FULL_CV và P1_A_B_inc.
 6.  **Context Assembly**: Lắp ghép dữ liệu vào System Prompt Template.
 7.  **History Loading**: Tải toàn bộ lịch sử hội thoại (không dùng sliding window).
 8.  **Budget Check**: Tính toán token dự kiến và kiểm tra ngưỡng cảnh báo (80%).

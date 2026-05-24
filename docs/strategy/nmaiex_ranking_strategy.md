@@ -385,9 +385,7 @@ Query params ranking: `?limit=20&province_id=HANOI&work_mode=REMOTE`
 
 ## 13. Tài Liệu Liên Quan
 
-- `[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md` — Low-level design chi tiết từng module.
-- `[NMAIex]_SENIORITY_PENALTY_PROPOSAL.md` — Phân tích chi tiết asymmetric buffer penalty.
-- `[NMAIex]_CJ_FLOW_OPTIMIZATION_REPORT.md` — Báo cáo tối ưu hóa luồng C→J.
+- `agent_workflow_doc/archive/[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md` — Low-level design gốc, chỉ dùng làm historical reference.
 - `docs/research/[NMAIex_th_3]` — Research tổng hợp, căn cứ lý thuyết.
 - `docs/research/[NMAIex_3]` — Research gốc tham chiếu.
 - `docs/guide/nmaiex_ranking_guide.md` — Hướng dẫn vận hành thực tế.

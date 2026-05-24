@@ -288,6 +288,4 @@ Năm endpoint phụ trợ phục vụ frontend dropdown — query thẳng từ D
 ## 10. Tài Liệu Liên Quan
 
 - `../strategy/nmaiex_ranking_strategy.md` — Toàn bộ quyết định kiến trúc và trade-off.
-- `agent_workflow_doc/[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md` — Low-level design gốc.
-- `agent_workflow_doc/[NMAIex]_SENIORITY_PENALTY_PROPOSAL.md` — Chi tiết asymmetric buffer penalty.
-- `agent_workflow_doc/[NMAIex]_CJ_FLOW_OPTIMIZATION_REPORT.md` — Báo cáo tối ưu luồng C→J.
+- `../../agent_workflow_doc/archive/[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md` — Low-level design gốc, chỉ dùng làm historical reference.

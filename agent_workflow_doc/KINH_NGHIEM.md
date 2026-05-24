@@ -24,6 +24,7 @@ File duy nhất trong dự án được viết thủ công :b
 - Cài postman MCP trong antigravity để Agent test API 
 
 - Chỉ dẫn Agent dùng psql với tham số xem trong .env
+- Yêu cầu Agent đọc file bằng "-Encoding UTF8" trong powershell tránh lỗi mojibake
 
 ## Quan trọng lắm này
 - Làm việc với Agent, ít nhất là ở thời điểm hiện tại thì chưa thể tin tưởng được chúng nó đâu =))
@@ -32,12 +33,6 @@ File duy nhất trong dự án được viết thủ công :b
     - Nhất là lúc chúng nó đưa ra phương án xong bảo là đợi mình duyệt mà toàn tự duyệt r làm luôn. Lúc đấy mà không quan sát thì nó tự triển khai lung tung thì ăn đủ :b Tốn token chỉ để sửa r làm lại từ đầu
    * Cập nhật - 23/05/2026 - Hưng: Hiện tại một số Model như GPT 5.5, Claude Opus 4.6 và Gemini Flask 3.5 đã khá oke, giờ mình bớt phải giám sát trực tiếp nữa rồi :b
 - Khi dùng Agent làm việc dài, ưu tiên yêu cầu nó báo cáo plan, assumptions, drift/conflict mới phát hiện và output kiểm chứng được. Tier 2 không được tự đổi quyết định kiến trúc đã khóa trong tài liệu tier 1, có ý kiến thì viết report propsose rồi tier 1 review 1 thể.
-
-
-## Prompt mồi mình rất hay dùng 
-"Đọc AI_WORKFLOW_INIT để hiểu dự án, đọc FANG_NEXT_PHASE_DECISIONS.md để biết các quyết định đã chốt, đọc P0B_AI_LLM_INVENTORY_REPORT.md để biết mapping AI/LLM hiện tại. Làm abc sửa xyz"
-* Cập nhật - 23/05/2026 - Hưng: Lúc đó cài đặt nmaiex thui nha thì mình bản kế hoạch rõ ràng + task cho cả backend/frontend như vậy. Thì với các công việc khác ae cũng làm tương tự thôi, công thức là ngữ cảnh dự án + tài liệu chiến lược + tài liệu triển khai chi tiết + task checklist + prompt của ae.
-* Lưu ý: `[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md`, `[NMAIex]_TASK_CHECKLIST_BACKEND.md` và `[NMAIex]_TASK_CHECKLIST_FRONTEND.md` đã được archive (vào `archive/`). Nếu cần context NMAIex, dùng `docs/strategy/nmaiex_ranking_strategy.md` + `docs/guide/nmaiex_ranking_guide.md` thay thế.
 
 ## Những gì mình đang có
 * Cập nhật - 23/05/2026 - Hưng

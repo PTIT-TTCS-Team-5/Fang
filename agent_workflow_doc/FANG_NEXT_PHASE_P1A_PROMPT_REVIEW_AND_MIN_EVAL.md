@@ -1,148 +1,158 @@
-# P1-A Prompt Review and P1-B Minimal Eval
+# P1-A/B Assignment - Prompt Review and Minimal Eval
 
 ## Brief
 
-Tài liệu này gom P1-A và P1-B cho cùng một owner. Người phụ trách review prompt phải đồng thời dựng eval tối thiểu để rubric review không dừng ở nhận xét lý thuyết và để các prompt quan trọng có case kiểm tra đầu tiên. Cụm này được giao sau P0-B/P0-C và sau khi user bổ sung hướng dẫn triển khai cần thiết.
+Bạn phụ trách cụm `P1_A_B_inc`: P1-A Prompt Review và P1-B Minimal Eval cho FANG.
+Mục tiêu của cụm này là rà toàn bộ prompt production-relevant trong FANG, đánh giá rủi ro theo rubric đã chốt, đề xuất rewrite cho prompt ưu tiên cao và tạo bộ eval seed tối thiểu để các thay đổi prompt có cách kiểm tra thực tế.
 
-## Mục tiêu
+P1-A và P1-B được giao cùng một owner để rubric review và test cases không bị lệch nhau.
 
-1. Review toàn bộ prompt production-relevant theo inventory P0-B.
-2. Đánh giá prompt theo task boundary, grounding, security, compliance, output contract và observability.
-3. Đề xuất prompt redesign theo thứ tự ưu tiên tính năng.
-4. Tạo eval tối thiểu cho những prompt/use case quan trọng nhất trước.
+## Cách đọc tài liệu
 
-## Dependency
+Đọc theo thứ tự dưới đây trước khi sửa code hoặc viết report:
 
-Ưu tiên đầu vào:
+1. `agent_workflow_doc/README.md`
+2. `agent_workflow_doc/KINH_NGHIEM.md`
+3. `README.md`
+4. `../miCareer-mini/README.md`
+5. `docs/system_architecture.md`
+6. `agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md`
+7. `agent_workflow_doc/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md`
+8. `agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md`
+9. `agent_workflow_doc/P0C_DOC_RECONCILIATION_PLAN.md`
+* NOTE FROM HƯNG: Cái 6-7-8-9 này khuyên ng ae dùng AI để hỗ trợ đọc hiểu nhé
+10. Các strategy/guide liên quan:
+* NOTE FROM HƯNG: Cái này cũng thế, hoặc đọc thủ công có chọn lọc
+    - `docs/strategy/rag_query_strategy.md`
+    - `docs/guide/rag_query_guide.md`
+    - `docs/strategy/integration_strategy.md`
+    - `docs/strategy/nmaiex_ranking_strategy.md`
+    - `docs/guide/nmaiex_ranking_guide.md`
+    - `docs/strategy/embedding_strategy.md`
+    - `docs/guide/embedding_guide.md`
 
-1. P0-B AI/LLM Inventory.
-2. P0-C Documentation Reconciliation.
-3. Quyết định đã chốt rằng JobApplication chat sẽ chuyển sang full CV markdown context.
-4. Hướng dẫn bổ sung trực tiếp từ user trước khi giao việc cho thành viên.
+Nếu cần truy vết các note ban đầu của user (Hưng), đọc thêm `agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md` và tìm `P1_A_B_inc`.
+* NOTE FROM HƯNG: Ý ở đây là ae vào file đó rồi Ctrl + f tìm mã, chỗ nào mình đánh mã là mình chỉ đinh/comment đó là phần việc của b
 
-Nếu P0-B chưa xong, owner được phép tự lập danh sách entry point tạm thời nhưng phải ghi rõ phần nào cần reconcile lại sau.
+## Nguồn chuẩn
 
-## Prompt groups phải xét
+1. Prompt/model/use-case inventory: `agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md`.
+2. Quyết định phân việc và constraint: `agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md`.
+3. Phần user đã gán cho `P1_A_B_inc`: `agent_workflow_doc/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md`.
+4. Code hiện tại vẫn là truth source khi docs và code mâu thuẫn
+* NOTE FROM HƯNG: Đã resolve hầu hết mâu thuân. Docs - code đã chuẩn
 
-1. CV parser.
-2. JobApplication chat prompt/context policy hiện tại và hướng full-CV.
-3. Chat summarization/branch.
-4. NMAIex province mapper.
-5. NMAIex skill mapper.
-6. Language proficiency normalization.
-7. Prompt trong synthetic/dev tooling chỉ review sau nếu nó ảnh hưởng dữ liệu test/chất lượng ranking.
+## Phạm vi bắt buộc
+
+Review các prompt production-relevant trong P0-B Appendix B:
+xem: agent_workflow_doc\P0B_AI_LLM_INVENTORY_REPORT.md
+1. `P1` - CV Parse Prompt.
+2. `P2` - Anthropic Schema Prompt.
+3. `P3` - HR Co-pilot System Prompt.
+4. `P4` - Chat Summarization Prompt.
+5. `P5` - Chat Branch Summarization Prompt.
+6. `P6` - Province Mapping Prompt.
+7. `P7` - Skill Mapping Prompt.
+8. `P8` - Proficiency Normalization Prompt.
+
+Prompt synthetic/dev tooling (`P9`, `P10`) chỉ review nếu nó ảnh hưởng trực tiếp tới dữ liệu eval/ranking.
+
+## Ưu tiên xử lý
+
+1. HR Co-pilot System Prompt, vì luồng này sẽ đổi sang full CV markdown trong `CHAT_FULL_CV`.
+2. CV Parse Prompt, vì đây là pipeline dữ liệu đầu vào cho toàn hệ thống.
+3. NMAIex Skill Mapping, Province Mapping và Proficiency Normalization, vì lỗi mapping ảnh hưởng ranking.
+4. Summarization/Branch prompts, vì liên quan context continuity và context budget.
 
 ## Rubric review
 
-Mỗi prompt phải được đánh giá theo các câu hỏi sau:
+Mỗi prompt cần được đánh giá theo các tiêu chí sau:
 
-1. **Task boundary**
-   - Model được phép làm gì.
-   - Model không được phép làm gì.
-2. **Grounding**
-   - Dữ liệu nào là bằng chứng.
-   - Khi thiếu dữ liệu có policy rõ không.
-   - Có tách evidence và inference không.
-3. **Security**
-   - CV/JD/ATS text có được coi là untrusted input không.
-   - Có nguy cơ prompt injection hoặc data exfiltration không.
-4. **HR/compliance risk**
-   - Có đẩy model sang quyết định tuyển dụng tuyệt đối, đánh giá thiếu căn cứ hoặc suy đoán nhạy cảm không.
-5. **Output contract**
-   - Free text/JSON/schema có rõ không.
-   - Validation/fallback phía code có khớp prompt không.
-6. **Operational quality**
-   - Prompt có versioning/observability/test case chưa.
-   - Có nằm inline khó quản lý không.
+1. **Task boundary**: model được làm gì, không được làm gì, có tự ý ra quyết định HR tuyệt đối không.
+2. **Grounding**: evidence nằm ở đâu, thiếu dữ liệu thì trả lời thế nào, có tách evidence và inference không.
+3. **Security**: CV/JD/ATS/chat history có được coi là untrusted input không, có chống prompt injection và data exfiltration không.
+4. **HR/compliance risk**: có suy đoán nhạy cảm, đánh giá thiếu căn cứ, hoặc khuyến nghị tuyển dụng tuyệt đối không.
+5. **Output contract**: free text/JSON/schema có rõ không, code validation/fallback có khớp prompt không.
+6. **Operational quality**: có versioning, observability, log/eval trace, test case và fallback behavior chưa.
+
+## Phần việc được gán từ P0-A
+
+Các mục sau là phần việc của `P1_A_B_inc`:
+
+1. Review prompt engineering cho multi-source RAG context, bao gồm skills, Offer/Email content và các nguồn context mới.
+2. Review context window management cho luồng chat mới: warning, hard-stop behavior, summarize/branch option và per-model budget.
+3. Đề xuất per-model context budget map nếu khối lượng vẫn kiểm soát được; nếu quá tải, tách thành open question cho Hưng.
+4. Tạo eval tối thiểu cho parser, JobApplication full-CV chat, NMAIex mapper và language proficiency normalization.
+
+Lưu ý: `CHAT_FULL_CV` là người implement feature chuyển chat sang full CV. Bạn hỗ trợ review prompt/eval cho luồng mới, nhưng không tự đổi retrieval architecture nếu chưa nằm trong scope của task bạn đang làm.
 
 ## Deliverables
 
+Tạo report và tài liệu strategy-level bằng tiếng Việt, có file references rõ. Không chỉ giao code patch hoặc nhận xét rời rạc.
+
 1. **Prompt review report**
    - Bảng prompt/use case.
-   - Điểm rủi ro.
-   - Vấn đề cụ thể có file refs.
-   - Thứ tự ưu tiên nâng cấp.
-2. **Prompt redesign proposals**
-   - Không nhất thiết rewrite tất cả ngay.
-   - Với prompt priority cao phải có draft mới hoặc spec rewrite rõ.
-3. **Minimal eval plan + seed cases**
-   - Case format.
+   - Điểm rủi ro theo rubric.
+   - File refs và dòng/hàm liên quan.
+   - Mức ưu tiên nâng cấp.
+2. **Prompt strategy-level document**
+   - Định nghĩa prompt policy cho FANG: grounding, untrusted input, HR/compliance, output contract, fallback và observability.
+   - Nêu rõ prompt nào là current behavior, prompt nào là target design, prompt nào cần user/tier 1 quyết định.
+   - Chất lượng tối thiểu phải tương đương tài liệu trong `docs/strategy/`: có bối cảnh, quyết định, trade-off, scope, risks và acceptance criteria.
+3. **Prompt redesign proposals**
+   - Không cần rewrite tất cả.
+   - Với prompt priority cao phải có draft prompt mới hoặc rewrite spec đủ rõ.
+4. **Minimal eval plan + seed cases**
+   - Format case.
    - Rubric/assertions.
-   - Case tối thiểu cho prompt priority cao.
-4. **Open questions**
-   - Những chỗ cần user/tier 1 quyết định.
+   - Case tối thiểu cho các prompt priority cao.
+5. **Open questions**
+   - Những điểm cần Hưng quyết định trước khi đổi behavior hoặc kiến trúc.
 
-## Eval tối thiểu trước
+Đề xuất nơi đặt output:
 
-Không làm eval platform lớn ngay. Bắt đầu bằng seed cases cho:
+- `agent_workflow_doc/P1A_B_PROMPT_REVIEW_REPORT.md`
+- `docs/strategy/prompt_engineering_strategy.md`
+- `agent_workflow_doc/P1B_MINIMAL_EVAL_SEED_CASES.md`
+
+## Eval seed tối thiểu
+
+Bắt đầu bằng seed cases nhỏ, không xây eval platform lớn ngay:
 
 1. CV parser:
    - field có trong CV phải extract được,
    - field không có không được bịa,
-   - CV mơ hồ/lỗi có warning hoặc failure behavior đúng theo policy.
-2. JobApplication chat:
+   - CV mơ hồ/lỗi phải có warning hoặc failure behavior đúng policy.
+2. JobApplication full-CV chat:
    - trả lời từ full CV/JD/ATS context,
-   - nói thiếu dữ liệu khi không có bằng chứng,
-   - không làm theo instruction độc hại nằm trong CV/JD text.
+   - nói thiếu dữ liệu khi không có evidence,
+   - không làm theo instruction độc hại nằm trong CV/JD/email text.
 3. NMAIex mapper:
-   - province mapping cases.
-   - skill mapping exact/unmatched cases.
+   - province mapping exact/ambiguous/unmatched cases,
+   - skill mapping exact/unmatched/hallucinated-id cases,
    - language proficiency normalization cases.
 
-## Ghi chú parser quality
+## Parser quality note
 
-Có ý tưởng bổ sung tín hiệu để parser báo mức tự tin/lỗi/warnings nhằm giúp xét leo Pro tier. Owner P1 phải:
+Parser hiện đã có `parserSelfReport`. Khi đề xuất cải tiến prompt/quality gate:
 
-1. Ghi rõ phần nào model tự báo, phần nào deterministic validator xác nhận.
+1. Tách rõ tín hiệu model tự báo và tín hiệu deterministic validator xác nhận.
 2. Không coi self-reported confidence là chân lý duy nhất.
 3. Đề xuất policy kết hợp prompt, schema, warning fields, quality gate và escalation.
 
-## Cách giao cho thành viên
+## Không làm trong scope này
 
-Owner của cụm này chịu trách nhiệm từ review đến eval seed. Không tách người review prompt và người làm eval tối thiểu ở pha đầu để tránh lệch rubric.
-
-Owner cụm P1-A/P1-B cũng sẽ hỗ trợ người làm JobApplication Full-CV Chat sau khi người đó hoàn thành prompt engineering mức cơ bản cho luồng chat mới. Trách nhiệm hỗ trợ gồm review prompt, bổ sung guardrail và đề xuất eval tối thiểu cho luồng mới; không tự ý đổi implementation scope của người làm JobApplication nếu chưa có user/tier 1 duyệt.
-
-Owner không được:
-
-- tự đổi kiến trúc LLM layer,
-- tự đổi flow JobPosting Agent,
-- tự chuyển JobApplication chat sang full CV nếu chưa có guide feature riêng,
-- rewrite prompt production mà không chỉ ra test/eval/risk đi kèm.
-
-## Prompt giao việc
-
-```text
-Bạn phụ trách cụm P1-A Prompt Review và P1-B Minimal Eval cho FANG.
-
-Đọc trước:
-- agent_workflow_doc/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md
-- P0-B AI/LLM Inventory nếu đã có
-- P0-C Documentation Reconciliation nếu đã có
-- Các file prompt/use case được inventory chỉ ra
-- Hướng dẫn bổ sung trực tiếp từ user cho cụm prompt/eval
-
-Mục tiêu:
-1. Review prompt production-relevant theo rubric task boundary, grounding, security, HR/compliance risk, output contract và operational quality.
-2. Lập báo cáo prompt review có file references và thứ tự ưu tiên.
-3. Đề xuất redesign cho prompt priority cao.
-4. Dựng eval tối thiểu đầu tiên cho các prompt/use case quan trọng thay vì chỉ viết nhận xét.
-
-Ràng buộc:
-- Không tự đổi kiến trúc provider/agent/framework.
-- Quyết định đã chốt: JobApplication chat sẽ chuyển sang full CV markdown context, nhưng feature implementation sẽ có guide riêng.
-- Nếu phát hiện prompt cần quyết định sản phẩm/kiến trúc mới, ghi open question thay vì tự khóa hướng.
-
-Output:
-- Prompt review report.
-- Prompt redesign proposals hoặc rewrite spec cho prompt priority cao.
-- Minimal eval plan và seed cases.
-- Danh sách open questions/risks cần user hoặc tier 1 review.
-```
+1. Không tự đổi provider/router/framework.
+2. Không tự implement JobPosting Agent.
+3. Không tự chuyển JobApplication chat sang full CV nếu task hiện tại không phải `CHAT_FULL_CV`.
+4. Không rewrite prompt production mà không có risk analysis và eval/test đi kèm.
+5. Không dùng `docs/research` hoặc tài liệu archive làm current runtime truth.
 
 ## Acceptance criteria
 
 1. Không bỏ sót prompt production-relevant đã có trong P0-B.
 2. Mỗi nhận xét chính có file reference và rubric reason.
 3. Có eval seed thực tế cho prompt priority cao, không chỉ backlog chung chung.
-4. Parser quality/warning/confidence idea được phân tích với guardrail rõ.
+4. JobApplication full-CV chat có prompt/eval guidance đủ để phối hợp với owner `CHAT_FULL_CV`.
+5. Parser confidence/warning idea được phân tích với guardrail rõ.
+6. Có report và ít nhất một tài liệu strategy-level đủ chất lượng để team dùng lại sau này.
