@@ -5,11 +5,21 @@ Supports any API provider using OpenAI SDK (orimise, local, etc.)
 """
 
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
 
 from openai import OpenAI
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+
+try:
+    import dotenv
+
+    dotenv.load_dotenv(ROOT_DIR / ".env")
+except ImportError:
+    pass
 
 
 def fetch_models(api_key: str, base_url: str, output_file: str = None) -> dict:
@@ -104,12 +114,17 @@ def main():
     )
     parser.add_argument(
         "--api-key",
-        default="sk-cd825b23e3c530c07709d38e5fd9840c7aae70b7b023eb0a5639c477c6b76193",
+        default=os.environ.get("ORIMISE_API_KEY")
+        or os.environ.get("OPEN_ROUTER_KEY")
+        or os.environ.get("NINE_ROUTER_KEY")
+        or os.environ.get("HUNG_9ROUTER_KEY"),
         help="API key for authentication",
     )
     parser.add_argument(
         "--base-url",
-        default="https://api.orimise.com/v1",
+        default=os.environ.get("ORIMISE_BASE_URL")
+        or os.environ.get("NINE_ROUTER_URL")
+        or "https://api.orimise.com/v1",
         help="Base URL of the API endpoint",
     )
     parser.add_argument(
@@ -120,6 +135,12 @@ def main():
     )
 
     args = parser.parse_args()
+    if not args.api_key:
+        print(
+            "Missing API key. Set ORIMISE_API_KEY, NINE_ROUTER_KEY, or HUNG_9ROUTER_KEY in .env.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     fetch_models(args.api_key, args.base_url, args.output)
 

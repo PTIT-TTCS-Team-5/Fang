@@ -3,19 +3,51 @@
 Usage:
     python scripts/list_gemini_models.py
 
-Uses 9Router at localhost:20128 which has multiple Google API keys configured.
+Loads 9Router config from .env/environment.
 """
+
+import os
+import sys
+from pathlib import Path
 
 import httpx
 
-NINE_ROUTER_URL = "http://localhost:20128/v1"
-NINE_ROUTER_KEY = "sk-ad63867957b503e7-nrt4w0-b687b29d"
+ROOT_DIR = Path(__file__).resolve().parent.parent
+
+try:
+    import dotenv
+
+    dotenv.load_dotenv(ROOT_DIR / ".env")
+except ImportError:
+    pass
+
+DEFAULT_NINE_ROUTER_URL = "http://localhost:20128/v1"
+
+
+def get_router_config() -> tuple[str, str]:
+    """Return 9Router base URL and API key from environment."""
+    url = (
+        os.environ.get("NINE_ROUTER_URL")
+        or os.environ.get("HUNG_9ROUTER_URL")
+        or DEFAULT_NINE_ROUTER_URL
+    ).strip()
+    key = (
+        os.environ.get("NINE_ROUTER_KEY")
+        or os.environ.get("HUNG_9ROUTER_KEY")
+        or os.environ.get("OPEN_ROUTER_KEY")
+    )
+    if not key:
+        raise RuntimeError(
+            "Missing 9Router key. Set NINE_ROUTER_KEY or HUNG_9ROUTER_KEY in .env."
+        )
+    return url.rstrip("/"), key.strip()
 
 
 def list_models():
     """Fetch and display all available models via 9Router."""
-    url = f"{NINE_ROUTER_URL}/models"
-    headers = {"Authorization": f"Bearer {NINE_ROUTER_KEY}"}
+    base_url, api_key = get_router_config()
+    url = f"{base_url}/models"
+    headers = {"Authorization": f"Bearer {api_key}"}
 
     resp = httpx.get(url, headers=headers, timeout=15.0)
     resp.raise_for_status()
@@ -74,4 +106,8 @@ def list_models():
 
 
 if __name__ == "__main__":
-    list_models()
+    try:
+        list_models()
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)

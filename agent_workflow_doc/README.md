@@ -23,6 +23,7 @@ Không dùng `docs/research/` hoặc `agent_workflow_doc/archive/` làm current 
 |---|---|
 | `FANG_NEXT_PHASE_DECISIONS.md` | Decision source cho giai đoạn next phase. |
 | `FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md` | Tổng hợp P0-D, trạng thái P0-A/B/C và option cho thành viên thứ ba. |
+| `FANG_NEXT_PHASE_LLM_SAFETY_PRECHECK_REPORT.md` | Safety precheck cho prompt injection/jailbreak/adversarial attacks; phải đọc trước P1-A/B và CHAT_FULL_CV. |
 | `FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md` | Prompt nghiên cứu 9Router/framework, chưa phải implementation plan. |
 | `AI_WORKFLOW_INIT.md` | Hướng dẫn khởi động context cho agent. |
 | `AI_MANUAL_UPDATE.md` | Ghi chú cập nhật thủ công khi có thay đổi lớn. |

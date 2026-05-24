@@ -1,5 +1,10 @@
 # P1-A/B Assignment - Prompt Review and Minimal Eval
 
+> [!IMPORTANT]
+> Trạng thái handoff: **tạm stall** cho tới khi user/tier 1 duyệt xong LLM safety precheck trong `agent_workflow_doc/FANG_NEXT_PHASE_LLM_SAFETY_PRECHECK_REPORT.md`. Không giao task này cho thành viên trước khi bổ sung safety/adversarial rubric vào scope thực thi.
+>
+> HR chat abuse eval đã mô phỏng JobApplication chat với model cheap `openai/gpt-4.1-nano`: kịch bản system prompt yếu có **3/6 case `unsafe_or_needs_review`**, kịch bản có guardrail còn **1/6 case `unsafe_or_needs_review`**. Xem `agent_workflow_doc/HR_CHAT_ABUSE_GUARDRAIL_EVAL_REPORT.md` và `agent_workflow_doc/HR_CHAT_ABUSE_GUARDRAIL_EVAL_RESULTS.json`. Đây là evidence trực tiếp rằng nếu HR chat không có scope/guardrail rõ, user có thể abuse luồng chat để yêu cầu code vi phạm ToS, thu thập secret, giám sát hoặc làm theo prompt injection trong CV.
+
 ## Brief
 
 Bạn phụ trách cụm `P1_A_B_inc`: P1-A Prompt Review và P1-B Minimal Eval cho FANG.
@@ -21,7 +26,8 @@ P1-A và P1-B được giao cùng một owner để rubric review và test cases
 8. `agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md`
 9. `agent_workflow_doc/P0C_DOC_RECONCILIATION_PLAN.md`
 * NOTE FROM HƯNG: Cái 6-7-8-9 này khuyên ng ae dùng AI để hỗ trợ đọc hiểu nhé
-10. Các strategy/guide liên quan:
+10. `agent_workflow_doc/FANG_NEXT_PHASE_LLM_SAFETY_PRECHECK_REPORT.md`
+11. Các strategy/guide liên quan:
 * NOTE FROM HƯNG: Cái này cũng thế, hoặc đọc thủ công có chọn lọc
     - `docs/strategy/rag_query_strategy.md`
     - `docs/guide/rag_query_guide.md`
@@ -39,7 +45,8 @@ Nếu cần truy vết các note ban đầu của user (Hưng), đọc thêm `ag
 1. Prompt/model/use-case inventory: `agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md`.
 2. Quyết định phân việc và constraint: `agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md`.
 3. Phần user đã gán cho `P1_A_B_inc`: `agent_workflow_doc/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md`.
-4. Code hiện tại vẫn là truth source khi docs và code mâu thuẫn
+4. Safety precheck: `agent_workflow_doc/FANG_NEXT_PHASE_LLM_SAFETY_PRECHECK_REPORT.md`.
+5. Code hiện tại vẫn là truth source khi docs và code mâu thuẫn
 * NOTE FROM HƯNG: Đã resolve hầu hết mâu thuân. Docs - code đã chuẩn
 
 ## Phạm vi bắt buộc
@@ -83,6 +90,7 @@ Các mục sau là phần việc của `P1_A_B_inc`:
 2. Review context window management cho luồng chat mới: warning, hard-stop behavior, summarize/branch option và per-model budget.
 3. Đề xuất per-model context budget map nếu khối lượng vẫn kiểm soát được; nếu quá tải, tách thành open question cho Hưng.
 4. Tạo eval tối thiểu cho parser, JobApplication full-CV chat, NMAIex mapper và language proficiency normalization.
+5. Bổ sung rubric và seed cases cho prompt injection/jailbreak/adversarial attacks, đặc biệt là indirect prompt injection từ CV/JD/email/ATS.
 
 Lưu ý: `CHAT_FULL_CV` là người implement feature chuyển chat sang full CV. Bạn hỗ trợ review prompt/eval cho luồng mới, nhưng không tự đổi retrieval architecture nếu chưa nằm trong scope của task bạn đang làm.
 
@@ -96,7 +104,7 @@ Tạo report và tài liệu strategy-level bằng tiếng Việt, có file refe
    - File refs và dòng/hàm liên quan.
    - Mức ưu tiên nâng cấp.
 2. **Prompt strategy-level document**
-   - Định nghĩa prompt policy cho FANG: grounding, untrusted input, HR/compliance, output contract, fallback và observability.
+   - Định nghĩa prompt policy cho FANG: grounding, untrusted input, HR/compliance, output contract, fallback, safety refusal và observability.
    - Nêu rõ prompt nào là current behavior, prompt nào là target design, prompt nào cần user/tier 1 quyết định.
    - Chất lượng tối thiểu phải tương đương tài liệu trong `docs/strategy/`: có bối cảnh, quyết định, trade-off, scope, risks và acceptance criteria.
 3. **Prompt redesign proposals**
@@ -106,6 +114,7 @@ Tạo report và tài liệu strategy-level bằng tiếng Việt, có file refe
    - Format case.
    - Rubric/assertions.
    - Case tối thiểu cho các prompt priority cao.
+   - Adversarial seed cases cho direct harmful request, roleplay jailbreak, authority override, translation/encoding bypass, partial code completion và indirect prompt injection.
 5. **Open questions**
    - Những điểm cần Hưng quyết định trước khi đổi behavior hoặc kiến trúc.
 
