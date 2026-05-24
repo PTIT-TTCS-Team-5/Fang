@@ -7,9 +7,12 @@ Khi một request gửi đến `/v2/chat/query`, hệ thống thực hiện pipe
 
 1.  **Validate**: Kiểm tra xem ứng viên đã được ingestion thành công chưa.
 2.  **Conversation Manager**: Khởi tạo hoặc tải hội thoại từ DB.
-3.  **Embed Prompt**: Chuyển câu hỏi của HR thành vector (1024-dim).
+3.  **Embed Prompt**: Chuyển câu hỏi của HR thành vector (1536-dim, Gemini `gemini-embedding-001`).
 4.  **Vector Search**: Tìm kiếm $K$ chunks (mặc định $K=3$) có độ tương đồng cosine cao nhất.
 5.  **Multi-source Context Fetching**: Tải dữ liệu bổ trợ (JobPosting, Candidate Profile, ATS History).
+
+> [!WARNING]
+> **Trạng thái hiện tạ:** Code chỉ fetch: job title/description, candidate basic fields (tên/email/phone/bio/expyears/location), interview feedback. Các nguồn bổ sung (skills, salary/work mode/level, offers, emails) thuộc phần việc CHAT_FULL_CV và P1_A_B_inc.
 6.  **Context Assembly**: Lắp ghép dữ liệu vào System Prompt Template.
 7.  **History Loading**: Tải toàn bộ lịch sử hội thoại (không dùng sliding window).
 8.  **Budget Check**: Tính toán token dự kiến và kiểm tra ngưỡng cảnh báo (80%).
@@ -52,6 +55,10 @@ System prompt được chia thành các block rõ rệt:
 - `[VỊ TRÍ TUYỂN DỤNG]`: Ngữ cảnh để AI biết đang tuyển cho job nào.
 - `[HỒ SƠ ỨNG VIÊN]`: Thông tin định danh và kỹ năng tổng quát.
 - `[NỘI DUNG CV]`: Các đoạn CV **được truy xuất (retrieved chunks)** qua vector search theo câu hỏi hiện tại, **không phải toàn bộ full CV gốc**.
+
+> [!IMPORTANT]
+> **Quyết định đã chốt:** JobApplication chat sẽ chuyển từ fixed chunk-RAG sang full CV markdown context. Xem `agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md`. Code và tài liệu chi tiết sẽ cập nhật khi implementation hoàn tất (work package CHAT_FULL_CV).
+
 - `[LỊCH SỬ TUYỂN DỤNG]`: Ghi chú từ các vòng phỏng vấn trước.
 
 ## 5. Cấu Hình (Environment Variables)

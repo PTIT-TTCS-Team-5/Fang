@@ -50,14 +50,17 @@ Nhận xét: `CHAT_FULL_CV` có thể chuẩn bị guide sau khi P0-B xong. Khô
 
 Những điểm cần tier 1 vì là quyết định kiến trúc, semantic/product behavior, hoặc cần nghiên cứu sâu.
 
-| Item | Quyết định/hành động |
-|---|---|
-| P0-B AI/LLM Inventory | Chạy bằng Claude Opus 4.6 hoặc GPT-5.5. Nên feed P0-A report + triage này làm context, nhưng yêu cầu P0-B vẫn đọc code trước. |
-| NMAIex post-ingestion semantics | Quyết định failed NMAIex expyears/skill mapping có làm ingestion fail, partial, hay best-effort. User đã ghi nhận và dự tính giao cho thành viên quản lý JobApplication sửa, nhưng semantic nên được tier 1 chốt trước. |
-| ProTierGate cải tiến | Cân nhắc thêm self-reported confidence/error value từ model. Đây là design decision cho parser quality gate, chưa nên giao tier 2 tự nghĩ. |
-| JobPosting Agent / tool-based retrieval / MCP | User trực tiếp làm decision track riêng. Không giao implementation trước khi có decision memo. |
-| Score clipping | User đã chốt không clip; tier 1 nên review impact để tránh làm vỡ ranking API/UX/tuning trước khi tier 2 sửa code. |
-| P0-C Documentation Reconciliation | Chạy sau P0-A + P0-B + các quyết định chính. |
+Trạng thái hiện tại: các mục có ảnh hưởng trực tiếp đến Conflict/Decision Resolve đã được tier 1 xử lý và kiểm thử xong trong ngày 23/05/2026. Code thay đổi chính nằm ở commit `b8d0544 feat: tách enrichment NMAIex khỏi ingestion chính`; walkthrough kiểm thử đầy đủ được lưu tại `agent_workflow_doc/archive/walkthrough_full_system_test.md`. JobPosting Agent/MCP vẫn là decision track riêng, chưa đưa vào implementation.
+
+| Item | Status | Kết quả |
+|---|---|---|
+| P0-B AI/LLM Inventory | Done | Đã hoàn tất bằng Claude Opus, báo cáo tại `agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md`. Inventory đã map đầy đủ use case AI/LLM, prompt/model/fallback, caller map, failure gaps và observability gaps. |
+| NMAIex post-ingestion semantics | Done | Đã chốt và implement sidecar enrichment: `AIINDEXJOB.SUCCESS` chỉ đại diện pipeline ingestion chính; NMAIex enrichment có bảng trạng thái riêng, retry/backfill script riêng, fail không chặn chat/RAG. |
+| ProTierGate cải tiến | Done | `ParsedCV` đã có `parserSelfReport`; parser prompt yêu cầu model tự báo confidence/issues; deterministic gate vẫn là chính, self-confidence thấp chỉ bổ sung reason fail theo ngưỡng config mặc định `0.55`. |
+| Score clipping | Done | Default vẫn không clip ranking score (`NMAIEX_ENABLE_SCORE_CLIP=false`); `clip_score()` chỉ clip khi bật flag legacy. Đã có unit test cho raw-score default và clipped mode. |
+| Full system verification | Done | Walkthrough với Gemini Flash 3.5: unit suite `29/29` pass, compile sạch, Postman `18/18` pass, ingestion/chat/enrichment hoạt động trên DB/API thật. |
+| JobPosting Agent / tool-based retrieval / MCP | Deferred | Giữ là decision track riêng. Chỉ nên nghiên cứu/viết decision memo trước, đặc biệt nếu tách nhánh này dùng 9Router riêng vì agent tốn token. |
+| P0-C Documentation Reconciliation | Done | Đã hoàn tất reconcile docs theo code thật + P0-B report + walkthrough P0-C. Các docs active đã cập nhật NMAIex module status, Gemini embedding 1536 dims, parser/generation split, sidecar enrichment, management route, full-CV/context-budget notes và archive tài liệu historical. |
 
 * NOTE FROM USER:
    - "NMAIex post-ingestion semantics" : Phần chính (parser → chunks → embed → save for RAG) chỉ auto-retry ngắn cho transient errors rồi HR manual re-run nếu fail lâu; phần phụ (map skills/expyears → update NMAIex)  NMAIex enrichment nên có scheduled retry/backfill hoặc re-enrichment batch, không chặn chat.
@@ -78,17 +81,17 @@ Trạng thái hiện tại: đã giao tier 2 xử lý và đã review/cleanup xo
 
 ## 6. P0-C / docs reconciliation
 
-Nhóm này nên để P0-C xử lý, không làm lẻ tẻ quá sớm nếu đang muốn giữ docs nhất quán.
+Trạng thái hiện tại: Done trong ngày 24/05/2026. P0-C đã reconcile tài liệu active theo code thực tế, P0-A decisions, P0-B inventory và walkthrough của Claude Opus 4.6. Các drift còn lại được giữ dưới dạng work package riêng, không chặn merge P0-A/B/C.
 
-| Item | Hành động trong P0-C |
+| Item | Status | Kết quả |
 |---|---|
-| D01 NMAIex status | Sửa docs: NMAIex là official FANG module, không phải extension tách biệt. |
-| D02 Embedding docs | Sửa docs theo Gemini 1536. |
-| D03 Generator fallback docs | Sửa README/docs: parser có 5-tier + ProTierGate; generation có 7 model modes. |
-| D07 Management route docs | Docs dùng canonical `/v2/nmaiex/management/jobs/{id}/content`. |
-| `/v2/nmaiex/master/languages` | User sẽ sửa trong P0-C. |
-| AI_WORKFLOW_INIT.md | Update vì đang stale về NMAIex/research. |
-| Workflow docs status | Cải thiện sau; không quan trọng với runtime. |
+| D01 NMAIex status | Done | Active docs thống nhất NMAIex là module chính thức của FANG, không còn mô tả như extension tách biệt. |
+| D02 Embedding docs | Done | Embedding docs chuyển sang Gemini `gemini-embedding-001`, mặc định 1536 dims; bản OpenAI cũ được archive. |
+| D03 Generator fallback docs | Done | README/docs tách rõ parser 5-tier + ProTierGate với generation 7 `modelMode`. |
+| D07 Management route docs | Done | Docs ghi canonical `/v2/nmaiex/management/jobs/{id}/content`. |
+| `/v2/nmaiex/master/languages` | Deferred | Vẫn là gap đã biết; chưa implement runtime nên P0-C chỉ giữ trạng thái rõ ràng, không claim đã có API. |
+| AI_WORKFLOW_INIT.md | Done | Cập nhật NMAIex là module đã implement; research docs chỉ là tham khảo, không phải runtime truth. |
+| Workflow docs status | Done | Archive/index đã cập nhật để phân biệt docs active với historical. |
 
 ## 7. Archive / không quay lại sửa
 

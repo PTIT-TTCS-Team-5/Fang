@@ -1,6 +1,6 @@
 # Chiến Lược Xếp Hạng NMAIex — Ranking Engine Hai Chiều
 
-Tài liệu này định nghĩa kiến trúc và các quyết định kỹ thuật cho hệ thống xếp hạng tự động hai chiều của NMAIex (Nhập môn AI extension). NMAIex được tích hợp trực tiếp vào FANG AI Core, phục vụ mục tiêu: **ghép nối ứng viên và công việc theo mức độ phù hợp, định lượng được, thay thế việc tìm kiếm thủ công**.
+Tài liệu này định nghĩa kiến trúc và các quyết định kỹ thuật cho hệ thống xếp hạng tự động hai chiều của NMAIex (Nhập môn AI module — tích hợp chính thức trong FANG). NMAIex được tích hợp trực tiếp vào FANG AI Core, phục vụ mục tiêu: **ghép nối ứng viên và công việc theo mức độ phù hợp, định lượng được, thay thế việc tìm kiếm thủ công**.
 
 ---
 
@@ -34,8 +34,8 @@ Việc ghép nối ứng viên — công việc không chỉ đơn giản là so
 ## 2. Nguyên Tắc Thiết Kế
 
 * **FANG là trung tâm**: Mọi logic xếp hạng (embedding, vector search, scoring, penalty) nằm ở FANG. Frontend chỉ gọi JSON API.
-* **Tái sử dụng hạ tầng TTCS**: NMAIex tái dùng `embed_chunks()`, `invoke_generation()`, `acquire_conn()` — không tạo infrastructure mới.
-* **Tách biệt hoàn toàn khỏi TTCS**: Code NMAIex nằm trong các file `nmaiex_*`. Router TTCS (`/v2/chat`, `/v2/ingest`) không bị sửa.
+* **Tái sử dụng hạ tầng FANG core**: NMAIex tái dùng `embed_chunks()`, `invoke_generation()`, `acquire_conn()` — không tạo infrastructure mới.
+* **Tổ chức code tách biệt, tích hợp runtime**: Code NMAIex nằm trong các file `nmaiex_*`. Ingestion pipeline gọi NMAIex enrichment dưới dạng sidecar (xem enrichment sidecar trong `integration_strategy.md`).
 * **score_breakdown luôn trả về**: Mọi response đều chứa breakdown điểm số để debug, dù UI ẩn hay hiện tùy mode (vì lười không giấu =)) )
 * **Graceful degradation**: LLM mapper fail không được làm crash pipeline — fallback về unmatched_texts, tính tiếp.
 
@@ -355,6 +355,21 @@ Cả TTCS và NMAIex dùng chung một tài khoản Cloudinary. Tách biệt qua
 | `GET` | `/v2/nmaiex/master/levels` | Danh sách cấp bậc JOBLEVEL |
 | `GET` | `/v2/nmaiex/master/categories` | Danh sách danh mục JOBCATEGORY |
 | `GET` | `/v2/nmaiex/master/skills` | Danh sách kỹ năng SKILL (catalog cho LLM mapper) |
+
+### 12.2 Management API
+
+| Method | Path | Mô tả |
+|---|---|---|
+| `GET` | `/v2/nmaiex/management/jobs` | Danh sách jobs với filters |
+| `GET` | `/v2/nmaiex/management/jobs/{job_id}` | Chi tiết job |
+| `PUT` | `/v2/nmaiex/management/jobs/{job_id}` | Cập nhật job |
+| `PATCH` | `/v2/nmaiex/management/jobs/{job_id}/content` | **Canonical** — Cập nhật content + re-ingest job embeddings |
+| `GET` | `/v2/nmaiex/management/candidates` | Danh sách candidates với filters |
+| `GET` | `/v2/nmaiex/management/candidates/{candidate_id}` | Chi tiết candidate |
+| `PUT` | `/v2/nmaiex/management/candidates/{candidate_id}` | Cập nhật candidate |
+
+> [!IMPORTANT]
+> Route canonical cho job content update + re-ingestion là `/v2/nmaiex/management/jobs/{job_id}/content`. Route root `/v2/nmaiex/jobs/{job_id}/content` hiện trả `reingestion_status: "queued"` nhưng **không thực sự re-ingest** — cần align hoặc deprecate.
 
 > **Lưu ý**: Endpoint `/v2/nmaiex/master/languages` **chưa được triển khai (Planned / Do not call)** — bảng `LANGUAGE` tồn tại trong DB nhưng chưa có route riêng. Khi cần, thêm vào `nmaiex_routes_ranking.py` tương tự pattern master data khác.
 

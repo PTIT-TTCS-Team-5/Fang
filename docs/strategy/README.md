@@ -22,7 +22,7 @@ Tài liệu trong thư mục này trả lời câu hỏi: "Tại sao chọn các
 1. Model routing có bắt buộc can thiệp FANG không
 Không bắt buộc ở giai đoạn đầu. Có 3 mức:
 1. Không can thiệp FANG core
-* Làm policy ở lớp NMAI extension hoặc runner riêng.
+* Làm policy ở lớp NMAIex module hoặc runner riêng.
 * Ví dụ: theo từng run profile, chọn modelMode nào được phép gọi, giới hạn retry, giới hạn số vòng sửa dữ liệu.
 * Ưu điểm: an toàn, bật tắt nhanh, không ảnh hưởng API contract đang chạy.
 2. Can thiệp nhẹ, tương thích ngược

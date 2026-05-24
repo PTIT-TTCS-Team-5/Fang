@@ -22,7 +22,7 @@ Lưu trữ chi tiết từng tin nhắn trong hội thoại.
 
 ### Bảng `AIDOCUMENTCHUNK`
 Lưu trữ các đoạn cắt từ CV và vector embedding.
-- `embedding`: halfvec(1024) - Vector không gian 1024 chiều dùng cho truy tìm ngữ nghĩa. Mặc định dùng mô hình `text-embedding-3-small`.
+- `embedding`: halfvec(1536) - Vector không gian 1536 chiều dùng cho truy tìm ngữ nghĩa. Mặc định dùng mô hình Gemini `gemini-embedding-001`.
 
 ## 2. Lưu ý về Role "system" trong Chat
 Trong FANG v2, role `system` được sử dụng với mục đích đặc biệt:

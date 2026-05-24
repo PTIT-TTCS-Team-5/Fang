@@ -3,7 +3,7 @@
 Tài liệu này định nghĩa kiến trúc giao tiếp giữa FANG AI Core v2 và các client web. Mục tiêu: biến FANG thành dịch vụ API độc lập, dễ tích hợp với bất kỳ web framework nào (Streamlit, Java Servlet, Spring Boot, v.v.).
 
 > [!NOTE]
-> FANG v2 nâng cấp toàn diện: 5-tier model, RAG query API, chat management, context đa nguồn, context window management. Tất cả endpoint mới dùng prefix `/v2/`. Endpoint `/v1/` giữ lại tạm thời.
+> FANG v2 nâng cấp toàn diện: 5-tier parser + ProTierGate, RAG query API 7 modelMode, chat management, context đa nguồn, context window management. Tất cả endpoint mới dùng prefix `/v2/`. Endpoint `/v1/` giữ lại tạm thời.
 
 ## 1. Nguyên Tắc Cốt Lõi
 
@@ -23,7 +23,7 @@ Tài liệu này định nghĩa kiến trúc giao tiếp giữa FANG AI Core v2 
 | Tạo hội thoại mới từ summary | `POST /v2/chat/conversations/{id}/branch-new` |
 | Embed prompt + vector search | Nội bộ |
 | Context đa nguồn (CV + JD + ATS) | Nội bộ |
-| 5-tier model invocation + fallback | Nội bộ |
+| 5-tier parser + ProTierGate, 7 modelMode generation + fallback | Nội bộ |
 | Persist chat, audit log | Nội bộ (AICHATMESSAGE, AIQUERYLOG) |
 | Ingestion pipeline (parse→chunk→embed) | `POST /v2/ingestion/jobs` |
 | Kiểm tra trạng thái ingestion | `GET /v2/ingestion/jobs/{id}` |
@@ -36,7 +36,7 @@ Tài liệu này định nghĩa kiến trúc giao tiếp giữa FANG AI Core v2 
 | Hiển thị danh sách Job, Candidate | Truy vấn DB trực tiếp |
 | Render chat UI | Gọi FANG API, hiển thị response |
 | Upload CV | Upload lên Cloudinary → gọi FANG ingestion API |
-| Polling trạng thái CV processing | Gọi FANG `GET /v1/ingestion/jobs/{id}` |
+| Polling trạng thái CV processing | Gọi FANG `GET /v2/ingestion/jobs/{id}` |
 | Kiểm tra eligibility cho chat | Kiểm tra ingestion status = SUCCESS trước khi cho phép chat |
 
 ## 3. API Contract Đầy Đủ
@@ -191,6 +191,9 @@ Kiểm tra trạng thái ingestion.
     "errorMsg": null
 }
 ```
+
+> [!IMPORTANT]
+> **Enrichment sidecar**: `AIINDEXJOB.SUCCESS` chỉ đại diện pipeline ingestion chính (parse → chunk → embed → save). NMAIex enrichment (skill mapping, province mapping, expyears) chạy riêng biệt sau ingestion chính, có bảng trạng thái riêng, và fail enrichment không chặn chat/RAG. Xem thêm tại `app/services/nmaiex_candidate_enrichment.py`.
 
 ### 3.3 System
 

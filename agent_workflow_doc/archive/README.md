@@ -21,5 +21,14 @@ Thư mục này chứa các tài liệu workflow, kế hoạch thực thi (imple
 
 Các prompt trong [tier2_completed_tasks/](tier2_completed_tasks/) đã được dùng để giao việc, đã có kết quả và đã được tier 1 review/cleanup. Chúng chỉ còn giá trị lịch sử, không phải task đang mở.
 
+### 4. NMAIex Implementation Historical (archived via P0-C)
+
+Các tài liệu NMAIex gốc — đã hoàn thành hoặc đã lỗi thời. Chứa một số thông tin conflict với quyết định mới (ví dụ: clip score, OpenAI embedding, NMAIex extension). Giữ nguyên content để tham khảo lịch sử, **không phải truth source hiện tại**.
+
+- **[[NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md]([NMAIex]_DETAILED_IMPLEMENTATION_PLAN.md)**: Low-level design cho NMAIex (hoàn thành). Một số thiết kế đã thay đổi: embedding → Gemini, clip → disabled.
+- **[[NMAIex]_DOC_UPDATE_INSTRUCTIONS.md]([NMAIex]_DOC_UPDATE_INSTRUCTIONS.md)**: Hướng dẫn cập nhật docs sau Phase 4 NMAIex (lỗi thời — NMAIex giờ là module chính thức).
+- **[[NMAIex]_TASK_CHECKLIST_BACKEND.md]([NMAIex]_TASK_CHECKLIST_BACKEND.md)**: Checklist backend NMAIex (hoàn thành, mọi items đã [x]).
+- **[[NMAIex]_TASK_CHECKLIST_FRONTEND.md]([NMAIex]_TASK_CHECKLIST_FRONTEND.md)**: Checklist frontend NMAIex (chưa hoàn thành tất cả, nhưng đã đủ cho MVP — archive theo quyết định P0-A triage).
+
 ---
 *Cập nhật gần nhất vào ngày: 2026-05-23.*

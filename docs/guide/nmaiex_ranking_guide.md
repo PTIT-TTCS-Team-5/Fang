@@ -253,6 +253,21 @@ Năm endpoint phụ trợ phục vụ frontend dropdown — query thẳng từ D
 | `GET /v2/nmaiex/master/skills` | `SKILL` | Catalog skill chuẩn cho LLM mapper |
 | `GET /v2/nmaiex/master/languages` | `LANGUAGE` | **Chưa triển khai (Planned / Do not call)** — bảng DB đã có, route chưa được tạo |
 
+### Management API
+
+| Method | Path | Mô tả |
+|---|---|---|
+| `GET` | `/v2/nmaiex/management/jobs` | Danh sách jobs với filters |
+| `GET` | `/v2/nmaiex/management/jobs/{job_id}` | Chi tiết job |
+| `PUT` | `/v2/nmaiex/management/jobs/{job_id}` | Cập nhật job |
+| `PATCH` | `/v2/nmaiex/management/jobs/{job_id}/content` | **Canonical** — Cập nhật content + re-ingest job embeddings |
+| `GET` | `/v2/nmaiex/management/candidates` | Danh sách candidates với filters |
+| `GET` | `/v2/nmaiex/management/candidates/{candidate_id}` | Chi tiết candidate |
+| `PUT` | `/v2/nmaiex/management/candidates/{candidate_id}` | Cập nhật candidate |
+
+> [!IMPORTANT]
+> Route canonical cho job content update + re-ingestion là `/v2/nmaiex/management/jobs/{job_id}/content`.
+
 ---
 
 ## 9. Điểm Cần Chú Ý Khi Phát Triển

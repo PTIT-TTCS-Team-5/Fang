@@ -84,7 +84,7 @@ HR chọn `modelMode` khi gửi prompt:
 | `gpt-mini` | GPT-5.4 mini | Retry tenacity, **không fallback** |
 | `claude-haiku` | Claude 4.5 Haiku | Retry tenacity, **không fallback** |
 | `gemini-pro` | Gemini 3.1 Pro | Retry tenacity, **không fallback** |
-| `gpt-full` | GPT-5.4 | Retry tenacity, **không fallback** |
+| `gpt-full` | GPT-5.5 | Retry tenacity, **không fallback** |
 
 Khi HR chọn model cụ thể → FANG gọi **đúng adapter đó**, retry tenacity, nếu hết retry vẫn fail → trả lỗi rõ ràng, **không fallback**. Lý do: HR chủ động chọn, fallback âm thầm gây nhầm lẫn.
 
@@ -93,7 +93,7 @@ Khi HR chọn model cụ thể → FANG gọi **đúng adapter đó**, retry ten
 | modelMode | Fallback Chain | Hành vi |
 |---|---|---|
 | `auto-lite` | Gemini Flash → GPT mini → Claude Haiku | 3-tier fallback, retry + ProTierGate |
-| `auto-pro` | Gemini Pro → GPT 5.4 | 2-tier fallback, retry |
+| `auto-pro` | Gemini Pro → GPT-5.5 | 2-tier fallback, retry |
 
 Khi HR chọn auto → FANG áp dụng fallback chain, `fallbackPath` trong response cho biết đường đi thực tế.
 
@@ -177,6 +177,9 @@ Hiện tại FANG chỉ truy xuất CV chunks từ `AIDOCUMENTCHUNK`. Trong th�
 - **Candidate profile**: Bio, năm kinh nghiệm, kỹ năng đã ghi nhận
 - **Luồng ATS**: Lịch sử interview, feedback của interviewer, offer đã gửi, email trao đổi
 
+> [!WARNING]
+> **Trạng thái hiện tại:** Code chỉ fetch: job title/description, candidate basic fields (tên/email/phone/bio/expyears/location), interview feedback. Các nguồn bổ sung (skills, salary/work mode/level, offers, emails) thuộc phần việc CHAT_FULL_CV và P1_A_B_inc.
+
 ### 7.2 Kiến trúc Context Assembly
 
 ```mermaid
@@ -215,6 +218,12 @@ Bio: {bio}
 [Chunk 1]: {content}
 [Chunk 2]: {content}
 ...
+```
+
+> [!IMPORTANT]
+> **Quyết định đã chốt:** JobApplication chat sẽ chuyển từ fixed chunk-RAG sang full CV markdown context. Xem `agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md`. Code và tài liệu chi tiết sẽ cập nhật khi implementation hoàn tất (work package CHAT_FULL_CV).
+
+```
 
 [ATS HISTORY]
 - Phỏng vấn: {date} — Điểm: {score} — Nhận xét: {feedback}
@@ -321,7 +330,7 @@ Nếu tổng vượt model context limit → lỗi hoặc bị cắt ngầm.
 | Loại | Model ví dụ | Context limit | Budget cho history |
 |---|---|---|---|
 | 💚 Lite | Gemini Flash | ~1M tokens | ~800K tokens |
-| 💚 Lite | GPT-5.5 mini | ~400K tokens | ~320K tokens |
+| 🟢 Lite | GPT-5.4 mini | ~400K tokens | ~320K tokens |
 | 💚 Lite | Claude 4.5 Haiku | ~200K tokens | ~180K tokens |
 | 🔶 Pro | Gemini 3.1 Pro | ~1M tokens | ~960K tokens |
 | 🔶 Pro | GPT-5.5 | ~1M tokens | ~960K tokens |
@@ -334,6 +343,9 @@ Nguồn cập nhật (04/2026):
 - Gemini Models docs: Gemini family có long-context lớn; cần xác nhận limit thực tế theo model alias/runtime đang bật trước khi set budget.
 
 Khuyến nghị vận hành: dùng budget khoảng 75-85% context limit để chừa headroom cho system prompt, retrieval context, và output tokens.
+
+> [!WARNING]
+> **Trạng thái hiện tại:** Code dùng group budget (Lite 180k, Pro 960k) và vẫn gọi LLM khi vượt ngưỡng, chỉ trả `contextWarning`. Per-model budget và stop-at-threshold behavior thuộc phần việc CHAT_FULL_CV + P1_A_B_inc.
 
 ### 10.3 Chiến lược: Token Budget + Summarization (KHÔNG Sliding Window)
 
@@ -421,7 +433,7 @@ context_budget_by_model: dict[str, int] = {
     "gpt-5.4-mini": 320_000,
     "claude-4.5-haiku": 180_000,
     "gemini-pro": 960_000,
-    "gpt-5.4": 960_000,
+    "gpt-5.5": 960_000,
 }
 context_budget_warning_threshold: float = 0.80   # Cảnh báo khi > 80%
 context_summarization_model: str = "gemini-flash" # Model dùng để tóm tắt
@@ -433,7 +445,7 @@ Luồng chi tiết khi nhận `POST /v2/chat/query`:
 
 1. **Validate request**: Kiểm tra `jobAppId`, `hrId`, `modelMode`, ingestion đã SUCCESS chưa
 2. **Chat Manager**: Load hoặc tạo `AICHATCONVERSATION`
-3. **Embed prompt**: Gọi `embedding.py` → vector 1024d
+3. **Embed prompt**: Gọi `embedding.py` → vector 1536d (Gemini `gemini-embedding-001`)
 4. **Vector search**: `ORDER BY embedding <=> %s` trên `AIDOCUMENTCHUNK WHERE jobAppId`
 5. **Fetch context đa nguồn**: JobPosting + Candidate profile + ATS history
 6. **Build system prompt**: Ghép all context theo template (Section 8)
