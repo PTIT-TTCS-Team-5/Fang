@@ -234,3 +234,9 @@ note.txt
 !/nmaiex_tuning/output/backup/
 !/nmaiex_tuning/output/backup/.env.nmaiex_*
 /synthetic_data/.tmp.driveupload
+
+# Understand-Anything local scratch
+.understand-anything/intermediate/
+.understand-anything/diff-overlay.json
+.understand-anything/*.log
+.understand-anything/fingerprints.json

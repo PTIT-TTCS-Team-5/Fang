@@ -67,3 +67,33 @@ File duy nhất trong dự án được viết thủ công :b
 7. Với docs:
    - Trước tiên phải biết truth source và loại drift: docs sửa theo code, code sửa theo docs, hay tài liệu cũ cần archive/viết lại.
    - Cập nhật nhỏ giao tier 2 được. Strategy, guide quan trọng hoặc doc reconciliation lớn cần có plan/review của tier 1.
+
+## Luồng làm việc mới với understand-everything
+```
+A. Baseline graph
+   /understand
+   /understand-dashboard
+
+B. Repo truth report
+   /understand-onboard
+   /understand-domain
+   hỏi graph các module/domain/core flow
+
+C. Tier 1 decision
+   GPT-5.5 hoặc Opus viết decision memo + implementation plan
+
+D. Phase execution
+   Tier 2 code theo cụm nhỏ
+   mỗi cụm phải có output + test + report
+
+E. Impact check
+   /understand-diff
+   Tier 1 review nếu ảnh hưởng rộng
+
+F. Docs sync
+   cập nhật strategy/guide/README
+   chạy lại /understand
+
+G. Commit
+   commit cả code + docs + graph nếu muốn share team
+```

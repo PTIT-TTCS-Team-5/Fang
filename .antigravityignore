@@ -1,0 +1,26 @@
+# Môi trường ảo và Cache của Python
+venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+*.pyo
+*.pyd
+
+# Thư mục cấu hình của IDE & công cụ (tránh gây nhiễu cho AI)
+.git/
+.vscode/
+.continue/
+.postman/
+
+# Các file nhạy cảm và các bản backup môi trường (tránh lộ thông tin & dư thừa)
+.env
+.env.nmaiex
+.env.nmaiex.backup_*
+
+# Các file nhị phân và tài liệu tĩnh lớn không phục vụ logic code
+gitleaks.exe
+*.pdf
+
+# File log sinh ra
+*.log

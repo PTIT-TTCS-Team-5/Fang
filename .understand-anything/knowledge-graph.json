@@ -1,0 +1,3921 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "FANG",
+    "languages": [
+      "config",
+      "http",
+      "json",
+      "markdown",
+      "python",
+      "sql",
+      "toml",
+      "txt",
+      "unknown",
+      "yaml"
+    ],
+    "frameworks": [
+      "FastAPI",
+      "Pydantic",
+      "Uvicorn"
+    ],
+    "description": "FastAPI-based AI core for the miCareer ecosystem that handles CV ingestion, RAG chat, and NMAIex ranking workflows with PostgreSQL-backed persistence and multi-model LLM orchestration. Note: this project has over 100 source files; consider scoping analysis to a subdirectory for faster results.",
+    "analyzedAt": "2026-05-27T05:07:49.851Z",
+    "gitCommitHash": "fca51de8725ca74b2ce927a8df9cf7e23886732b"
+  },
+  "nodes": [
+    {
+      "id": "file:.antigravityignore",
+      "type": "file",
+      "name": ".antigravityignore",
+      "filePath": ".antigravityignore",
+      "summary": "Lists exclusion patterns for the companion antigravity tooling and related repository analysis workflows.",
+      "tags": [
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.env.example",
+      "type": "config",
+      "name": ".env.example",
+      "filePath": ".env.example",
+      "summary": "Provides the baseline environment variable template required to configure the application and its external providers.",
+      "tags": [
+        "configuration",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.env.nmaiex.backup_20260520_195429",
+      "type": "config",
+      "name": ".env.nmaiex.backup_20260520_195429",
+      "filePath": ".env.nmaiex.backup_20260520_195429",
+      "summary": "Provides NMAIex-oriented environment settings used to configure ranking and enrichment behavior.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.env.nmaiex.backup_20260521_040458",
+      "type": "config",
+      "name": ".env.nmaiex.backup_20260521_040458",
+      "filePath": ".env.nmaiex.backup_20260521_040458",
+      "summary": "Provides NMAIex-oriented environment settings used to configure ranking and enrichment behavior.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.env.nmaiex.example",
+      "type": "config",
+      "name": ".env.nmaiex.example",
+      "filePath": ".env.nmaiex.example",
+      "summary": "Provides NMAIex-oriented environment settings used to configure ranking and enrichment behavior.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.gitleaks.toml",
+      "type": "config",
+      "name": ".gitleaks.toml",
+      "filePath": ".gitleaks.toml",
+      "summary": "Configures repository secret scanning rules used during development and release hygiene checks.",
+      "tags": [
+        "configuration",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.pre-commit-config.yaml",
+      "type": "config",
+      "name": ".pre-commit-config.yaml",
+      "filePath": ".pre-commit-config.yaml",
+      "summary": "Defines pre-commit automation used to enforce local quality checks before changes are committed.",
+      "tags": [
+        "configuration",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.understand-anything/.understandignore",
+      "type": "file",
+      "name": ".understandignore",
+      "filePath": ".understand-anything/.understandignore",
+      "summary": "Lists analysis exclusions that control which files are omitted from the repository knowledge graph build.",
+      "tags": [
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/[NMAIex]_PROVINCE_MERGER_GUIDE.md",
+      "type": "document",
+      "name": "[NMAIex]_PROVINCE_MERGER_GUIDE.md",
+      "filePath": "agent_workflow_doc/[NMAIex]_PROVINCE_MERGER_GUIDE.md",
+      "summary": "Workflow and planning document for [nmaiex] province merger guide used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "ranking",
+        "reference"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:agent_workflow_doc/AI_MANUAL_UPDATE.md",
+      "type": "document",
+      "name": "AI_MANUAL_UPDATE.md",
+      "filePath": "agent_workflow_doc/AI_MANUAL_UPDATE.md",
+      "summary": "Workflow and planning document for ai manual update used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:agent_workflow_doc/AI_WORKFLOW_INIT.md",
+      "type": "document",
+      "name": "AI_WORKFLOW_INIT.md",
+      "filePath": "agent_workflow_doc/AI_WORKFLOW_INIT.md",
+      "summary": "Workflow and planning document for ai workflow init used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
+      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
+      "summary": "Workflow and planning document for fang next phase 9router deep research prompt used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
+      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
+      "summary": "Workflow and planning document for fang next phase chat full cv assignment used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "chat",
+        "ingestion",
+        "reference"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_DECISIONS.md",
+      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md",
+      "summary": "Workflow and planning document for fang next phase decisions used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
+      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
+      "summary": "Workflow and planning document for fang next phase p0a repo reality audit report used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
+      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
+      "summary": "Workflow and planning document for fang next phase p0a repo reality audit used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
+      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
+      "summary": "Workflow and planning document for fang next phase p0a user note triage used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
+      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
+      "summary": "Workflow and planning document for fang next phase p0b ai llm inventory used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
+      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
+      "summary": "Workflow and planning document for fang next phase p0c doc reconciliation used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
+      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
+      "summary": "Workflow and planning document for fang next phase p0d handoff and assignment used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
+      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
+      "summary": "Workflow and planning document for fang next phase p1a prompt review and min eval used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/GIT_WORKFLOW_GUIDE.md",
+      "type": "document",
+      "name": "GIT_WORKFLOW_GUIDE.md",
+      "filePath": "agent_workflow_doc/GIT_WORKFLOW_GUIDE.md",
+      "summary": "Workflow and planning document for git workflow guide used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:agent_workflow_doc/harness/rule.md",
+      "type": "document",
+      "name": "rule.md",
+      "filePath": "agent_workflow_doc/harness/rule.md",
+      "summary": "Workflow and planning document for rule used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:agent_workflow_doc/KINH_NGHIEM.md",
+      "type": "document",
+      "name": "KINH_NGHIEM.md",
+      "filePath": "agent_workflow_doc/KINH_NGHIEM.md",
+      "summary": "Workflow and planning document for kinh nghiem used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md",
+      "type": "document",
+      "name": "P0B_AI_LLM_INVENTORY_REPORT.md",
+      "filePath": "agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md",
+      "summary": "Workflow and planning document for p0b ai llm inventory report used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:agent_workflow_doc/P0C_DOC_RECONCILIATION_PLAN.md",
+      "type": "document",
+      "name": "P0C_DOC_RECONCILIATION_PLAN.md",
+      "filePath": "agent_workflow_doc/P0C_DOC_RECONCILIATION_PLAN.md",
+      "summary": "Workflow and planning document for p0c doc reconciliation plan used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:agent_workflow_doc/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "agent_workflow_doc/README.md",
+      "summary": "Workflow and planning document for readme used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "app/__init__.py",
+      "summary": "Implements project logic for init.",
+      "tags": [
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/api/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "app/api/__init__.py",
+      "summary": "Defines API routing logic for init within the FastAPI application.",
+      "tags": [
+        "api-handler",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/api/nmaiex_routes_management.py",
+      "type": "file",
+      "name": "nmaiex_routes_management.py",
+      "filePath": "app/api/nmaiex_routes_management.py",
+      "summary": "Defines NMAIex management endpoints for refreshing structured job and candidate data used by ranking flows.",
+      "tags": [
+        "api-handler",
+        "ranking",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "file",
+      "name": "nmaiex_routes_ranking.py",
+      "filePath": "app/api/nmaiex_routes_ranking.py",
+      "summary": "Defines the NMAIex ranking endpoints that expose bidirectional job-to-candidate and candidate-to-job scoring results.",
+      "tags": [
+        "api-handler",
+        "ranking",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/api/routes_chat.py",
+      "type": "file",
+      "name": "routes_chat.py",
+      "filePath": "app/api/routes_chat.py",
+      "summary": "Defines the chat API endpoints, conversation flows, and request handling for the RAG interaction surface.",
+      "tags": [
+        "api-handler",
+        "chat",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/api/routes_ingestion.py",
+      "type": "file",
+      "name": "routes_ingestion.py",
+      "filePath": "app/api/routes_ingestion.py",
+      "summary": "Defines the ingestion API endpoints that trigger CV processing jobs and expose ingestion job status.",
+      "tags": [
+        "api-handler",
+        "ingestion",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/core/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "app/core/__init__.py",
+      "summary": "Provides shared core infrastructure for init in the application runtime.",
+      "tags": [
+        "config",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/core/config.py",
+      "type": "file",
+      "name": "config.py",
+      "filePath": "app/core/config.py",
+      "summary": "Centralizes runtime settings, environment loading, and application-wide configuration used across the FastAPI service.",
+      "tags": [
+        "config",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/core/database.py",
+      "type": "file",
+      "name": "database.py",
+      "filePath": "app/core/database.py",
+      "summary": "Manages database connectivity and shared persistence primitives for the application runtime.",
+      "tags": [
+        "config",
+        "persistence",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/core/logging.py",
+      "type": "file",
+      "name": "logging.py",
+      "filePath": "app/core/logging.py",
+      "summary": "Configures structured logging helpers and shared logger behavior for request and pipeline diagnostics.",
+      "tags": [
+        "config",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/core/nmaiex_config.py",
+      "type": "file",
+      "name": "nmaiex_config.py",
+      "filePath": "app/core/nmaiex_config.py",
+      "summary": "Centralizes runtime settings, environment loading, and application-wide configuration used across the FastAPI service.",
+      "tags": [
+        "config",
+        "ranking",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/main.py",
+      "type": "file",
+      "name": "main.py",
+      "filePath": "app/main.py",
+      "summary": "Bootstraps the FastAPI application, initializes shared resources, and mounts the chat, ingestion, and NMAIex routers.",
+      "tags": [
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/models/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "app/models/__init__.py",
+      "summary": "Defines application data models for init.",
+      "tags": [
+        "data-model",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/models/chat.py",
+      "type": "file",
+      "name": "chat.py",
+      "filePath": "app/models/chat.py",
+      "summary": "Defines chat request, response, and conversation models used by the RAG API surface and persistence flow.",
+      "tags": [
+        "data-model",
+        "chat",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/models/cv_models.py",
+      "type": "file",
+      "name": "cv_models.py",
+      "filePath": "app/models/cv_models.py",
+      "summary": "Defines structured CV data models that drive parsing, chunking, markdown generation, and persistence.",
+      "tags": [
+        "data-model",
+        "ingestion",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/models/ingestion.py",
+      "type": "file",
+      "name": "ingestion.py",
+      "filePath": "app/models/ingestion.py",
+      "summary": "Defines ingestion job schemas and status payloads exchanged by the ingestion API and services.",
+      "tags": [
+        "data-model",
+        "ingestion",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/models/nmaiex_schemas.py",
+      "type": "file",
+      "name": "nmaiex_schemas.py",
+      "filePath": "app/models/nmaiex_schemas.py",
+      "summary": "Defines schemas for NMAIex ranking, enrichment, and master-data responses used by ranking endpoints.",
+      "tags": [
+        "data-model",
+        "ranking",
+        "persistence"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/services/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "app/services/__init__.py",
+      "summary": "Implements service-layer logic for init in the AI core.",
+      "tags": [
+        "service",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/services/chat_persistence.py",
+      "type": "file",
+      "name": "chat_persistence.py",
+      "filePath": "app/services/chat_persistence.py",
+      "summary": "Persists chat conversations, messages, and summarization state for the RAG chat workflow.",
+      "tags": [
+        "service",
+        "chat",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/services/chunking.py",
+      "type": "file",
+      "name": "chunking.py",
+      "filePath": "app/services/chunking.py",
+      "summary": "Transforms parsed CV content into structured chunks suitable for embedding, retrieval, and downstream persistence.",
+      "tags": [
+        "service",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/services/cv_loader.py",
+      "type": "file",
+      "name": "cv_loader.py",
+      "filePath": "app/services/cv_loader.py",
+      "summary": "Loads CV source content into the ingestion pipeline before parsing and chunk generation.",
+      "tags": [
+        "service",
+        "ingestion",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/services/cv_parser_adapters.py",
+      "type": "file",
+      "name": "cv_parser_adapters.py",
+      "filePath": "app/services/cv_parser_adapters.py",
+      "summary": "Implements provider-specific adapter logic and fallback orchestration for CV parsing model calls.",
+      "tags": [
+        "service",
+        "ingestion",
+        "parsing"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/cv_parser.py",
+      "type": "file",
+      "name": "cv_parser.py",
+      "filePath": "app/services/cv_parser.py",
+      "summary": "Coordinates CV parsing with LLM-backed extraction and quality checks for the ingestion pipeline.",
+      "tags": [
+        "service",
+        "ingestion",
+        "parsing"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/embedding.py",
+      "type": "file",
+      "name": "embedding.py",
+      "filePath": "app/services/embedding.py",
+      "summary": "Creates vector embeddings and embedding-related batching behavior for retrieval and enrichment workflows.",
+      "tags": [
+        "service",
+        "embedding",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/services/job_ingestion_service.py",
+      "type": "file",
+      "name": "job_ingestion_service.py",
+      "filePath": "app/services/job_ingestion_service.py",
+      "summary": "Coordinates ingestion-side processing for job content as part of the NMAIex management workflow.",
+      "tags": [
+        "service",
+        "ingestion",
+        "python"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/services/markdown_builder.py",
+      "type": "file",
+      "name": "markdown_builder.py",
+      "filePath": "app/services/markdown_builder.py",
+      "summary": "Builds normalized markdown representations of CV content for chunking, storage, and downstream retrieval.",
+      "tags": [
+        "service",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/nmaiex_candidate_enrichment.py",
+      "type": "file",
+      "name": "nmaiex_candidate_enrichment.py",
+      "filePath": "app/services/nmaiex_candidate_enrichment.py",
+      "summary": "Enriches candidate records with derived NMAIex attributes used by ranking and filtering logic.",
+      "tags": [
+        "service",
+        "ranking",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/nmaiex_mapper_service.py",
+      "type": "file",
+      "name": "nmaiex_mapper_service.py",
+      "filePath": "app/services/nmaiex_mapper_service.py",
+      "summary": "Maps raw profile and job information into NMAIex canonical dimensions such as skills, province, and experience.",
+      "tags": [
+        "service",
+        "ranking",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/nmaiex_ranking_service.py",
+      "type": "file",
+      "name": "nmaiex_ranking_service.py",
+      "filePath": "app/services/nmaiex_ranking_service.py",
+      "summary": "Calculates NMAIex ranking scores, scoring breakdowns, and bidirectional recommendation results.",
+      "tags": [
+        "service",
+        "ranking",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/persistence.py",
+      "type": "file",
+      "name": "persistence.py",
+      "filePath": "app/services/persistence.py",
+      "summary": "Saves parsed CV artifacts, chunks, embeddings, and related ingestion records into persistent storage.",
+      "tags": [
+        "service",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/rag_model_adapters.py",
+      "type": "file",
+      "name": "rag_model_adapters.py",
+      "filePath": "app/services/rag_model_adapters.py",
+      "summary": "Wraps provider-specific chat model calls and fallback behavior used by the RAG generation flow.",
+      "tags": [
+        "service",
+        "rag",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/rag_orchestrator.py",
+      "type": "file",
+      "name": "rag_orchestrator.py",
+      "filePath": "app/services/rag_orchestrator.py",
+      "summary": "Coordinates prompt assembly, context management, and model execution for chat generation.",
+      "tags": [
+        "service",
+        "rag",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/rag_query.py",
+      "type": "file",
+      "name": "rag_query.py",
+      "filePath": "app/services/rag_query.py",
+      "summary": "Runs retrieval, context preparation, and answer generation for chat requests over indexed candidate and job data.",
+      "tags": [
+        "service",
+        "rag",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "table:database/root_data.sql",
+      "type": "table",
+      "name": "root_data.sql",
+      "filePath": "database/root_data.sql",
+      "summary": "Seeds foundational reference data needed by the application and ranking pipelines.",
+      "tags": [
+        "database",
+        "persistence",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "table:database/schema_ai_core.sql",
+      "type": "table",
+      "name": "schema_ai_core.sql",
+      "filePath": "database/schema_ai_core.sql",
+      "summary": "Defines the core AI schema used by ingestion, retrieval, and application-side persistence flows.",
+      "tags": [
+        "database",
+        "persistence",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "table:database/schema_web_core.sql",
+      "type": "table",
+      "name": "schema_web_core.sql",
+      "filePath": "database/schema_web_core.sql",
+      "summary": "Defines companion web-facing schema objects and relational structures referenced by the AI core.",
+      "tags": [
+        "database",
+        "persistence",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "table:database/seed_data.sql",
+      "type": "table",
+      "name": "seed_data.sql",
+      "filePath": "database/seed_data.sql",
+      "summary": "Seeds the database with application data used for local development, testing, and ranking scenarios.",
+      "tags": [
+        "database",
+        "persistence",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "table:database/seed_synth.sql",
+      "type": "table",
+      "name": "seed_synth.sql",
+      "filePath": "database/seed_synth.sql",
+      "summary": "Seeds synthetic records that support local testing and evaluation of database-backed workflows.",
+      "tags": [
+        "database",
+        "persistence",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/cau_truc_thu_muc.txt",
+      "type": "document",
+      "name": "cau_truc_thu_muc.txt",
+      "filePath": "docs/cau_truc_thu_muc.txt",
+      "summary": "Documentation covering cau truc thu muc for the project.",
+      "tags": [
+        "documentation",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/strategy/chunking_strategy.md",
+      "type": "document",
+      "name": "chunking_strategy.md",
+      "filePath": "docs/strategy/chunking_strategy.md",
+      "summary": "Strategy document describing chunking strategy decisions, tradeoffs, and intended system behavior.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/strategy/embedding_strategy.md",
+      "type": "document",
+      "name": "embedding_strategy.md",
+      "filePath": "docs/strategy/embedding_strategy.md",
+      "summary": "Strategy document describing embedding strategy decisions, tradeoffs, and intended system behavior.",
+      "tags": [
+        "documentation",
+        "embedding",
+        "reference"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/strategy/integration_strategy.md",
+      "type": "document",
+      "name": "integration_strategy.md",
+      "filePath": "docs/strategy/integration_strategy.md",
+      "summary": "Strategy document describing integration strategy decisions, tradeoffs, and intended system behavior.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/strategy/nmaiex_ranking_strategy.md",
+      "type": "document",
+      "name": "nmaiex_ranking_strategy.md",
+      "filePath": "docs/strategy/nmaiex_ranking_strategy.md",
+      "summary": "Strategy document describing nmaiex ranking strategy decisions, tradeoffs, and intended system behavior.",
+      "tags": [
+        "documentation",
+        "ranking",
+        "reference"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/strategy/rag_query_strategy.md",
+      "type": "document",
+      "name": "rag_query_strategy.md",
+      "filePath": "docs/strategy/rag_query_strategy.md",
+      "summary": "Strategy document describing rag query strategy decisions, tradeoffs, and intended system behavior.",
+      "tags": [
+        "documentation",
+        "rag",
+        "reference"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/strategy/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "docs/strategy/README.md",
+      "summary": "Strategy document describing readme decisions, tradeoffs, and intended system behavior.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/system_architecture.md",
+      "type": "document",
+      "name": "system_architecture.md",
+      "filePath": "docs/system_architecture.md",
+      "summary": "Documents the system architecture, major runtime components, and the relationships between ingestion, chat, and ranking flows.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/.resources/definition.yaml",
+      "type": "config",
+      "name": "definition.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/.resources/definition.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "api-contract",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Chat API/.resources/definition.yaml",
+      "type": "config",
+      "name": "definition.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Chat API/.resources/definition.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "chat",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Chat API/GET v2-chat-conversations-id-messages.request.yaml",
+      "type": "config",
+      "name": "GET v2-chat-conversations-id-messages.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Chat API/GET v2-chat-conversations-id-messages.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "chat",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Chat API/GET v2-chat-conversations.request.yaml",
+      "type": "config",
+      "name": "GET v2-chat-conversations.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Chat API/GET v2-chat-conversations.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "chat",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-conversations-id-branch-new.request.yaml",
+      "type": "config",
+      "name": "POST v2-chat-conversations-id-branch-new.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-conversations-id-branch-new.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "chat",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-conversations-id-summarize.request.yaml",
+      "type": "config",
+      "name": "POST v2-chat-conversations-id-summarize.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-conversations-id-summarize.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "chat",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-query.request.yaml",
+      "type": "config",
+      "name": "POST v2-chat-query.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-query.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "chat",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Ingestion API/.resources/definition.yaml",
+      "type": "config",
+      "name": "definition.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Ingestion API/.resources/definition.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ingestion",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Ingestion API/GET v2-ingestion-jobs-indexJobId.request.yaml",
+      "type": "config",
+      "name": "GET v2-ingestion-jobs-indexJobId.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Ingestion API/GET v2-ingestion-jobs-indexJobId.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ingestion",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Ingestion API/POST v2-ingestion-jobs.request.yaml",
+      "type": "config",
+      "name": "POST v2-ingestion-jobs.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Ingestion API/POST v2-ingestion-jobs.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ingestion",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-candidates-cv.request.yaml",
+      "type": "config",
+      "name": "PATCH v2-nmaiex-management-candidates-cv.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-candidates-cv.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-jobs-content.request.yaml",
+      "type": "config",
+      "name": "PATCH v2-nmaiex-management-jobs-content.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-jobs-content.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-jobs-structured.request.yaml",
+      "type": "config",
+      "name": "PATCH v2-nmaiex-management-jobs-structured.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-jobs-structured.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/.resources/definition.yaml",
+      "type": "config",
+      "name": "definition.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/.resources/definition.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-categories.request.yaml",
+      "type": "config",
+      "name": "GET v2-nmaiex-master-categories.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-categories.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-levels.request.yaml",
+      "type": "config",
+      "name": "GET v2-nmaiex-master-levels.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-levels.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-provinces.request.yaml",
+      "type": "config",
+      "name": "GET v2-nmaiex-master-provinces.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-provinces.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-skills.request.yaml",
+      "type": "config",
+      "name": "GET v2-nmaiex-master-skills.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-skills.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/.resources/definition.yaml",
+      "type": "config",
+      "name": "definition.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/.resources/definition.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/GET v2-nmaiex-ranking-candidates-job_id.request.yaml",
+      "type": "config",
+      "name": "GET v2-nmaiex-ranking-candidates-job_id.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/GET v2-nmaiex-ranking-candidates-job_id.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/GET v2-nmaiex-ranking-jobs-candidate_id.request.yaml",
+      "type": "config",
+      "name": "GET v2-nmaiex-ranking-jobs-candidate_id.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/GET v2-nmaiex-ranking-jobs-candidate_id.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "ranking",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/.resources/definition.yaml",
+      "type": "config",
+      "name": "definition.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Smoke Tests/.resources/definition.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "api-contract",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/Test Chat-Ingestion-Ranking Flow.request.yaml",
+      "type": "config",
+      "name": "Test Chat-Ingestion-Ranking Flow.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Smoke Tests/Test Chat-Ingestion-Ranking Flow.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "chat",
+        "ingestion",
+        "api-contract"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/Test Health Check.request.yaml",
+      "type": "config",
+      "name": "Test Health Check.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/Smoke Tests/Test Health Check.request.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "api-contract",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/FANG_v2_Collection.postman_collection.json",
+      "type": "config",
+      "name": "FANG_v2_Collection.postman_collection.json",
+      "filePath": "postman/FANG_v2_Collection.postman_collection.json",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "api-contract",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "config:postman/globals/workspace.globals.yaml",
+      "type": "config",
+      "name": "workspace.globals.yaml",
+      "filePath": "postman/globals/workspace.globals.yaml",
+      "summary": "Defines Postman collection or request configuration used to exercise the application APIs and smoke-test key flows.",
+      "tags": [
+        "configuration",
+        "api-contract",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:postman/POSTMAN_SETUP_GUIDE.md",
+      "type": "document",
+      "name": "POSTMAN_SETUP_GUIDE.md",
+      "filePath": "postman/POSTMAN_SETUP_GUIDE.md",
+      "summary": "Guides Postman-based setup and manual API exercise paths for the FANG service.",
+      "tags": [
+        "documentation",
+        "api-contract",
+        "reference"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Explains the FANG AI core, its FastAPI-based ingestion and RAG chat architecture, and the operational setup expected by the project.",
+      "tags": [
+        "entry-point",
+        "documentation",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:requirements.txt",
+      "type": "document",
+      "name": "requirements.txt",
+      "filePath": "requirements.txt",
+      "summary": "Lists the Python package dependencies required to run the FastAPI service, LLM integrations, and supporting utilities.",
+      "tags": [
+        "documentation",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/extract_markdown_base64_images.py",
+      "type": "file",
+      "name": "extract_markdown_base64_images.py",
+      "filePath": "scripts/extract_markdown_base64_images.py",
+      "summary": "Utility script for extracting and normalizing embedded markdown images from source content.",
+      "tags": [
+        "utility",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:scripts/fetch_available_models.py",
+      "type": "file",
+      "name": "fetch_available_models.py",
+      "filePath": "scripts/fetch_available_models.py",
+      "summary": "Utility script for listing available model backends that can be used by the application runtime.",
+      "tags": [
+        "utility",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/list_gemini_models_direct.py",
+      "type": "file",
+      "name": "list_gemini_models_direct.py",
+      "filePath": "scripts/list_gemini_models_direct.py",
+      "summary": "Utility script for directly querying Gemini model availability outside the main application runtime.",
+      "tags": [
+        "utility",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/list_gemini_models.py",
+      "type": "file",
+      "name": "list_gemini_models.py",
+      "filePath": "scripts/list_gemini_models.py",
+      "summary": "Utility script for enumerating Gemini models through the project?s configured access path.",
+      "tags": [
+        "utility",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/redistribute_applications.py",
+      "type": "file",
+      "name": "redistribute_applications.py",
+      "filePath": "scripts/redistribute_applications.py",
+      "summary": "Operational script for redistributing application records during maintenance or test-data preparation.",
+      "tags": [
+        "utility",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:scripts/reset_and_seed_db.py",
+      "type": "file",
+      "name": "reset_and_seed_db.py",
+      "filePath": "scripts/reset_and_seed_db.py",
+      "summary": "Operational script that resets the database and seeds baseline data for local development and testing.",
+      "tags": [
+        "utility",
+        "persistence",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/retry_nmaiex_candidate_enrichment.py",
+      "type": "file",
+      "name": "retry_nmaiex_candidate_enrichment.py",
+      "filePath": "scripts/retry_nmaiex_candidate_enrichment.py",
+      "summary": "Operational script for retrying NMAIex candidate enrichment jobs after earlier failures.",
+      "tags": [
+        "utility",
+        "ranking",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/run_gitleaks.py",
+      "type": "file",
+      "name": "run_gitleaks.py",
+      "filePath": "scripts/run_gitleaks.py",
+      "summary": "Operational script for running repository secret scanning and surfacing gitleaks findings.",
+      "tags": [
+        "utility",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/smoke_test.py",
+      "type": "file",
+      "name": "smoke_test.py",
+      "filePath": "scripts/smoke_test.py",
+      "summary": "Entry script for running a lightweight smoke test against the local FastAPI application.",
+      "tags": [
+        "utility",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:smoke_tests/test_chat_api.py",
+      "type": "file",
+      "name": "test_chat_api.py",
+      "filePath": "smoke_tests/test_chat_api.py",
+      "summary": "Smoke test covering test chat api against the running service and its core workflows.",
+      "tags": [
+        "test",
+        "chat",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:smoke_tests/test_chunking.py",
+      "type": "file",
+      "name": "test_chunking.py",
+      "filePath": "smoke_tests/test_chunking.py",
+      "summary": "Smoke test covering test chunking against the running service and its core workflows.",
+      "tags": [
+        "test",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:smoke_tests/test_e2e_pipeline.py",
+      "type": "file",
+      "name": "test_e2e_pipeline.py",
+      "filePath": "smoke_tests/test_e2e_pipeline.py",
+      "summary": "Smoke test covering test e2e pipeline against the running service and its core workflows.",
+      "tags": [
+        "test",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:smoke_tests/test_parser_db.py",
+      "type": "file",
+      "name": "test_parser_db.py",
+      "filePath": "smoke_tests/test_parser_db.py",
+      "summary": "Smoke test covering test parser db against the running service and its core workflows.",
+      "tags": [
+        "test",
+        "parsing",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:smoke_tests/test_parser.py",
+      "type": "file",
+      "name": "test_parser.py",
+      "filePath": "smoke_tests/test_parser.py",
+      "summary": "Smoke test covering test parser against the running service and its core workflows.",
+      "tags": [
+        "test",
+        "parsing",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:test_api.http",
+      "type": "file",
+      "name": "test_api.http",
+      "filePath": "test_api.http",
+      "summary": "Collects manual HTTP requests for exercising the main API endpoints during local development and debugging.",
+      "tags": [
+        "api-contract",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/unit_test_chunking.py",
+      "type": "file",
+      "name": "unit_test_chunking.py",
+      "filePath": "tests/unit/unit_test_chunking.py",
+      "summary": "Unit test module validating unit test chunking behavior within the application.",
+      "tags": [
+        "test",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/unit_test_embedding.py",
+      "type": "file",
+      "name": "unit_test_embedding.py",
+      "filePath": "tests/unit/unit_test_embedding.py",
+      "summary": "Unit test module validating unit test embedding behavior within the application.",
+      "tags": [
+        "test",
+        "embedding",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/unit_test_ingestion_flow.py",
+      "type": "file",
+      "name": "unit_test_ingestion_flow.py",
+      "filePath": "tests/unit/unit_test_ingestion_flow.py",
+      "summary": "Unit test module validating unit test ingestion flow behavior within the application.",
+      "tags": [
+        "test",
+        "ingestion",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/unit_test_nmaiex_candidate_enrichment.py",
+      "type": "file",
+      "name": "unit_test_nmaiex_candidate_enrichment.py",
+      "filePath": "tests/unit/unit_test_nmaiex_candidate_enrichment.py",
+      "summary": "Unit test module validating unit test nmaiex candidate enrichment behavior within the application.",
+      "tags": [
+        "test",
+        "ranking",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/unit_test_nmaiex_score_clipping.py",
+      "type": "file",
+      "name": "unit_test_nmaiex_score_clipping.py",
+      "filePath": "tests/unit/unit_test_nmaiex_score_clipping.py",
+      "summary": "Unit test module validating unit test nmaiex score clipping behavior within the application.",
+      "tags": [
+        "test",
+        "ranking",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/unit_test_parser_policy.py",
+      "type": "file",
+      "name": "unit_test_parser_policy.py",
+      "filePath": "tests/unit/unit_test_parser_policy.py",
+      "summary": "Unit test module validating unit test parser policy behavior within the application.",
+      "tags": [
+        "test",
+        "parsing",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/unit/unit_test_persistence.py",
+      "type": "file",
+      "name": "unit_test_persistence.py",
+      "filePath": "tests/unit/unit_test_persistence.py",
+      "summary": "Unit test module validating unit test persistence behavior within the application.",
+      "tags": [
+        "test",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:app/api/nmaiex_routes_management.py",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_management.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_management.py",
+      "target": "file:app/models/ingestion.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_management.py",
+      "target": "file:app/models/nmaiex_schemas.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_management.py",
+      "target": "file:app/services/job_ingestion_service.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_management.py",
+      "target": "file:app/services/nmaiex_mapper_service.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_management.py",
+      "target": "file:app/services/persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_ranking.py",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_ranking.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_ranking.py",
+      "target": "file:app/models/ingestion.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_ranking.py",
+      "target": "file:app/models/nmaiex_schemas.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_ranking.py",
+      "target": "file:app/services/nmaiex_mapper_service.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_ranking.py",
+      "target": "file:app/services/nmaiex_ranking_service.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/nmaiex_routes_ranking.py",
+      "target": "file:app/services/persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_chat.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_chat.py",
+      "target": "file:app/models/chat.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_chat.py",
+      "target": "file:app/services/chat_persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_chat.py",
+      "target": "file:app/services/rag_model_adapters.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_chat.py",
+      "target": "file:app/services/rag_orchestrator.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_chat.py",
+      "target": "file:app/services/rag_query.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_ingestion.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_ingestion.py",
+      "target": "file:app/models/cv_models.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_ingestion.py",
+      "target": "file:app/models/ingestion.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_ingestion.py",
+      "target": "file:app/services/chunking.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_ingestion.py",
+      "target": "file:app/services/cv_loader.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_ingestion.py",
+      "target": "file:app/services/cv_parser.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_ingestion.py",
+      "target": "file:app/services/embedding.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_ingestion.py",
+      "target": "file:app/services/markdown_builder.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_ingestion.py",
+      "target": "file:app/services/nmaiex_candidate_enrichment.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_ingestion.py",
+      "target": "file:app/services/persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/core/database.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/core/database.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/core/logging.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/main.py",
+      "target": "file:app/api/nmaiex_routes_management.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/main.py",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/main.py",
+      "target": "file:app/api/routes_chat.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/main.py",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/main.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/main.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/chat_persistence.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/chat_persistence.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/chunking.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/cv_loader.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/cv_parser_adapters.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/cv_parser_adapters.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/cv_parser_adapters.py",
+      "target": "file:app/models/cv_models.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/cv_parser.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/cv_parser.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/cv_parser.py",
+      "target": "file:app/models/cv_models.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/cv_parser.py",
+      "target": "file:app/services/cv_parser_adapters.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/embedding.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/embedding.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/job_ingestion_service.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/job_ingestion_service.py",
+      "target": "file:app/services/chunking.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/job_ingestion_service.py",
+      "target": "file:app/services/embedding.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/job_ingestion_service.py",
+      "target": "file:app/services/persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/markdown_builder.py",
+      "target": "file:app/models/cv_models.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_candidate_enrichment.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_candidate_enrichment.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_candidate_enrichment.py",
+      "target": "file:app/core/nmaiex_config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_candidate_enrichment.py",
+      "target": "file:app/models/nmaiex_schemas.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_candidate_enrichment.py",
+      "target": "file:app/services/embedding.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_candidate_enrichment.py",
+      "target": "file:app/services/nmaiex_mapper_service.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_mapper_service.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_mapper_service.py",
+      "target": "file:app/core/nmaiex_config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_mapper_service.py",
+      "target": "file:app/models/nmaiex_schemas.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_mapper_service.py",
+      "target": "file:app/services/embedding.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_mapper_service.py",
+      "target": "file:app/services/rag_orchestrator.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_ranking_service.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_ranking_service.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/nmaiex_ranking_service.py",
+      "target": "file:app/core/nmaiex_config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/persistence.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/persistence.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_model_adapters.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_model_adapters.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_model_adapters.py",
+      "target": "file:app/services/cv_parser_adapters.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_orchestrator.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_orchestrator.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_orchestrator.py",
+      "target": "file:app/services/cv_parser_adapters.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_orchestrator.py",
+      "target": "file:app/services/rag_model_adapters.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_query.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_query.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_query.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_query.py",
+      "target": "file:app/services/chat_persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_query.py",
+      "target": "file:app/services/embedding.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_query.py",
+      "target": "file:app/services/rag_model_adapters.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/rag_query.py",
+      "target": "file:app/services/rag_orchestrator.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/redistribute_applications.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/reset_and_seed_db.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/reset_and_seed_db.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/reset_and_seed_db.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/reset_and_seed_db.py",
+      "target": "file:app/core/nmaiex_config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/retry_nmaiex_candidate_enrichment.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/retry_nmaiex_candidate_enrichment.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/retry_nmaiex_candidate_enrichment.py",
+      "target": "file:app/services/nmaiex_candidate_enrichment.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/smoke_test.py",
+      "target": "file:app/main.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_chunking.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_chunking.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_chunking.py",
+      "target": "file:app/models/cv_models.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_chunking.py",
+      "target": "file:app/services/chunking.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_chunking.py",
+      "target": "file:app/services/markdown_builder.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_chunking.py",
+      "target": "file:app/services/persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:app/models/cv_models.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:app/services/chunking.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:app/services/cv_loader.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:app/services/cv_parser.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:app/services/embedding.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:app/services/markdown_builder.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:app/services/persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser_db.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser_db.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser_db.py",
+      "target": "file:app/services/cv_parser.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser_db.py",
+      "target": "file:app/services/persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser.py",
+      "target": "file:app/services/cv_parser.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_chunking.py",
+      "target": "file:app/models/cv_models.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_chunking.py",
+      "target": "file:app/services/chunking.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_chunking.py",
+      "target": "file:app/services/markdown_builder.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_embedding.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_embedding.py",
+      "target": "file:app/services/embedding.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_ingestion_flow.py",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_ingestion_flow.py",
+      "target": "file:app/models/ingestion.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_nmaiex_candidate_enrichment.py",
+      "target": "file:app/models/nmaiex_schemas.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_nmaiex_candidate_enrichment.py",
+      "target": "file:app/services/nmaiex_candidate_enrichment.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_nmaiex_score_clipping.py",
+      "target": "file:app/core/nmaiex_config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_nmaiex_score_clipping.py",
+      "target": "file:app/services/nmaiex_ranking_service.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_parser_policy.py",
+      "target": "file:app/models/cv_models.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_parser_policy.py",
+      "target": "file:app/services/cv_parser_adapters.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_parser_policy.py",
+      "target": "file:app/services/cv_parser.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_persistence.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_persistence.py",
+      "target": "file:app/services/persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.example",
+      "target": "file:app/core/config.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.example",
+      "target": "file:app/core/database.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.example",
+      "target": "file:app/services/embedding.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.example",
+      "target": "file:app/services/rag_model_adapters.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.nmaiex.backup_20260520_195429",
+      "target": "file:app/core/nmaiex_config.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.nmaiex.backup_20260520_195429",
+      "target": "file:app/services/nmaiex_mapper_service.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.nmaiex.backup_20260520_195429",
+      "target": "file:app/services/nmaiex_ranking_service.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.nmaiex.backup_20260521_040458",
+      "target": "file:app/core/nmaiex_config.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.nmaiex.backup_20260521_040458",
+      "target": "file:app/services/nmaiex_mapper_service.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.nmaiex.backup_20260521_040458",
+      "target": "file:app/services/nmaiex_ranking_service.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.nmaiex.example",
+      "target": "file:app/core/nmaiex_config.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.nmaiex.example",
+      "target": "file:app/services/nmaiex_mapper_service.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.env.nmaiex.example",
+      "target": "file:app/services/nmaiex_ranking_service.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.gitleaks.toml",
+      "target": "file:scripts/run_gitleaks.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.pre-commit-config.yaml",
+      "target": "file:scripts/run_gitleaks.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:.pre-commit-config.yaml",
+      "target": "file:tests/unit/unit_test_parser_policy.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/[NMAIex]_PROVINCE_MERGER_GUIDE.md",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/[NMAIex]_PROVINCE_MERGER_GUIDE.md",
+      "target": "file:app/services/nmaiex_ranking_service.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/[NMAIex]_PROVINCE_MERGER_GUIDE.md",
+      "target": "file:app/services/nmaiex_candidate_enrichment.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/README.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/README.md",
+      "target": "file:app/api/routes_chat.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/README.md",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "table:database/root_data.sql",
+      "target": "file:scripts/reset_and_seed_db.py",
+      "type": "migrates",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "table:database/root_data.sql",
+      "target": "file:app/core/database.py",
+      "type": "migrates",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "table:database/schema_ai_core.sql",
+      "target": "file:app/core/database.py",
+      "type": "defines_schema",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "table:database/schema_ai_core.sql",
+      "target": "file:app/services/persistence.py",
+      "type": "defines_schema",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "table:database/schema_web_core.sql",
+      "target": "file:app/core/database.py",
+      "type": "defines_schema",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "table:database/schema_web_core.sql",
+      "target": "file:app/services/persistence.py",
+      "type": "defines_schema",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "table:database/seed_data.sql",
+      "target": "file:scripts/reset_and_seed_db.py",
+      "type": "migrates",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "table:database/seed_data.sql",
+      "target": "file:app/core/database.py",
+      "type": "migrates",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "table:database/seed_synth.sql",
+      "target": "file:scripts/reset_and_seed_db.py",
+      "type": "migrates",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "table:database/seed_synth.sql",
+      "target": "file:app/core/database.py",
+      "type": "migrates",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/chunking_strategy.md",
+      "target": "file:app/services/chunking.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/embedding_strategy.md",
+      "target": "file:app/services/embedding.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/integration_strategy.md",
+      "target": "file:app/api/routes_chat.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/integration_strategy.md",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/integration_strategy.md",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/nmaiex_ranking_strategy.md",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/nmaiex_ranking_strategy.md",
+      "target": "file:app/services/nmaiex_ranking_service.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/nmaiex_ranking_strategy.md",
+      "target": "file:app/services/nmaiex_candidate_enrichment.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/rag_query_strategy.md",
+      "target": "file:app/services/rag_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/README.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/README.md",
+      "target": "file:app/api/routes_chat.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/strategy/README.md",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/system_architecture.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/system_architecture.md",
+      "target": "file:app/api/routes_chat.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/system_architecture.md",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Chat API/.resources/definition.yaml",
+      "target": "file:app/api/routes_chat.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Chat API/GET v2-chat-conversations-id-messages.request.yaml",
+      "target": "file:app/api/routes_chat.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Chat API/GET v2-chat-conversations.request.yaml",
+      "target": "file:app/api/routes_chat.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-conversations-id-branch-new.request.yaml",
+      "target": "file:app/api/routes_chat.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-conversations-id-summarize.request.yaml",
+      "target": "file:app/api/routes_chat.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-query.request.yaml",
+      "target": "file:app/api/routes_chat.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Ingestion API/.resources/definition.yaml",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Ingestion API/GET v2-ingestion-jobs-indexJobId.request.yaml",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Ingestion API/POST v2-ingestion-jobs.request.yaml",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-candidates-cv.request.yaml",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-candidates-cv.request.yaml",
+      "target": "file:app/api/nmaiex_routes_management.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-jobs-content.request.yaml",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-jobs-content.request.yaml",
+      "target": "file:app/api/nmaiex_routes_management.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-jobs-structured.request.yaml",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-jobs-structured.request.yaml",
+      "target": "file:app/api/nmaiex_routes_management.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/.resources/definition.yaml",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-categories.request.yaml",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-levels.request.yaml",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-provinces.request.yaml",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-skills.request.yaml",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/.resources/definition.yaml",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/GET v2-nmaiex-ranking-candidates-job_id.request.yaml",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/GET v2-nmaiex-ranking-jobs-candidate_id.request.yaml",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/.resources/definition.yaml",
+      "target": "file:app/main.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/Test Chat-Ingestion-Ranking Flow.request.yaml",
+      "target": "file:app/api/routes_chat.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/Test Chat-Ingestion-Ranking Flow.request.yaml",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/Test Chat-Ingestion-Ranking Flow.request.yaml",
+      "target": "file:app/main.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/Test Health Check.request.yaml",
+      "target": "file:app/main.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:app/api/routes_chat.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/reset_and_seed_db.py",
+      "target": "table:database/schema_ai_core.sql",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/reset_and_seed_db.py",
+      "target": "table:database/schema_web_core.sql",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/reset_and_seed_db.py",
+      "target": "table:database/seed_data.sql",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/reset_and_seed_db.py",
+      "target": "table:database/root_data.sql",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/smoke_test.py",
+      "target": "file:app/main.py",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/smoke_test.py",
+      "target": "file:app/api/routes_chat.py",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/smoke_test.py",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_chat_api.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_chat_api.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_chat_api.py",
+      "target": "file:app/models/chat.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_chat_api.py",
+      "target": "file:scripts/smoke_test.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_chunking.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_chunking.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_chunking.py",
+      "target": "file:app/services/chunking.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_chunking.py",
+      "target": "file:scripts/smoke_test.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_e2e_pipeline.py",
+      "target": "file:scripts/smoke_test.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser_db.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser_db.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser_db.py",
+      "target": "file:scripts/smoke_test.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser_db.py",
+      "target": "file:smoke_tests/test_parser.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:smoke_tests/test_parser.py",
+      "target": "file:scripts/smoke_test.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_chunking.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_chunking.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_chunking.py",
+      "target": "file:app/services/chunking.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_chunking.py",
+      "target": "file:smoke_tests/test_chunking.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_embedding.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_embedding.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_embedding.py",
+      "target": "file:app/services/embedding.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_ingestion_flow.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_ingestion_flow.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_ingestion_flow.py",
+      "target": "file:app/models/ingestion.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_nmaiex_candidate_enrichment.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_nmaiex_candidate_enrichment.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_nmaiex_candidate_enrichment.py",
+      "target": "file:app/services/nmaiex_candidate_enrichment.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_nmaiex_score_clipping.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_nmaiex_score_clipping.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_parser_policy.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_parser_policy.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_parser_policy.py",
+      "target": "file:smoke_tests/test_parser.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_persistence.py",
+      "target": "file:.antigravityignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_persistence.py",
+      "target": "file:.understand-anything/.understandignore",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_persistence.py",
+      "target": "file:app/services/persistence.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "backward"
+    },
+    {
+      "source": "document:agent_workflow_doc/AI_MANUAL_UPDATE.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/AI_WORKFLOW_INIT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/GIT_WORKFLOW_GUIDE.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/harness/rule.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/KINH_NGHIEM.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/P0C_DOC_RECONCILIATION_PLAN.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/cau_truc_thu_muc.txt",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:postman/POSTMAN_SETUP_GUIDE.md",
+      "target": "config:postman/FANG_v2_Collection.postman_collection.json",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:postman/POSTMAN_SETUP_GUIDE.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:requirements.txt",
+      "target": "file:app/main.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:test_api.http",
+      "target": "file:app/api/routes_chat.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "file:test_api.http",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "file:test_api.http",
+      "target": "file:app/api/nmaiex_routes_ranking.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/FANG_v2_Collection.postman_collection.json",
+      "target": "file:app/main.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/globals/workspace.globals.yaml",
+      "target": "config:postman/FANG_v2_Collection.postman_collection.json",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/.resources/definition.yaml",
+      "target": "config:postman/FANG_v2_Collection.postman_collection.json",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Chat API/.resources/definition.yaml",
+      "target": "config:postman/FANG_v2_Collection.postman_collection.json",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Ingestion API/.resources/definition.yaml",
+      "target": "config:postman/FANG_v2_Collection.postman_collection.json",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/.resources/definition.yaml",
+      "target": "config:postman/FANG_v2_Collection.postman_collection.json",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/.resources/definition.yaml",
+      "target": "config:postman/FANG_v2_Collection.postman_collection.json",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/.resources/definition.yaml",
+      "target": "config:postman/FANG_v2_Collection.postman_collection.json",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/extract_markdown_base64_images.py",
+      "target": "file:app/services/markdown_builder.py",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/fetch_available_models.py",
+      "target": "file:app/core/config.py",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/list_gemini_models.py",
+      "target": "file:app/core/config.py",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/list_gemini_models_direct.py",
+      "target": "file:app/core/config.py",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:project-configuration",
+      "name": "Project Configuration",
+      "description": "Environment templates, repository controls, and root-level configuration artifacts that shape runtime and developer tooling.",
+      "nodeIds": [
+        "file:.antigravityignore",
+        "config:.env.example",
+        "config:.env.nmaiex.backup_20260520_195429",
+        "config:.env.nmaiex.backup_20260521_040458",
+        "config:.env.nmaiex.example",
+        "config:.gitleaks.toml",
+        "config:.pre-commit-config.yaml",
+        "file:.understand-anything/.understandignore",
+        "file:app/__init__.py",
+        "document:requirements.txt"
+      ]
+    },
+    {
+      "id": "layer:documentation",
+      "name": "Documentation",
+      "description": "Reference material, architecture notes, and workflow documents that explain how the system is intended to work.",
+      "nodeIds": [
+        "document:agent_workflow_doc/[NMAIex]_PROVINCE_MERGER_GUIDE.md",
+        "document:agent_workflow_doc/AI_MANUAL_UPDATE.md",
+        "document:agent_workflow_doc/AI_WORKFLOW_INIT.md",
+        "document:agent_workflow_doc/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
+        "document:agent_workflow_doc/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
+        "document:agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md",
+        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
+        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
+        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
+        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
+        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
+        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
+        "document:agent_workflow_doc/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
+        "document:agent_workflow_doc/GIT_WORKFLOW_GUIDE.md",
+        "document:agent_workflow_doc/harness/rule.md",
+        "document:agent_workflow_doc/KINH_NGHIEM.md",
+        "document:agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md",
+        "document:agent_workflow_doc/P0C_DOC_RECONCILIATION_PLAN.md",
+        "document:agent_workflow_doc/README.md",
+        "document:docs/cau_truc_thu_muc.txt",
+        "document:docs/strategy/chunking_strategy.md",
+        "document:docs/strategy/embedding_strategy.md",
+        "document:docs/strategy/integration_strategy.md",
+        "document:docs/strategy/nmaiex_ranking_strategy.md",
+        "document:docs/strategy/rag_query_strategy.md",
+        "document:docs/strategy/README.md",
+        "document:docs/system_architecture.md",
+        "document:postman/POSTMAN_SETUP_GUIDE.md",
+        "document:README.md"
+      ]
+    },
+    {
+      "id": "layer:api-surface",
+      "name": "API Surface",
+      "description": "Application entry points, HTTP route handlers, and externally visible request definitions for chat, ingestion, and ranking flows.",
+      "nodeIds": [
+        "file:app/api/__init__.py",
+        "file:app/api/nmaiex_routes_management.py",
+        "file:app/api/nmaiex_routes_ranking.py",
+        "file:app/api/routes_chat.py",
+        "file:app/api/routes_ingestion.py",
+        "file:app/main.py",
+        "config:postman/collections/FANG v2 API Test Suite/.resources/definition.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Chat API/.resources/definition.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Chat API/GET v2-chat-conversations-id-messages.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Chat API/GET v2-chat-conversations.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-conversations-id-branch-new.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-conversations-id-summarize.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Chat API/POST v2-chat-query.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Ingestion API/.resources/definition.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Ingestion API/GET v2-ingestion-jobs-indexJobId.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Ingestion API/POST v2-ingestion-jobs.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-candidates-cv.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-jobs-content.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/NMAIex Management API/PATCH v2-nmaiex-management-jobs-structured.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/.resources/definition.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-categories.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-levels.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-provinces.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/NMAIex Master Data API/GET v2-nmaiex-master-skills.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/.resources/definition.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/GET v2-nmaiex-ranking-candidates-job_id.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/NMAIex Ranking API/GET v2-nmaiex-ranking-jobs-candidate_id.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/.resources/definition.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/Test Chat-Ingestion-Ranking Flow.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/Test Health Check.request.yaml",
+        "config:postman/FANG_v2_Collection.postman_collection.json",
+        "config:postman/globals/workspace.globals.yaml",
+        "file:test_api.http"
+      ]
+    },
+    {
+      "id": "layer:application-core",
+      "name": "Application Core",
+      "description": "Shared configuration, data models, and service-layer implementation that execute the AI, ingestion, and ranking workflows.",
+      "nodeIds": [
+        "file:app/core/__init__.py",
+        "file:app/core/config.py",
+        "file:app/core/database.py",
+        "file:app/core/logging.py",
+        "file:app/core/nmaiex_config.py",
+        "file:app/models/__init__.py",
+        "file:app/models/chat.py",
+        "file:app/models/cv_models.py",
+        "file:app/models/ingestion.py",
+        "file:app/models/nmaiex_schemas.py",
+        "file:app/services/__init__.py",
+        "file:app/services/chat_persistence.py",
+        "file:app/services/chunking.py",
+        "file:app/services/cv_loader.py",
+        "file:app/services/cv_parser_adapters.py",
+        "file:app/services/cv_parser.py",
+        "file:app/services/embedding.py",
+        "file:app/services/job_ingestion_service.py",
+        "file:app/services/markdown_builder.py",
+        "file:app/services/nmaiex_candidate_enrichment.py",
+        "file:app/services/nmaiex_mapper_service.py",
+        "file:app/services/nmaiex_ranking_service.py",
+        "file:app/services/persistence.py",
+        "file:app/services/rag_model_adapters.py",
+        "file:app/services/rag_orchestrator.py",
+        "file:app/services/rag_query.py"
+      ]
+    },
+    {
+      "id": "layer:data-assets",
+      "name": "Data Assets",
+      "description": "Database schemas and seed data that support persistent storage and local test environments.",
+      "nodeIds": [
+        "table:database/root_data.sql",
+        "table:database/schema_ai_core.sql",
+        "table:database/schema_web_core.sql",
+        "table:database/seed_data.sql",
+        "table:database/seed_synth.sql"
+      ]
+    },
+    {
+      "id": "layer:tooling-and-tests",
+      "name": "Tooling And Tests",
+      "description": "Operational scripts, smoke tests, and unit tests that validate and maintain the application.",
+      "nodeIds": [
+        "file:scripts/extract_markdown_base64_images.py",
+        "file:scripts/fetch_available_models.py",
+        "file:scripts/list_gemini_models_direct.py",
+        "file:scripts/list_gemini_models.py",
+        "file:scripts/redistribute_applications.py",
+        "file:scripts/reset_and_seed_db.py",
+        "file:scripts/retry_nmaiex_candidate_enrichment.py",
+        "file:scripts/run_gitleaks.py",
+        "file:scripts/smoke_test.py",
+        "file:smoke_tests/test_chat_api.py",
+        "file:smoke_tests/test_chunking.py",
+        "file:smoke_tests/test_e2e_pipeline.py",
+        "file:smoke_tests/test_parser_db.py",
+        "file:smoke_tests/test_parser.py",
+        "file:tests/unit/unit_test_chunking.py",
+        "file:tests/unit/unit_test_embedding.py",
+        "file:tests/unit/unit_test_ingestion_flow.py",
+        "file:tests/unit/unit_test_nmaiex_candidate_enrichment.py",
+        "file:tests/unit/unit_test_nmaiex_score_clipping.py",
+        "file:tests/unit/unit_test_parser_policy.py",
+        "file:tests/unit/unit_test_persistence.py"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "Project Overview",
+      "description": "Start with the root README to understand the role of FANG, the major pipelines, and the public API surface it exposes.",
+      "nodeIds": [
+        "document:README.md"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "Architecture Narrative",
+      "description": "Read the architecture notes before diving into code so the ingestion, chat, and ranking subsystems have a clear shared frame.",
+      "nodeIds": [
+        "document:docs/system_architecture.md",
+        "document:docs/strategy/integration_strategy.md"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "Application Entry Point",
+      "description": "Move to the FastAPI bootstrap and router layer to see how the runtime starts and how top-level HTTP surfaces are partitioned.",
+      "nodeIds": [
+        "file:app/main.py",
+        "file:app/api/routes_chat.py",
+        "file:app/api/routes_ingestion.py",
+        "file:app/api/nmaiex_routes_ranking.py"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "Ingestion Pipeline",
+      "description": "Trace the ingestion path from route handler into parsing, chunking, markdown shaping, embeddings, and persistence.",
+      "nodeIds": [
+        "file:app/services/cv_parser.py",
+        "file:app/services/chunking.py",
+        "file:app/services/markdown_builder.py",
+        "file:app/services/embedding.py",
+        "file:app/services/persistence.py"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "RAG Chat Flow",
+      "description": "Study the retrieval and generation stack that assembles context, selects providers, and persists conversation state for chat.",
+      "nodeIds": [
+        "file:app/services/rag_query.py",
+        "file:app/services/rag_orchestrator.py",
+        "file:app/services/rag_model_adapters.py",
+        "file:app/services/chat_persistence.py"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "NMAIex Ranking",
+      "description": "Inspect the ranking-specific configuration, mapping, enrichment, and scoring services that power bidirectional recommendation flows.",
+      "nodeIds": [
+        "file:app/core/nmaiex_config.py",
+        "file:app/services/nmaiex_mapper_service.py",
+        "file:app/services/nmaiex_candidate_enrichment.py",
+        "file:app/services/nmaiex_ranking_service.py"
+      ]
+    },
+    {
+      "order": 7,
+      "title": "Persistence And Seed Data",
+      "description": "Review the SQL assets and reset script to understand the database structures and local bootstrap path behind the service.",
+      "nodeIds": [
+        "table:database/schema_ai_core.sql",
+        "table:database/schema_web_core.sql",
+        "table:database/seed_data.sql",
+        "file:scripts/reset_and_seed_db.py"
+      ]
+    },
+    {
+      "order": 8,
+      "title": "Verification Surface",
+      "description": "Finish with the Postman assets and test modules that exercise the public API and the most critical data-processing paths.",
+      "nodeIds": [
+        "config:postman/FANG_v2_Collection.postman_collection.json",
+        "file:smoke_tests/test_e2e_pipeline.py",
+        "file:tests/unit/unit_test_parser_policy.py"
+      ]
+    }
+  ]
+}
