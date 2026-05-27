@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "project": {
-    "name": "FANG",
+    "name": "Fang",
     "languages": [
       "config",
       "http",
@@ -17,24 +17,14 @@
     "frameworks": [
       "FastAPI",
       "Pydantic",
+      "Pytest",
       "Uvicorn"
     ],
-    "description": "FastAPI-based AI core for the miCareer ecosystem that handles CV ingestion, RAG chat, and NMAIex ranking workflows with PostgreSQL-backed persistence and multi-model LLM orchestration. Note: this project has over 100 source files; consider scoping analysis to a subdirectory for faster results.",
-    "analyzedAt": "2026-05-27T05:07:49.851Z",
-    "gitCommitHash": "fca51de8725ca74b2ce927a8df9cf7e23886732b"
+    "description": "FastAPI-based AI core for the miCareer ecosystem, handling CV ingestion, retrieval-augmented chat, and NMAIex ranking services across a modular Python backend. Note: this project has over 100 source files; consider scoping analysis to a subdirectory for faster results.",
+    "analyzedAt": "2026-05-27T13:47:02Z",
+    "gitCommitHash": "e2b415425e65fea2faab74b0aedc94b6fb6837f4"
   },
   "nodes": [
-    {
-      "id": "file:.antigravityignore",
-      "type": "file",
-      "name": ".antigravityignore",
-      "filePath": ".antigravityignore",
-      "summary": "Lists exclusion patterns for the companion antigravity tooling and related repository analysis workflows.",
-      "tags": [
-        "project-artifact"
-      ],
-      "complexity": "simple"
-    },
     {
       "id": "config:.env.example",
       "type": "config",
@@ -111,17 +101,6 @@
       "complexity": "simple"
     },
     {
-      "id": "file:.understand-anything/.understandignore",
-      "type": "file",
-      "name": ".understandignore",
-      "filePath": ".understand-anything/.understandignore",
-      "summary": "Lists analysis exclusions that control which files are omitted from the repository knowledge graph build.",
-      "tags": [
-        "project-artifact"
-      ],
-      "complexity": "moderate"
-    },
-    {
       "id": "document:agent_workflow_doc/[NMAIex]_PROVINCE_MERGER_GUIDE.md",
       "type": "document",
       "name": "[NMAIex]_PROVINCE_MERGER_GUIDE.md",
@@ -161,137 +140,6 @@
       "complexity": "simple"
     },
     {
-      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
-      "type": "document",
-      "name": "FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
-      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
-      "summary": "Workflow and planning document for fang next phase 9router deep research prompt used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
-      "type": "document",
-      "name": "FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
-      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
-      "summary": "Workflow and planning document for fang next phase chat full cv assignment used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "chat",
-        "ingestion",
-        "reference"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md",
-      "type": "document",
-      "name": "FANG_NEXT_PHASE_DECISIONS.md",
-      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md",
-      "summary": "Workflow and planning document for fang next phase decisions used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
-      "type": "document",
-      "name": "FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
-      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
-      "summary": "Workflow and planning document for fang next phase p0a repo reality audit report used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "complex"
-    },
-    {
-      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
-      "type": "document",
-      "name": "FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
-      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
-      "summary": "Workflow and planning document for fang next phase p0a repo reality audit used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
-      "type": "document",
-      "name": "FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
-      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
-      "summary": "Workflow and planning document for fang next phase p0a user note triage used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
-      "type": "document",
-      "name": "FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
-      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
-      "summary": "Workflow and planning document for fang next phase p0b ai llm inventory used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
-      "type": "document",
-      "name": "FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
-      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
-      "summary": "Workflow and planning document for fang next phase p0c doc reconciliation used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
-      "type": "document",
-      "name": "FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
-      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
-      "summary": "Workflow and planning document for fang next phase p0d handoff and assignment used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "document:agent_workflow_doc/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
-      "type": "document",
-      "name": "FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
-      "filePath": "agent_workflow_doc/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
-      "summary": "Workflow and planning document for fang next phase p1a prompt review and min eval used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "moderate"
-    },
-    {
       "id": "document:agent_workflow_doc/GIT_WORKFLOW_GUIDE.md",
       "type": "document",
       "name": "GIT_WORKFLOW_GUIDE.md",
@@ -303,58 +151,6 @@
         "project-artifact"
       ],
       "complexity": "simple"
-    },
-    {
-      "id": "document:agent_workflow_doc/harness/rule.md",
-      "type": "document",
-      "name": "rule.md",
-      "filePath": "agent_workflow_doc/harness/rule.md",
-      "summary": "Workflow and planning document for rule used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "document:agent_workflow_doc/KINH_NGHIEM.md",
-      "type": "document",
-      "name": "KINH_NGHIEM.md",
-      "filePath": "agent_workflow_doc/KINH_NGHIEM.md",
-      "summary": "Workflow and planning document for kinh nghiem used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "moderate"
-    },
-    {
-      "id": "document:agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md",
-      "type": "document",
-      "name": "P0B_AI_LLM_INVENTORY_REPORT.md",
-      "filePath": "agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md",
-      "summary": "Workflow and planning document for p0b ai llm inventory report used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "complex"
-    },
-    {
-      "id": "document:agent_workflow_doc/P0C_DOC_RECONCILIATION_PLAN.md",
-      "type": "document",
-      "name": "P0C_DOC_RECONCILIATION_PLAN.md",
-      "filePath": "agent_workflow_doc/P0C_DOC_RECONCILIATION_PLAN.md",
-      "summary": "Workflow and planning document for p0c doc reconciliation plan used to coordinate repository analysis and implementation work.",
-      "tags": [
-        "documentation",
-        "reference",
-        "project-artifact"
-      ],
-      "complexity": "complex"
     },
     {
       "id": "document:agent_workflow_doc/README.md",
@@ -538,7 +334,8 @@
       "tags": [
         "data-model",
         "chat",
-        "python"
+        "python",
+        "tested"
       ],
       "complexity": "moderate"
     },
@@ -614,7 +411,8 @@
       "summary": "Transforms parsed CV content into structured chunks suitable for embedding, retrieval, and downstream persistence.",
       "tags": [
         "service",
-        "python"
+        "python",
+        "tested"
       ],
       "complexity": "moderate"
     },
@@ -1523,7 +1321,8 @@
       "summary": "Unit test module validating unit test chunking behavior within the application.",
       "tags": [
         "test",
-        "project-artifact"
+        "project-artifact",
+        "tested"
       ],
       "complexity": "moderate"
     },
@@ -1588,7 +1387,8 @@
       "tags": [
         "test",
         "parsing",
-        "project-artifact"
+        "project-artifact",
+        "tested"
       ],
       "complexity": "complex"
     },
@@ -1600,6 +1400,276 @@
       "summary": "Unit test module validating unit test persistence behavior within the application.",
       "tags": [
         "test",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:agent_workflow_doc/KINH_NGHIEM.md",
+      "type": "document",
+      "name": "KINH_NGHIEM.md",
+      "filePath": "agent_workflow_doc/KINH_NGHIEM.md",
+      "summary": "Workflow and planning document for kinh nghiem used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
+      "filePath": "agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
+      "summary": "Workflow and planning document for fang next phase chat full cv assignment used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "chat",
+        "ingestion",
+        "reference"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_CHAT_FULL_CV_DECISION_ANALYSIS.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_CHAT_FULL_CV_DECISION_ANALYSIS.md",
+      "filePath": "agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_CHAT_FULL_CV_DECISION_ANALYSIS.md",
+      "summary": "Documentation artifact covering jobapplication full-cv chat decision analysis for repository planning, architecture review, or implementation coordination.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_NMAIEX_RANKING_EXPLAINABILITY_ASSIGNMENT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_NMAIEX_RANKING_EXPLAINABILITY_ASSIGNMENT.md",
+      "filePath": "agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_NMAIEX_RANKING_EXPLAINABILITY_ASSIGNMENT.md",
+      "summary": "Documentation artifact covering nmaiex ranking explainability assignment for repository planning, architecture review, or implementation coordination.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
+      "filePath": "agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
+      "summary": "Workflow and planning document for fang next phase p1a prompt review and min eval used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
+      "filePath": "agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
+      "summary": "Workflow and planning document for fang next phase 9router deep research prompt used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_DECISIONS.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_DECISIONS.md",
+      "filePath": "agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_DECISIONS.md",
+      "summary": "Workflow and planning document for fang next phase decisions used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_JOBPOSTING_AGENT_DECISION_ANALYSIS.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_JOBPOSTING_AGENT_DECISION_ANALYSIS.md",
+      "filePath": "agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_JOBPOSTING_AGENT_DECISION_ANALYSIS.md",
+      "summary": "Documentation artifact covering jobposting agent decision analysis for repository planning, architecture review, or implementation coordination.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_JOBPOSTING_OPTION_B_IMPLEMENTATION_ADVISORY.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_JOBPOSTING_OPTION_B_IMPLEMENTATION_ADVISORY.md",
+      "filePath": "agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_JOBPOSTING_OPTION_B_IMPLEMENTATION_ADVISORY.md",
+      "summary": "Documentation artifact covering jobposting agent option b implementation advisory for repository planning, architecture review, or implementation coordination.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
+      "filePath": "agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
+      "summary": "Workflow and planning document for fang next phase p0a repo reality audit used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
+      "filePath": "agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
+      "summary": "Workflow and planning document for fang next phase p0a repo reality audit report used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
+      "filePath": "agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
+      "summary": "Workflow and planning document for fang next phase p0a user note triage used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
+      "filePath": "agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
+      "summary": "Workflow and planning document for fang next phase p0b ai llm inventory used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
+      "filePath": "agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
+      "summary": "Workflow and planning document for fang next phase p0c doc reconciliation used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
+      "filePath": "agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
+      "summary": "Workflow and planning document for fang next phase p0d handoff and assignment used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_UNASSIGNED_MEMBER_ASSIGNMENT_OPTIONS.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_UNASSIGNED_MEMBER_ASSIGNMENT_OPTIONS.md",
+      "filePath": "agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_UNASSIGNED_MEMBER_ASSIGNMENT_OPTIONS.md",
+      "summary": "Documentation artifact covering unassigned member assignment options for repository planning, architecture review, or implementation coordination.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/P0B_AI_LLM_INVENTORY_REPORT.md",
+      "type": "document",
+      "name": "P0B_AI_LLM_INVENTORY_REPORT.md",
+      "filePath": "agent_workflow_doc/current_workflow/P0B_AI_LLM_INVENTORY_REPORT.md",
+      "summary": "Workflow and planning document for p0b ai llm inventory report used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:agent_workflow_doc/current_workflow/P0C_DOC_RECONCILIATION_PLAN.md",
+      "type": "document",
+      "name": "P0C_DOC_RECONCILIATION_PLAN.md",
+      "filePath": "agent_workflow_doc/current_workflow/P0C_DOC_RECONCILIATION_PLAN.md",
+      "summary": "Workflow and planning document for p0c doc reconciliation plan used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:.antigravityignore",
+      "type": "file",
+      "name": ".antigravityignore",
+      "filePath": ".antigravityignore",
+      "summary": "Lists exclusion patterns for the companion antigravity tooling and related repository analysis workflows.",
+      "tags": [
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.understand-anything/.understandignore",
+      "type": "file",
+      "name": ".understandignore",
+      "filePath": ".understand-anything/.understandignore",
+      "summary": "Lists analysis exclusions that control which files are omitted from the repository knowledge graph build.",
+      "tags": [
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/harness/rule.md",
+      "type": "document",
+      "name": "rule.md",
+      "filePath": "agent_workflow_doc/harness/rule.md",
+      "summary": "Workflow and planning document for rule used to coordinate repository analysis and implementation work.",
+      "tags": [
+        "documentation",
+        "reference",
         "project-artifact"
       ],
       "complexity": "simple"
@@ -3140,151 +3210,20 @@
       "direction": "forward"
     },
     {
-      "source": "file:smoke_tests/test_chat_api.py",
-      "target": "file:.antigravityignore",
+      "source": "file:app/models/chat.py",
+      "target": "file:smoke_tests/test_chat_api.py",
       "type": "tested_by",
       "weight": 0.5,
-      "direction": "backward"
+      "direction": "forward",
+      "description": "Direction corrected (was test → production)"
     },
     {
-      "source": "file:smoke_tests/test_chat_api.py",
-      "target": "file:.understand-anything/.understandignore",
+      "source": "file:app/services/chunking.py",
+      "target": "file:smoke_tests/test_chunking.py",
       "type": "tested_by",
       "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_chat_api.py",
-      "target": "file:app/models/chat.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_chat_api.py",
-      "target": "file:scripts/smoke_test.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_chunking.py",
-      "target": "file:.antigravityignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_chunking.py",
-      "target": "file:.understand-anything/.understandignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_chunking.py",
-      "target": "file:app/services/chunking.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_chunking.py",
-      "target": "file:scripts/smoke_test.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_e2e_pipeline.py",
-      "target": "file:.antigravityignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_e2e_pipeline.py",
-      "target": "file:.understand-anything/.understandignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_e2e_pipeline.py",
-      "target": "file:scripts/smoke_test.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_parser_db.py",
-      "target": "file:.antigravityignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_parser_db.py",
-      "target": "file:.understand-anything/.understandignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_parser_db.py",
-      "target": "file:scripts/smoke_test.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_parser_db.py",
-      "target": "file:smoke_tests/test_parser.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_parser.py",
-      "target": "file:.antigravityignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_parser.py",
-      "target": "file:.understand-anything/.understandignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:smoke_tests/test_parser.py",
-      "target": "file:scripts/smoke_test.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_chunking.py",
-      "target": "file:.antigravityignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_chunking.py",
-      "target": "file:.understand-anything/.understandignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_chunking.py",
-      "target": "file:app/services/chunking.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
+      "direction": "forward",
+      "description": "Direction corrected (was test → production)"
     },
     {
       "source": "file:tests/unit/unit_test_chunking.py",
@@ -3294,120 +3233,8 @@
       "direction": "backward"
     },
     {
-      "source": "file:tests/unit/unit_test_embedding.py",
-      "target": "file:.antigravityignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_embedding.py",
-      "target": "file:.understand-anything/.understandignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_embedding.py",
-      "target": "file:app/services/embedding.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_ingestion_flow.py",
-      "target": "file:.antigravityignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_ingestion_flow.py",
-      "target": "file:.understand-anything/.understandignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_ingestion_flow.py",
-      "target": "file:app/models/ingestion.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_nmaiex_candidate_enrichment.py",
-      "target": "file:.antigravityignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_nmaiex_candidate_enrichment.py",
-      "target": "file:.understand-anything/.understandignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_nmaiex_candidate_enrichment.py",
-      "target": "file:app/services/nmaiex_candidate_enrichment.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_nmaiex_score_clipping.py",
-      "target": "file:.antigravityignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_nmaiex_score_clipping.py",
-      "target": "file:.understand-anything/.understandignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_parser_policy.py",
-      "target": "file:.antigravityignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_parser_policy.py",
-      "target": "file:.understand-anything/.understandignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
       "source": "file:tests/unit/unit_test_parser_policy.py",
       "target": "file:smoke_tests/test_parser.py",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_persistence.py",
-      "target": "file:.antigravityignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_persistence.py",
-      "target": "file:.understand-anything/.understandignore",
-      "type": "tested_by",
-      "weight": 0.5,
-      "direction": "backward"
-    },
-    {
-      "source": "file:tests/unit/unit_test_persistence.py",
-      "target": "file:app/services/persistence.py",
       "type": "tested_by",
       "weight": 0.5,
       "direction": "backward"
@@ -3427,105 +3254,7 @@
       "direction": "forward"
     },
     {
-      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
       "source": "document:agent_workflow_doc/GIT_WORKFLOW_GUIDE.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/harness/rule.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/KINH_NGHIEM.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md",
-      "target": "file:app/main.py",
-      "type": "documents",
-      "weight": 0.5,
-      "direction": "forward"
-    },
-    {
-      "source": "document:agent_workflow_doc/P0C_DOC_RECONCILIATION_PLAN.md",
       "target": "file:app/main.py",
       "type": "documents",
       "weight": 0.5,
@@ -3663,6 +3392,104 @@
       "type": "depends_on",
       "weight": 0.6,
       "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/KINH_NGHIEM.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_DECISIONS.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/current_workflow/P0B_AI_LLM_INVENTORY_REPORT.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/current_workflow/P0C_DOC_RECONCILIATION_PLAN.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/harness/rule.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
     }
   ],
   "layers": [
@@ -3691,21 +3518,21 @@
         "document:agent_workflow_doc/[NMAIex]_PROVINCE_MERGER_GUIDE.md",
         "document:agent_workflow_doc/AI_MANUAL_UPDATE.md",
         "document:agent_workflow_doc/AI_WORKFLOW_INIT.md",
-        "document:agent_workflow_doc/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
-        "document:agent_workflow_doc/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
-        "document:agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md",
-        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
-        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
-        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
-        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
-        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
-        "document:agent_workflow_doc/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
-        "document:agent_workflow_doc/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_9ROUTER_DEEP_RESEARCH_PROMPT.md",
+        "document:agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_CHAT_FULL_CV_ASSIGNMENT.md",
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_DECISIONS.md",
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT_REPORT.md",
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_REPO_REALITY_AUDIT.md",
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0A_USER_NOTE_TRIAGE.md",
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0B_AI_LLM_INVENTORY.md",
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0C_DOC_RECONCILIATION.md",
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_P0D_HANDOFF_AND_ASSIGNMENT.md",
+        "document:agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_P1A_PROMPT_REVIEW_AND_MIN_EVAL.md",
         "document:agent_workflow_doc/GIT_WORKFLOW_GUIDE.md",
         "document:agent_workflow_doc/harness/rule.md",
         "document:agent_workflow_doc/KINH_NGHIEM.md",
-        "document:agent_workflow_doc/P0B_AI_LLM_INVENTORY_REPORT.md",
-        "document:agent_workflow_doc/P0C_DOC_RECONCILIATION_PLAN.md",
+        "document:agent_workflow_doc/current_workflow/P0B_AI_LLM_INVENTORY_REPORT.md",
+        "document:agent_workflow_doc/current_workflow/P0C_DOC_RECONCILIATION_PLAN.md",
         "document:agent_workflow_doc/README.md",
         "document:docs/cau_truc_thu_muc.txt",
         "document:docs/strategy/chunking_strategy.md",
@@ -3716,7 +3543,12 @@
         "document:docs/strategy/README.md",
         "document:docs/system_architecture.md",
         "document:postman/POSTMAN_SETUP_GUIDE.md",
-        "document:README.md"
+        "document:README.md",
+        "document:agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_CHAT_FULL_CV_DECISION_ANALYSIS.md",
+        "document:agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_NMAIEX_RANKING_EXPLAINABILITY_ASSIGNMENT.md",
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_JOBPOSTING_AGENT_DECISION_ANALYSIS.md",
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_JOBPOSTING_OPTION_B_IMPLEMENTATION_ADVISORY.md",
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_UNASSIGNED_MEMBER_ASSIGNMENT_OPTIONS.md"
       ]
     },
     {
