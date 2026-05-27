@@ -8,7 +8,7 @@ Mục tiêu của cụm này là biến logic ranking hiện tại của NMAIex 
 
 Đây là **workstream tài liệu/phân tích trước**, không phải workstream sửa công thức ranking, không implement JobPosting Agent, không implement MCP/LangGraph, không làm tuning.
 
-Lý do chọn cụm này trước: user đang trực tiếp làm `JobPosting Agent Option B - Design-first + Read-only Tool Layer`. Option C trong tài liệu phân việc cũng hữu ích, nhưng cần phối hợp sát với tool-layer workstream nên dễ tốn coordination. Explainability pack ít conflict hơn, vẫn hỗ trợ trực tiếp cho JobPosting Agent về sau, và có thể làm độc lập với quỹ thời gian hạn hẹp.
+Lý do chọn cụm này trước: user (Hưng) đang trực tiếp làm `JobPosting Agent Option B - Design-first + Read-only Tool Layer`. Option C trong tài liệu phân việc cũng hữu ích, nhưng cần phối hợp sát với tool-layer workstream nên dễ tốn coordination. Explainability pack ít conflict hơn, vẫn hỗ trợ trực tiếp cho JobPosting Agent về sau, và có thể làm độc lập với quỹ thời gian hạn hẹp.
 
 ## Cách đọc tài liệu
 
