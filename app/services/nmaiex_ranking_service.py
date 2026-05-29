@@ -126,10 +126,21 @@ async def compute_language_score(
     job_post_id: int,
     candidate_languages: list[
         dict
-    ],  # List of {"language": "en", "proficiency": "ADVANCED"}
+    ],  # List of {"language": "en", "proficiency": "ADVANCED"} OR normalized rows
     conn,
+    *,
+    use_normalized: bool = False,
 ) -> tuple[float, float, dict]:
     """Tính điểm ngôn ngữ.
+
+    [NMAIex C3 WS1] Extended:
+    - When use_normalized=True, candidate_languages contains rows from
+      CANDIDATELANGUAGE JOIN LANGUAGE: {"langCode": str, "proficiency": str}.
+      This is the preferred path for enriched candidates.
+    - When use_normalized=False (legacy fallback), raw list of
+      {"language": raw_name, "proficiency": raw_prof} is used.
+      Raw proficiency is treated as already normalized (backward compat).
+
     Returns:
         (lang_penalty, lang_bonus, breakdown_dict)
     """
@@ -152,29 +163,41 @@ async def compute_language_score(
     lang_bonus = 0.0
     breakdown = {"requirements": []}
 
-    # Chuẩn hóa map ngôn ngữ của candidate (chuyển sang dict để dễ tra cứu)
-    cand_lang_map = {}
-    for cl in candidate_languages:
-        if not isinstance(cl, dict):
-            continue
-        lang_name = cl.get("language", "").lower()
-        if "english" in lang_name or "tiếng anh" in lang_name:
-            code = "en"
-        elif "japanese" in lang_name or "tiếng nhật" in lang_name:
-            code = "ja"
-        elif "korean" in lang_name or "tiếng hàn" in lang_name:
-            code = "ko"
-        elif "chinese" in lang_name or "tiếng trung" in lang_name:
-            code = "zh"
-        elif "french" in lang_name or "tiếng pháp" in lang_name:
-            code = "fr"
-        elif "german" in lang_name or "tiếng đức" in lang_name:
-            code = "de"
-        else:
-            code = lang_name  # Giữ nguyên nếu không match
+    # Build cand_lang_map: langCode -> proficiency numeric level
+    cand_lang_map: dict[str, int] = {}
 
-        prof = cl.get("proficiency", "BASIC")
-        cand_lang_map[code] = PROFICIENCY_LEVELS.get(prof, 1)
+    if use_normalized:
+        # Preferred path: normalized rows from CANDIDATELANGUAGE JOIN LANGUAGE
+        for cl in candidate_languages:
+            if not isinstance(cl, dict):
+                continue
+            code = (cl.get("langCode") or "").lower()
+            prof_str = cl.get("proficiency") or "BASIC"
+            if code:
+                cand_lang_map[code] = PROFICIENCY_LEVELS.get(prof_str.upper(), 1)
+    else:
+        # Legacy fallback: raw dicts with simple string-based language name mapping
+        for cl in candidate_languages:
+            if not isinstance(cl, dict):
+                continue
+            lang_name = cl.get("language", "").lower()
+            if "english" in lang_name or "tiếng anh" in lang_name:
+                code = "en"
+            elif "japanese" in lang_name or "tiếng nhật" in lang_name:
+                code = "ja"
+            elif "korean" in lang_name or "tiếng hàn" in lang_name:
+                code = "ko"
+            elif "chinese" in lang_name or "tiếng trung" in lang_name:
+                code = "zh"
+            elif "french" in lang_name or "tiếng pháp" in lang_name:
+                code = "fr"
+            elif "german" in lang_name or "tiếng đức" in lang_name:
+                code = "de"
+            else:
+                code = lang_name  # Giữ nguyên nếu không match
+
+            prof = cl.get("proficiency", "BASIC")
+            cand_lang_map[code] = PROFICIENCY_LEVELS.get(prof, 1)
 
     for req in req_rows:
         code = req["langcode"]
@@ -216,6 +239,35 @@ async def compute_language_score(
 
     lang_bonus = min(lang_bonus, nmaiex_settings.nmaiex_lang_bonus_cap)
     return lang_penalty, lang_bonus, breakdown
+
+
+async def fetch_candidate_languages_normalized(
+    candidate_id: int,
+    conn,
+) -> list[dict]:
+    """Fetch normalized language rows for a candidate from CANDIDATELANGUAGE.
+
+    [NMAIex C3 WS1] Returns list of {"langCode": str | None, "proficiency": str}
+    suitable for the use_normalized=True path of compute_language_score().
+    Candidates with unknown langId are returned with langCode=None.
+    """
+    rows = await conn.fetch(
+        """
+        SELECT l.langCode, cl.proficiency, cl.rawName
+        FROM CANDIDATELANGUAGE cl
+        LEFT JOIN LANGUAGE l ON cl.langId = l.langId
+        WHERE cl.userId = $1
+        """,
+        candidate_id,
+    )
+    return [
+        {
+            "langCode": row["langcode"],  # may be None for unknown lang
+            "proficiency": row["proficiency"] or "BASIC",
+            "rawName": row["rawname"],
+        }
+        for row in rows
+    ]
 
 
 # ============================================================
@@ -436,6 +488,30 @@ async def rank_candidates_for_job(
                 uid = r["userid"]
                 candidate_skills_dict.setdefault(uid, set()).add(r["skillid"])
 
+        # [C3 WS1] Batch-fetch normalized languages for all candidates
+        cand_normalized_langs: dict[int, list[dict]] = {
+            cid: [] for cid in candidate_ids
+        }
+        if candidate_ids:
+            norm_rows = await conn.fetch(
+                """
+                SELECT cl.userId, l.langCode, cl.proficiency, cl.rawName
+                FROM CANDIDATELANGUAGE cl
+                LEFT JOIN LANGUAGE l ON cl.langId = l.langId
+                WHERE cl.userId = ANY($1::int[])
+                """,
+                candidate_ids,
+            )
+            for r in norm_rows:
+                uid = r["userid"]
+                cand_normalized_langs.setdefault(uid, []).append(
+                    {
+                        "langCode": r["langcode"],
+                        "proficiency": r["proficiency"] or "BASIC",
+                        "rawName": r["rawname"],
+                    }
+                )
+
         # RRF ranking
         rrf_k = nmaiex_settings.nmaiex_rrf_k
         w_rrf = nmaiex_settings.nmaiex_jc_weight_rrf
@@ -493,8 +569,25 @@ async def rank_candidates_for_job(
             else:
                 seniority_penalty = 0.0
 
+            # Language Scoring — prefer normalized CANDIDATELANGUAGE if available
+            norm_langs_for_cand = cand_normalized_langs.get(cid, [])
+            if norm_langs_for_cand:
+                lang_penalty, lang_bonus, _ = await compute_language_score(
+                    job_post_id=job_id,
+                    candidate_languages=norm_langs_for_cand,
+                    conn=conn,
+                    use_normalized=True,
+                )
+            else:
+                # Fallback: no normalized rows yet (old candidate, not re-enriched)
+                lang_penalty, lang_bonus, _ = 0.0, 0.0, {"requirements": []}
+
             final_score = clip_score(
-                w_rrf * rrf_score_norm + w_skill * skill_score - seniority_penalty
+                w_rrf * rrf_score_norm
+                + w_skill * skill_score
+                - seniority_penalty
+                - lang_penalty
+                + lang_bonus
             )
 
             results.append(

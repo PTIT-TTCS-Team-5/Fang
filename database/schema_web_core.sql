@@ -198,6 +198,39 @@ CREATE TABLE CANDIDATESKILL (
   FOREIGN KEY (skillId) REFERENCES SKILL(skillId)
 );
 
+-- [NMAIex C3 WS1] Normalized candidate language data (Phase 1)
+-- Surrogate PK required because langId is nullable for unknown languages.
+-- Raw values preserved for audit/debug and retroactive mapping.
+CREATE TABLE CANDIDATELANGUAGE (
+    candidateLangId SERIAL PRIMARY KEY,
+    userId          INT NOT NULL,
+    langId          INT,
+    rawName         VARCHAR(100),
+    proficiency     VARCHAR(20) CHECK (proficiency IN ('BASIC','INTERMEDIATE','ADVANCED','FLUENT','NATIVE')),
+    rawProficiency  VARCHAR(100),
+    certification   VARCHAR(200),
+    createdAt       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updatedAt       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (userId) REFERENCES CANDIDATE(userId) ON DELETE CASCADE,
+    FOREIGN KEY (langId) REFERENCES LANGUAGE(langId)
+);
+
+CREATE INDEX IF NOT EXISTS idx_candidate_language_user
+    ON CANDIDATELANGUAGE (userId);
+
+CREATE INDEX IF NOT EXISTS idx_candidate_language_lang_level
+    ON CANDIDATELANGUAGE (langId, proficiency);
+
+-- Unique: one row per known language per candidate
+CREATE UNIQUE INDEX IF NOT EXISTS uq_candidate_language_known
+    ON CANDIDATELANGUAGE (userId, langId)
+    WHERE langId IS NOT NULL;
+
+-- Unique: one row per unknown raw name per candidate
+CREATE UNIQUE INDEX IF NOT EXISTS uq_candidate_language_unknown
+    ON CANDIDATELANGUAGE (userId, lower(rawName))
+    WHERE langId IS NULL AND rawName IS NOT NULL;
+
 -- [NMAIex] Strategy C: Unmatched skills với vector cho fuzzy matching (Tầng 2)
 CREATE TABLE CANDIDATE_SKILL_RAW (
     rawId      SERIAL PRIMARY KEY,
