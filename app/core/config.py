@@ -42,7 +42,16 @@ class Settings(BaseSettings):
     context_budget_lite: int = 180_000  # Safe for Claude 4.5 Haiku (200k window)
     context_budget_pro: int = 960_000  # For Gemini Pro / GPT-5.5 (1M window)
     context_budget_warning_threshold: float = 0.80  # Cảnh báo khi > 80%
+    # [CHAT_FULL_CV Phase 1.3] Hard limit: không gọi LLM khi vượt ngưỡng này,
+    # trả deterministic response hướng dẫn HR summarize/branch/giảm prompt.
+    context_budget_hard_limit: float = 0.95
     context_summarization_model: str = "gemini-flash"  # Model dùng để tóm tắt
+
+    # [CHAT_FULL_CV Phase 2] Giới hạn data đưa vào prompt cho từng source phụ.
+    # Tránh prompt phình do offer/email lịch sử nhiều, và giảm bề mặt injection.
+    chat_offer_history_limit: int = 3
+    chat_email_history_limit: int = 5
+    chat_email_body_char_limit: int = 300
 
     # --- CORS (v2) ---
     cors_allowed_origins: list[str] = ["*"]

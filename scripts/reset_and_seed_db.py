@@ -87,7 +87,7 @@ async def main():
                 base_dir / "schema_web_core.sql",
                 base_dir / "schema_ai_core.sql",
                 base_dir / "root_data.sql",
-                base_dir / "seed_synth.sql",  # synthetic data infrastructure seed
+                base_dir / "seed_data.sql",  # legacy: 18 candidates + 5 companies + jobs + apps (for CHAT_FULL_CV testing)
             ]
 
             for sql_file in sql_files:
