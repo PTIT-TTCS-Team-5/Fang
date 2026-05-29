@@ -225,18 +225,20 @@ async def get_state(conversation_id: uuid.UUID) -> dict[str, Any] | None:
 async def save_state(conversation_id: uuid.UUID, state_json: dict[str, Any]) -> None:
     """UPSERT stateJson cho cuộc hội thoại.
 
-    Note: pass the dict directly — asyncpg's built-in JSONB codec calls
-    json.dumps() internally. Pre-serialising with json.dumps() would cause
-    double-encoding (the string is stored as a JSON string, not a JSON object).
+    asyncpg requires an explicit json.dumps() string for JSONB columns when
+    using conn.execute() — it does NOT auto-encode Python dicts. Passing a
+    string for a JSONB column is the correct approach (asyncpg treats it as
+    raw JSON text and casts to JSONB server-side).
     """
     query = """
         INSERT INTO AIJOBPOSTINGCHATSTATE (conversationId, stateJson, updatedAt)
-        VALUES ($1, $2, CURRENT_TIMESTAMP)
+        VALUES ($1, $2::jsonb, CURRENT_TIMESTAMP)
         ON CONFLICT (conversationId) DO UPDATE
         SET stateJson = EXCLUDED.stateJson, updatedAt = CURRENT_TIMESTAMP;
     """
+    state_str = json.dumps(state_json)
     async with acquire_conn() as conn:
-        await conn.execute(query, conversation_id, state_json)
+        await conn.execute(query, conversation_id, state_str)
 
 
 # ---------------------------------------------------------------------------
@@ -258,10 +260,13 @@ async def insert_tool_call_log(
     tool_id: int | None = None,
 ) -> int:
     """Ghi log gọi tool vào bảng AIJOBPOSTINGTOOLCALLLOG."""
-    # Pass dicts directly — asyncpg JSONB codec handles serialisation.
-    # Pre-serialising with json.dumps() would cause double-encoding.
-    tool_input_val = tool_input
-    tool_output_meta_val = tool_output_meta
+    # Serialize dicts to JSON strings — asyncpg's built-in JSONB codec may
+    # not auto-encode nested dict values in all driver versions. Explicit
+    # json.dumps() is safe: asyncpg accepts str for JSONB columns.
+    tool_input_val = json.dumps(tool_input) if tool_input is not None else None
+    tool_output_meta_val = (
+        json.dumps(tool_output_meta) if tool_output_meta is not None else None
+    )
 
     if tool_id is None:
         query_tool = "SELECT toolId FROM AIJOBPOSTINGTOOL WHERE toolName = $1;"

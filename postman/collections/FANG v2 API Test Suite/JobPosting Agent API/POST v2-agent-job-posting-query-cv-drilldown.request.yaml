@@ -1,0 +1,31 @@
+$kind: http-request
+name: 'POST /v2/agent/job-posting/query — CV Drill-down'
+method: POST
+url: '{{base_url}}/v2/agent/job-posting/query'
+order: 1002
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "jobPostId": {{job_post_id}},
+        "hrId": {{hr_id}},
+        "prompt": "Xem chi tiết CV đã mask PII của ứng viên jobAppId={{job_app_id}} và tóm tắt điểm mạnh/yếu.",
+        "conversationId": "{{conversation_id}}"
+    }
+description: |-
+  Smoke Case 4 — JobPosting query: full CV drill-down with PII masking.
+  Use {{job_app_id}} = 1 (candidateId=18, jobPostId=1).
+
+  Expected assertions:
+  - HTTP 200
+  - response.response is non-empty
+  - PII masking: response MUST NOT contain raw email / phone / home address
+    (check for @-sign in email context, 10-digit phone patterns)
+  - response.toolCalls should include a tool related to CV/profile fetch
+
+  Notes:
+  - Run AFTER Case 2 to have a valid {{conversation_id}}
+  - {{job_app_id}} default: 1 (first application for jobPostId=1)

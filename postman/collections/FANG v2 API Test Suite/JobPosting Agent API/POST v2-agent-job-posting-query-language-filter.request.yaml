@@ -1,0 +1,32 @@
+$kind: http-request
+name: 'POST /v2/agent/job-posting/query — Language Filter'
+method: POST
+url: '{{base_url}}/v2/agent/job-posting/query'
+order: 1001
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "jobPostId": {{job_post_id}},
+        "hrId": {{hr_id}},
+        "prompt": "Trong nhóm ứng viên này, lọc những người có tiếng Anh hạng C trở lên hoặc tương đương advanced trở lên.",
+        "conversationId": "{{conversation_id}}"
+    }
+description: |-
+  Smoke Case 3 — JobPosting query: language filter (multi-turn).
+  Use {{conversation_id}} from Case 2 to continue the same conversation.
+  DB: 463 candidates have language data (481 rows in candidatelanguage).
+
+  Expected assertions:
+  - HTTP 200
+  - response.conversationId == {{conversation_id}} (same conversation)
+  - response.response is a non-empty string
+  - No scope/permission errors
+  - Language warnings are acceptable if mapper returns unknown proficiency strings
+
+  Notes:
+  - Run AFTER Case 2 to have a valid {{conversation_id}}
+  - If API key quota is exhausted, expect HTTP 500 (Gemini 429)

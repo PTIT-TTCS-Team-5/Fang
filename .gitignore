@@ -240,3 +240,4 @@ note.txt
 .understand-anything/diff-overlay.json
 .understand-anything/*.log
 .understand-anything/fingerprints.json
+/backups

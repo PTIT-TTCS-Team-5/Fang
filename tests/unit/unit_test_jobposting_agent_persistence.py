@@ -188,13 +188,16 @@ class JobPostingAgentPersistenceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("role NOT IN ('tool_call', 'tool_result')", query_custom)
 
     async def test_save_and_get_state(self) -> None:
+        import json as _json
+
         conv_uuid = uuid.uuid4()
         mock_state = {"workingSetJobAppIds": [1, 2, 3]}
 
         await save_state(conv_uuid, mock_state)
         self.conn.execute.assert_called_once()
-        # asyncpg JSONB codec expects a Python dict, not a pre-serialised string
-        self.assertEqual(self.conn.execute.call_args[0][2], mock_state)
+        # save_state serialises the dict to a JSON string before passing to asyncpg
+        # (asyncpg rejects Python dict for JSONB columns in conn.execute — requires str)
+        self.assertEqual(self.conn.execute.call_args[0][2], _json.dumps(mock_state))
 
         self.conn.fetchval.return_value = mock_state
         state_res = await get_state(conv_uuid)
@@ -229,12 +232,16 @@ class JobPostingAgentPersistenceTests(unittest.IsolatedAsyncioTestCase):
             "INSERT INTO AIJOBPOSTINGTOOLCALLLOG",
             self.conn.fetchval.call_args_list[1][0][0],
         )
-        # Verify JSONB columns receive dicts, not pre-serialised strings (asyncpg handles serialisation)
+        # insert_tool_call_log uses explicit json.dumps() for JSONB columns (required by asyncpg)
+        import json as _json
+
         insert_args = self.conn.fetchval.call_args_list[1][0]
-        self.assertEqual(insert_args[7], {"limit": 10})  # toolInput param
         self.assertEqual(
-            insert_args[8], {"summary": "Ranked 10 candidates"}
-        )  # toolOutputMeta param
+            insert_args[7], _json.dumps({"limit": 10})
+        )  # toolInput param pre-serialised
+        self.assertEqual(
+            insert_args[8], _json.dumps({"summary": "Ranked 10 candidates"})
+        )  # toolOutputMeta param pre-serialised
 
 
 if __name__ == "__main__":

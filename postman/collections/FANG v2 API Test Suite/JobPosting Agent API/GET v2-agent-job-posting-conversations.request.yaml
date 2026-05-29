@@ -1,0 +1,18 @@
+$kind: http-request
+name: 'GET /v2/agent/job-posting/conversations'
+method: GET
+url: '{{base_url}}/v2/agent/job-posting/conversations?jobPostId={{job_post_id}}&hrId={{hr_id}}'
+order: 1003
+headers: []
+description: |-
+  Smoke Case 5a — List conversations for an HR and JobPost.
+  Real DB IDs: hrId=2, jobPostId=1.
+
+  Expected assertions:
+  - HTTP 200
+  - Response is an array (may be empty if no conversations yet)
+  - Each item has: conversationId (UUID), jobPostId, hrId, title, createdAt,
+    lastMessageAt, messageCount (int), isArchived (bool)
+  - isArchived = false for all active conversations
+
+  Verified PASS on 2026-05-29: returned 4 conversations including smoke session.

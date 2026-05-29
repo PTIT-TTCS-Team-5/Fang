@@ -1,28 +1,25 @@
 {
   "version": "1.0.0",
   "project": {
-    "name": "Fang",
+    "name": "FANG - AI Core v2.0",
     "languages": [
-      "config",
-      "http",
-      "json",
-      "markdown",
       "python",
       "sql",
-      "toml",
-      "txt",
-      "unknown",
-      "yaml"
+      "markdown",
+      "yaml",
+      "json",
+      "config"
     ],
     "frameworks": [
       "FastAPI",
+      "SQLAlchemy",
+      "LangChain",
       "Pydantic",
-      "Pytest",
-      "Uvicorn"
+      "pgvector"
     ],
-    "description": "FastAPI-based AI core for the miCareer ecosystem, handling CV ingestion, retrieval-augmented chat, and NMAIex ranking services across a modular Python backend. Note: this project has over 100 source files; consider scoping analysis to a subdirectory for faster results.",
-    "analyzedAt": "2026-05-27T13:47:02Z",
-    "gitCommitHash": "e2b415425e65fea2faab74b0aedc94b6fb6837f4"
+    "description": "AI layer for the miCarery ecosystem built on FastAPI. Implements a 5-Tier CV Parser (Lite→Pro fallback) and 7-mode RAG Chat pipeline with vector search (pgvector HNSW) and NMAIex candidate-job ranking. Cost-optimized quality gates with resilient fallback chains.",
+    "analyzedAt": "2026-05-29T00:00:00Z",
+    "gitCommitHash": "225b370b18e0d85de73b7c93b510c1188aeea9f2"
   },
   "nodes": [
     {

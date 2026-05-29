@@ -1,0 +1,10 @@
+{
+  "total_scanned": 5,
+  "total_updated": 5,
+  "total_skipped": 0,
+  "language_rows_inserted": 5,
+  "province_updates": 0,
+  "failures": [],
+  "backup_created": true,
+  "backup_path": "backups/micareer_lite_db_before_c3_reenrich_20260529_203123.dump"
+}
