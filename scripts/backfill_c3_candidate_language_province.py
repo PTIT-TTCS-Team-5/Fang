@@ -3,6 +3,7 @@ import asyncio
 import datetime
 import json
 import os
+import random
 import subprocess
 import sys
 import traceback
@@ -32,13 +33,13 @@ NINE_ROUTER_URL = os.environ.get("NINE_ROUTER_URL", "http://localhost:20128/v1")
 NINE_ROUTER_KEY = os.environ.get(
     "NINE_ROUTER_KEY", "sk-ad63867957b503e7-nrt4w0-b687b29d"
 )
-MODEL_BACKFILL = "openai/gpt-5-nano"
+MODEL_BACKFILL = "gemini/gemini-3.1-flash-lite"
 
 
 async def mock_invoke_generation(
     messages: list[dict[str, str]], model_mode: str
 ) -> GenerationTrace:
-    """Redirect LLM calls to 9Router-compatible local endpoint using gpt-5-nano."""
+    """Redirect LLM calls to 9Router-compatible local endpoint using gemini-3.1-flash-lite with exponential backoff on 429/5xx."""
     payload = {
         "model": MODEL_BACKFILL,
         "messages": messages,
@@ -50,17 +51,72 @@ async def mock_invoke_generation(
         "Content-Type": "application/json",
     }
 
+    max_retries = 10
+    base_delay = 2.0  # seconds
+
     start_time = datetime.datetime.now()
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            f"{NINE_ROUTER_URL}/chat/completions",
-            json=payload,
-            headers=headers,
-            timeout=60.0,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        content = data["choices"][0]["message"]["content"]
+    content = None
+
+    for attempt in range(max_retries):
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    f"{NINE_ROUTER_URL}/chat/completions",
+                    json=payload,
+                    headers=headers,
+                    timeout=60.0,
+                )
+                if resp.status_code == 429:
+                    delay = base_delay * (2**attempt) + random.uniform(0.1, 1.0)
+                    logger.warning(
+                        f"[9Router-Backfill] Received HTTP 429 (Too Many Requests). "
+                        f"Retrying in {delay:.2f} seconds (attempt {attempt + 1}/{max_retries})..."
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                elif resp.status_code >= 500:
+                    delay = base_delay * (2**attempt) + random.uniform(0.1, 1.0)
+                    logger.warning(
+                        f"[9Router-Backfill] Received HTTP {resp.status_code}. "
+                        f"Retrying in {delay:.2f} seconds (attempt {attempt + 1}/{max_retries})..."
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+
+                resp.raise_for_status()
+                data = resp.json()
+                content = data["choices"][0]["message"]["content"]
+                break
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code in (429, 500, 502, 503, 504):
+                delay = base_delay * (2**attempt) + random.uniform(0.1, 1.0)
+                logger.warning(
+                    f"[9Router-Backfill] HTTP error {e.response.status_code}. "
+                    f"Retrying in {delay:.2f} seconds (attempt {attempt + 1}/{max_retries})..."
+                )
+                await asyncio.sleep(delay)
+                continue
+            raise
+        except (httpx.ConnectError, httpx.TimeoutException) as e:
+            delay = base_delay * (2**attempt) + random.uniform(0.1, 1.0)
+            logger.warning(
+                f"[9Router-Backfill] Connection/Timeout error: {e}. "
+                f"Retrying in {delay:.2f} seconds (attempt {attempt + 1}/{max_retries})..."
+            )
+            await asyncio.sleep(delay)
+            continue
+    else:
+        # Exhausted retries, make one final direct request raising status on failure
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{NINE_ROUTER_URL}/chat/completions",
+                json=payload,
+                headers=headers,
+                timeout=60.0,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            content = data["choices"][0]["message"]["content"]
 
     latency_ms = int((datetime.datetime.now() - start_time).total_seconds() * 1000)
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -84,12 +85,32 @@ _LANGUAGE_ALIAS_MAP: dict[str, str] = {
     "tiếng thái": "th",
 }
 
+_LANGUAGE_CERTIFICATE_PATTERNS: dict[str, re.Pattern[str]] = {
+    "IELTS": re.compile(r"\bIELTS\b(?:\s*[:\-]?\s*([0-9](?:\.[05])?))?", re.I),
+    "TOEIC": re.compile(r"\bTOEIC\b(?:\s*[:\-]?\s*(\d{3,4}))?", re.I),
+    "TOEFL": re.compile(r"\bTOEFL\b(?:\s*[:\-]?\s*(\d{2,3}))?", re.I),
+    "CAMBRIDGE": re.compile(
+        r"\b(CAMBRIDGE|KET|PET|FCE|CAE|CPE)\b(?:\s*[:\-]?\s*([A-C][12]?))?",
+        re.I,
+    ),
+    "JLPT": re.compile(r"\bJLPT\b\s*[:\-]?\s*(N[1-5])\b|\b(N[1-5])\b", re.I),
+    "HSK": re.compile(r"\bHSK\b(?:\s*[:\-]?\s*([1-6]))?", re.I),
+    "TOPIK": re.compile(r"\bTOPIK\b(?:\s*[:\-]?\s*([1-6]))?", re.I),
+    "DELF": re.compile(r"\bDELF\b(?:\s*[:\-]?\s*([A-C][12]?))?", re.I),
+    "DALF": re.compile(r"\bDALF\b(?:\s*[:\-]?\s*([A-C][12]?))?", re.I),
+    "GOETHE": re.compile(
+        r"\bGOETHE\b(?:[-\s]?ZERTIFIKAT)?(?:\s*[:\-]?\s*([A-C][12]?))?", re.I
+    ),
+    "TESTDAF": re.compile(r"\bTESTDAF\b(?:\s*[:\-]?\s*(TDN\s*[3-5]))?", re.I),
+}
+
 
 @dataclass(frozen=True)
 class EnrichmentPayload:
     experience: list[Any]
     skills: list[str]
     languages: list[dict[str, Any]] = field(default_factory=list)
+    certificates: list[str] = field(default_factory=list)
     candidate_location: str | None = None
 
 
@@ -376,6 +397,7 @@ async def enrich_candidate_structured_data(
             await _normalize_and_persist_languages(
                 candidate_id=candidate_id,
                 raw_languages=payload.languages,
+                raw_certificates=payload.certificates,
                 conn=target_conn,
             )
 
@@ -448,6 +470,13 @@ def _coerce_enrichment_payload(parsed_payload: Any) -> EnrichmentPayload:
     raw_skills = parsed_payload.get("skills") or []
     skills = [str(skill).strip() for skill in raw_skills if str(skill).strip()]
 
+    raw_certificates = parsed_payload.get("certificates") or []
+    certificates = [
+        str(certificate).strip()
+        for certificate in raw_certificates
+        if str(certificate).strip()
+    ]
+
     # [C3 WS1] Extract languages: list[LanguageEntry | dict]
     raw_languages_raw = parsed_payload.get("languages") or []
     languages: list[dict[str, Any]] = []
@@ -484,6 +513,7 @@ def _coerce_enrichment_payload(parsed_payload: Any) -> EnrichmentPayload:
         experience=experience,
         skills=skills,
         languages=languages,
+        certificates=certificates,
         candidate_location=candidate_location,
     )
 
@@ -539,6 +569,7 @@ async def _normalize_and_persist_languages(
     candidate_id: int,
     raw_languages: list[dict[str, Any]],
     conn: Any,
+    raw_certificates: list[str] | None = None,
 ) -> None:
     """Delete old CANDIDATELANGUAGE rows and insert fresh normalized rows.
 
@@ -587,12 +618,13 @@ async def _normalize_and_persist_languages(
             )
             normalized_prof = "BASIC"
 
-        await conn.execute(
+        candidate_lang_id = await conn.fetchval(
             """
             INSERT INTO CANDIDATELANGUAGE
                 (userId, langId, rawName, proficiency, rawProficiency, certification)
             VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT DO NOTHING
+            RETURNING candidateLangId
             """,
             candidate_id,
             lang_id,
@@ -601,12 +633,116 @@ async def _normalize_and_persist_languages(
             raw_prof,
             certification,
         )
+        if candidate_lang_id is None:
+            candidate_lang_id = await conn.fetchval(
+                """
+                SELECT candidateLangId
+                FROM CANDIDATELANGUAGE
+                WHERE userId = $1
+                  AND (
+                        (langId IS NOT NULL AND langId = $2)
+                     OR (langId IS NULL AND $2 IS NULL AND LOWER(rawName) = LOWER($3))
+                  )
+                ORDER BY candidateLangId DESC
+                LIMIT 1
+                """,
+                candidate_id,
+                lang_id,
+                raw_name,
+            )
+        if candidate_lang_id is not None:
+            await _persist_language_certificates(
+                candidate_lang_id=candidate_lang_id,
+                lang_id=lang_id,
+                raw_texts=[
+                    value
+                    for value in (
+                        raw_prof,
+                        certification,
+                        *(raw_certificates or []),
+                    )
+                    if value
+                ],
+                conn=conn,
+            )
 
     logger.info(
         "[NMAIex C3 WS1] Persisted %d language rows for candidateId=%d",
         len(raw_languages),
         candidate_id,
     )
+
+
+async def _persist_language_certificates(
+    *,
+    candidate_lang_id: int,
+    lang_id: int | None,
+    raw_texts: list[str],
+    conn: Any,
+) -> None:
+    """Persist normalized certificate links for one CANDIDATELANGUAGE row.
+
+    This is deterministic and best-effort. It extracts known certificate names
+    from raw proficiency/certification text and top-level ParsedCV.certificates.
+    Non-language certificates such as AWS are ignored because they do not match
+    LANGUAGECERTIFICATE.
+    """
+    cert_matches = _extract_language_certificate_matches(raw_texts)
+    if not cert_matches:
+        return
+
+    for cert_code, raw_text, normalized_score in cert_matches:
+        cert_row = await conn.fetchrow(
+            """
+            SELECT certId, langId
+            FROM LANGUAGECERTIFICATE
+            WHERE certCode = $1
+            """,
+            cert_code,
+        )
+        if not cert_row:
+            continue
+
+        cert_lang_id = cert_row["langid"]
+        if lang_id is not None and cert_lang_id is not None and cert_lang_id != lang_id:
+            continue
+
+        await conn.execute(
+            """
+            INSERT INTO CANDIDATELANGUAGECERTIFICATE
+                (candidateLangId, certId, rawText, normalizedScore)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT DO NOTHING
+            """,
+            candidate_lang_id,
+            cert_row["certid"],
+            raw_text[:200],
+            normalized_score,
+        )
+
+
+def _extract_language_certificate_matches(
+    raw_texts: list[str],
+) -> list[tuple[str, str, str | None]]:
+    """Return unique (certCode, rawText, normalizedScore) from raw text snippets."""
+    matches: list[tuple[str, str, str | None]] = []
+    seen: set[tuple[str, str]] = set()
+    for raw_text in raw_texts:
+        text = str(raw_text or "").strip()
+        if not text:
+            continue
+        for cert_code, pattern in _LANGUAGE_CERTIFICATE_PATTERNS.items():
+            for match in pattern.finditer(text):
+                groups = [group for group in match.groups() if group]
+                normalized_score = (
+                    groups[-1].upper().replace(" ", "") if groups else None
+                )
+                key = (cert_code, text.lower())
+                if key in seen:
+                    continue
+                seen.add(key)
+                matches.append((cert_code, text, normalized_score))
+    return matches
 
 
 async def _normalize_and_update_province(

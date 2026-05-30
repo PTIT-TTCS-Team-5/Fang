@@ -33,6 +33,7 @@ class FakeConn:
         self.execute = AsyncMock()
         self.executemany = AsyncMock()
         self.fetchrow = AsyncMock(return_value=None)
+        self.fetchval = AsyncMock(return_value=123)
         self.tx = FakeTransaction()
 
     def transaction(self):
@@ -315,7 +316,7 @@ class WS1LanguageMappingTests(IsolatedAsyncioTestCase):
         # Verify INSERT was called with langId=None
         insert_calls = [
             call
-            for call in conn.execute.await_args_list
+            for call in conn.fetchval.await_args_list
             if "INSERT INTO CANDIDATELANGUAGE" in call.args[0]
         ]
         self.assertEqual(len(insert_calls), 1)

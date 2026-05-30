@@ -44,6 +44,17 @@ CREATE TABLE LANGUAGE (
     langName VARCHAR(50)  NOT NULL
 );
 
+-- [NMAIex C3.2] Chuẩn hóa chứng chỉ ngoại ngữ theo catalog riêng.
+-- Một chứng chỉ thường gắn với một ngôn ngữ, nhưng vẫn để langId nullable
+-- để có thể bổ sung chứng chỉ đa ngôn ngữ hoặc chưa phân loại về sau.
+CREATE TABLE LANGUAGECERTIFICATE (
+    certId      SERIAL PRIMARY KEY,
+    certCode    VARCHAR(30) NOT NULL UNIQUE, -- IELTS, TOEIC, JLPT, HSK...
+    certName    VARCHAR(120) NOT NULL,
+    langId      INT REFERENCES LANGUAGE(langId),
+    description TEXT
+);
+
 -- ============================================================
 -- Core User & Account tables
 -- ============================================================
@@ -230,6 +241,28 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_candidate_language_known
 CREATE UNIQUE INDEX IF NOT EXISTS uq_candidate_language_unknown
     ON CANDIDATELANGUAGE (userId, lower(rawName))
     WHERE langId IS NULL AND rawName IS NOT NULL;
+
+-- [NMAIex C3.2] N-N: một candidate-language có thể có nhiều chứng chỉ
+-- (IELTS + TOEIC, JLPT + NAT-TEST, HSK + HSKK...).
+CREATE TABLE CANDIDATELANGUAGECERTIFICATE (
+    candidateLanguageCertId SERIAL PRIMARY KEY,
+    candidateLangId INT NOT NULL,
+    certId          INT NOT NULL,
+    rawText         VARCHAR(200),
+    normalizedScore VARCHAR(50),
+    createdAt       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (candidateLangId) REFERENCES CANDIDATELANGUAGE(candidateLangId) ON DELETE CASCADE,
+    FOREIGN KEY (certId) REFERENCES LANGUAGECERTIFICATE(certId)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_candidate_language_certificate
+    ON CANDIDATELANGUAGECERTIFICATE (candidateLangId, certId, COALESCE(rawText, ''));
+
+CREATE INDEX IF NOT EXISTS idx_candidate_language_cert_lang
+    ON CANDIDATELANGUAGECERTIFICATE (candidateLangId);
+
+CREATE INDEX IF NOT EXISTS idx_candidate_language_cert_cert
+    ON CANDIDATELANGUAGECERTIFICATE (certId);
 
 -- [NMAIex] Strategy C: Unmatched skills với vector cho fuzzy matching (Tầng 2)
 CREATE TABLE CANDIDATE_SKILL_RAW (
