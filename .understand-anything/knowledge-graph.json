@@ -17,9 +17,9 @@
       "Pydantic",
       "pgvector"
     ],
-    "description": "AI layer for the miCarery ecosystem built on FastAPI. Implements a 5-Tier CV Parser (Lite→Pro fallback) and 7-mode RAG Chat pipeline with vector search (pgvector HNSW) and NMAIex candidate-job ranking. Cost-optimized quality gates with resilient fallback chains.",
-    "analyzedAt": "2026-05-29T00:00:00Z",
-    "gitCommitHash": "225b370b18e0d85de73b7c93b510c1188aeea9f2"
+    "description": "AI layer for the miCareer ecosystem built on FastAPI. Implements a 5-Tier CV parser, 7-mode RAG chat pipeline, NMAIex bidirectional ranking, and the C3 JobPosting Agent runtime for job-scoped HR assistance.",
+    "analyzedAt": "2026-05-30T02:31:38.804932Z",
+    "gitCommitHash": "f213f133b21a502ad74d19b6c20e41f578474bd9"
   },
   "nodes": [
     {
@@ -254,7 +254,7 @@
       "type": "file",
       "name": "config.py",
       "filePath": "app/core/config.py",
-      "summary": "Centralizes runtime settings, environment loading, and application-wide configuration used across the FastAPI service.",
+      "summary": "Centralizes runtime settings, environment loading, and application-wide configuration used across the FastAPI service, including JobPosting Agent controls.",
       "tags": [
         "config",
         "python"
@@ -304,7 +304,7 @@
       "type": "file",
       "name": "main.py",
       "filePath": "app/main.py",
-      "summary": "Bootstraps the FastAPI application, initializes shared resources, and mounts the chat, ingestion, and NMAIex routers.",
+      "summary": "Bootstraps the FastAPI application, initializes shared resources, and mounts the chat, ingestion, NMAIex, and JobPosting Agent routers.",
       "tags": [
         "python"
       ],
@@ -1668,6 +1668,526 @@
         "documentation",
         "reference",
         "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:app/api/routes_jobposting_agent.py",
+      "type": "file",
+      "name": "routes_jobposting_agent.py",
+      "filePath": "app/api/routes_jobposting_agent.py",
+      "summary": "Defines the JobPosting Agent API endpoints for querying the agent, listing conversations, reading message history, renaming threads, and archiving conversations.",
+      "tags": [
+        "api-handler",
+        "jobposting-agent",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/models/jobposting_agent.py",
+      "type": "file",
+      "name": "jobposting_agent.py",
+      "filePath": "app/models/jobposting_agent.py",
+      "summary": "Defines the Pydantic request, response, and helper models used by the JobPosting Agent API and runtime state.",
+      "tags": [
+        "data-model",
+        "jobposting-agent",
+        "python"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/services/jobposting_agent_persistence.py",
+      "type": "file",
+      "name": "jobposting_agent_persistence.py",
+      "filePath": "app/services/jobposting_agent_persistence.py",
+      "summary": "Persists JobPosting Agent conversations, messages, state, and tool-call logs in the AIJOBPOSTING* tables.",
+      "tags": [
+        "service",
+        "jobposting-agent",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/jobposting_agent_query.py",
+      "type": "file",
+      "name": "jobposting_agent_query.py",
+      "filePath": "app/services/jobposting_agent_query.py",
+      "summary": "Validates JobPosting Agent requests, enforces job and HR scope, and coordinates persistence with the runtime.",
+      "tags": [
+        "service",
+        "jobposting-agent",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/jobposting_agent_runtime.py",
+      "type": "file",
+      "name": "jobposting_agent_runtime.py",
+      "filePath": "app/services/jobposting_agent_runtime.py",
+      "summary": "Implements the Gemini tool-calling runtime for the JobPosting Agent, including fallback model selection and tool execution limits.",
+      "tags": [
+        "service",
+        "jobposting-agent",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:app/services/jobposting_tools.py",
+      "type": "file",
+      "name": "jobposting_tools.py",
+      "filePath": "app/services/jobposting_tools.py",
+      "summary": "Provides read-only JobPosting Agent tools for job context, candidate ranking, CV lookup, and scoped search over applications.",
+      "tags": [
+        "service",
+        "jobposting-agent",
+        "python"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "config:pytest.ini",
+      "type": "config",
+      "name": "pytest.ini",
+      "filePath": "pytest.ini",
+      "summary": "Pytest configuration that controls test discovery and execution defaults for the repository test suite.",
+      "tags": [
+        "configuration",
+        "testing",
+        "project-artifact"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/apply_c3_language_certificate_schema.py",
+      "type": "file",
+      "name": "apply_c3_language_certificate_schema.py",
+      "filePath": "scripts/apply_c3_language_certificate_schema.py",
+      "summary": "Applies the language-certificate schema changes required by the C3 backfill workflow.",
+      "tags": [
+        "utility",
+        "migration",
+        "database"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/backfill_c3_candidate_language_province.py",
+      "type": "file",
+      "name": "backfill_c3_candidate_language_province.py",
+      "filePath": "scripts/backfill_c3_candidate_language_province.py",
+      "summary": "Backfills candidate language and province data to support the C3 JobPosting Agent ranking workflow.",
+      "tags": [
+        "utility",
+        "backfill",
+        "nmaiex"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:scripts/backfill_c3_language_certificates_from_synthetic_batches.py",
+      "type": "file",
+      "name": "backfill_c3_language_certificates_from_synthetic_batches.py",
+      "filePath": "scripts/backfill_c3_language_certificates_from_synthetic_batches.py",
+      "summary": "Backfills language-certificate data from synthetic batches and reports progress for the C3 enrichment workflow.",
+      "tags": [
+        "utility",
+        "backfill",
+        "nmaiex"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:scripts/smoke_parse_enrich_sample_cv.py",
+      "type": "file",
+      "name": "smoke_parse_enrich_sample_cv.py",
+      "filePath": "scripts/smoke_parse_enrich_sample_cv.py",
+      "summary": "Smoke script that exercises CV parsing and NMAIex enrichment against a sample CV payload.",
+      "tags": [
+        "utility",
+        "smoke-test",
+        "ingestion"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:smoke_tests/test_jobposting_agent_api.py",
+      "type": "file",
+      "name": "test_jobposting_agent_api.py",
+      "filePath": "smoke_tests/test_jobposting_agent_api.py",
+      "summary": "End-to-end smoke test that exercises the JobPosting Agent API against a running FastAPI service.",
+      "tags": [
+        "test",
+        "jobposting-agent",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/unit/unit_test_jobposting_agent_persistence.py",
+      "type": "file",
+      "name": "unit_test_jobposting_agent_persistence.py",
+      "filePath": "tests/unit/unit_test_jobposting_agent_persistence.py",
+      "summary": "Unit tests for JobPosting Agent conversation persistence, message storage, and tool-call logging.",
+      "tags": [
+        "test",
+        "jobposting-agent",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/unit/unit_test_jobposting_agent_runtime.py",
+      "type": "file",
+      "name": "unit_test_jobposting_agent_runtime.py",
+      "filePath": "tests/unit/unit_test_jobposting_agent_runtime.py",
+      "summary": "Unit tests for the JobPosting Agent runtime, including tool execution limits and fallback behavior.",
+      "tags": [
+        "test",
+        "jobposting-agent",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/unit/unit_test_jobposting_agent_tools.py",
+      "type": "file",
+      "name": "unit_test_jobposting_agent_tools.py",
+      "filePath": "tests/unit/unit_test_jobposting_agent_tools.py",
+      "summary": "Unit tests for JobPosting Agent tool helpers, filtering logic, and candidate-ranking lookups.",
+      "tags": [
+        "test",
+        "jobposting-agent",
+        "project-artifact"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/unit_test_routes_jobposting_agent.py",
+      "type": "file",
+      "name": "unit_test_routes_jobposting_agent.py",
+      "filePath": "tests/unit/unit_test_routes_jobposting_agent.py",
+      "summary": "Unit tests for the JobPosting Agent FastAPI routes and request validation paths.",
+      "tags": [
+        "test",
+        "jobposting-agent",
+        "project-artifact"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/GET v2-agent-job-posting-conversations-messages.request.yaml",
+      "type": "config",
+      "name": "GET v2-agent-job-posting-conversations-messages.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/JobPosting Agent API/GET v2-agent-job-posting-conversations-messages.request.yaml",
+      "summary": "Postman request definition for the JobPosting Agent conversation message-history endpoint.",
+      "tags": [
+        "configuration",
+        "api-contract",
+        "jobposting-agent"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/GET v2-agent-job-posting-conversations.request.yaml",
+      "type": "config",
+      "name": "GET v2-agent-job-posting-conversations.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/JobPosting Agent API/GET v2-agent-job-posting-conversations.request.yaml",
+      "summary": "Postman request definition for the JobPosting Agent conversation list endpoint.",
+      "tags": [
+        "configuration",
+        "api-contract",
+        "jobposting-agent"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-cv-drilldown.request.yaml",
+      "type": "config",
+      "name": "POST v2-agent-job-posting-query-cv-drilldown.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-cv-drilldown.request.yaml",
+      "summary": "Postman request definition for the JobPosting Agent CV drill-down query endpoint.",
+      "tags": [
+        "configuration",
+        "api-contract",
+        "jobposting-agent"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-language-filter.request.yaml",
+      "type": "config",
+      "name": "POST v2-agent-job-posting-query-language-filter.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-language-filter.request.yaml",
+      "summary": "Postman request definition for the JobPosting Agent language-filter query endpoint.",
+      "tags": [
+        "configuration",
+        "api-contract",
+        "jobposting-agent"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-scope-negative.request.yaml",
+      "type": "config",
+      "name": "POST v2-agent-job-posting-query-scope-negative.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-scope-negative.request.yaml",
+      "summary": "Postman request definition for the JobPosting Agent scope-negative validation endpoint.",
+      "tags": [
+        "configuration",
+        "api-contract",
+        "jobposting-agent"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-top-candidates.request.yaml",
+      "type": "config",
+      "name": "POST v2-agent-job-posting-query-top-candidates.request.yaml",
+      "filePath": "postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-top-candidates.request.yaml",
+      "summary": "Postman request definition for the JobPosting Agent top-candidates query endpoint.",
+      "tags": [
+        "configuration",
+        "api-contract",
+        "jobposting-agent"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE0_BASELINE_ORCHESTRATOR_PROMPT.md",
+      "type": "document",
+      "name": "C3_PHASE0_BASELINE_ORCHESTRATOR_PROMPT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/C3_PHASE0_BASELINE_ORCHESTRATOR_PROMPT.md",
+      "summary": "C3 workflow prompt that establishes the baseline orchestration plan for the JobPosting Agent rollout.",
+      "tags": [
+        "documentation",
+        "workflow",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE1_WS1_DATA_FOUNDATION_PROMPT.md",
+      "type": "document",
+      "name": "C3_PHASE1_WS1_DATA_FOUNDATION_PROMPT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/C3_PHASE1_WS1_DATA_FOUNDATION_PROMPT.md",
+      "summary": "C3 workflow prompt focused on the data-foundation tasks that prepare enrichment and schema changes.",
+      "tags": [
+        "documentation",
+        "workflow",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE1_WS2_PERSISTENCE_API_SHELL_PROMPT.md",
+      "type": "document",
+      "name": "C3_PHASE1_WS2_PERSISTENCE_API_SHELL_PROMPT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/C3_PHASE1_WS2_PERSISTENCE_API_SHELL_PROMPT.md",
+      "summary": "C3 workflow prompt covering the persistence and API shell work for the JobPosting Agent.",
+      "tags": [
+        "documentation",
+        "workflow",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE2_WS3_TOOLS_RUNTIME_PROMPT.md",
+      "type": "document",
+      "name": "C3_PHASE2_WS3_TOOLS_RUNTIME_PROMPT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/C3_PHASE2_WS3_TOOLS_RUNTIME_PROMPT.md",
+      "summary": "C3 workflow prompt focused on building the JobPosting Agent tool layer and runtime.",
+      "tags": [
+        "documentation",
+        "workflow",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE3_FINAL_INTEGRATION_REVIEW_PROMPT.md",
+      "type": "document",
+      "name": "C3_PHASE3_FINAL_INTEGRATION_REVIEW_PROMPT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/C3_PHASE3_FINAL_INTEGRATION_REVIEW_PROMPT.md",
+      "summary": "C3 workflow prompt for the final integration review of the JobPosting Agent stack.",
+      "tags": [
+        "documentation",
+        "workflow",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE4_RISK_A_REENRICHMENT_PROMPT.md",
+      "type": "document",
+      "name": "C3_PHASE4_RISK_A_REENRICHMENT_PROMPT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/C3_PHASE4_RISK_A_REENRICHMENT_PROMPT.md",
+      "summary": "C3 workflow prompt for the risk-driven re-enrichment and cleanup pass.",
+      "tags": [
+        "documentation",
+        "workflow",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE5_POSTMAN_API_SMOKE_PROMPT.md",
+      "type": "document",
+      "name": "C3_PHASE5_POSTMAN_API_SMOKE_PROMPT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/C3_PHASE5_POSTMAN_API_SMOKE_PROMPT.md",
+      "summary": "C3 workflow prompt for the Postman-based smoke test pass covering the JobPosting API.",
+      "tags": [
+        "documentation",
+        "workflow",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE6_FULL_SYSTEM_POSTMAN_PSQL_TEST_PROMPT.md",
+      "type": "document",
+      "name": "C3_PHASE6_FULL_SYSTEM_POSTMAN_PSQL_TEST_PROMPT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/C3_PHASE6_FULL_SYSTEM_POSTMAN_PSQL_TEST_PROMPT.md",
+      "summary": "C3 workflow prompt for the full-system Postman and PostgreSQL validation pass.",
+      "tags": [
+        "documentation",
+        "workflow",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_FINAL_INTEGRATION_REVIEW_REPORT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_JOBPOSTING_C3_FINAL_INTEGRATION_REVIEW_REPORT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_FINAL_INTEGRATION_REVIEW_REPORT.md",
+      "summary": "Execution report capturing the final integration review outcome for the C3 JobPosting Agent rollout.",
+      "tags": [
+        "documentation",
+        "report",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_LANGUAGE_CERTIFICATE_BACKFILL_REPORT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_JOBPOSTING_C3_LANGUAGE_CERTIFICATE_BACKFILL_REPORT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_LANGUAGE_CERTIFICATE_BACKFILL_REPORT.md",
+      "summary": "Execution report summarizing the language-certificate backfill work completed during the C3 rollout.",
+      "tags": [
+        "documentation",
+        "report",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_PHASE0_BASELINE_REPORT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_JOBPOSTING_C3_PHASE0_BASELINE_REPORT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_PHASE0_BASELINE_REPORT.md",
+      "summary": "Execution report documenting the baseline orchestrator phase for the JobPosting Agent project.",
+      "tags": [
+        "documentation",
+        "report",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_POSTMAN_API_SMOKE_REPORT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_JOBPOSTING_C3_POSTMAN_API_SMOKE_REPORT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_POSTMAN_API_SMOKE_REPORT.md",
+      "summary": "Execution report for the Postman API smoke pass against the JobPosting Agent endpoints.",
+      "tags": [
+        "documentation",
+        "report",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_RISK_A_REENRICH_REPORT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_JOBPOSTING_C3_RISK_A_REENRICH_REPORT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_RISK_A_REENRICH_REPORT.md",
+      "summary": "Execution report covering the risk-based re-enrichment pass for candidate normalization.",
+      "tags": [
+        "documentation",
+        "report",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_WS1_DATA_FOUNDATION_REPORT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_JOBPOSTING_C3_WS1_DATA_FOUNDATION_REPORT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_WS1_DATA_FOUNDATION_REPORT.md",
+      "summary": "Execution report for the data-foundation workstream in the JobPosting Agent rollout.",
+      "tags": [
+        "documentation",
+        "report",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_WS2_PERSISTENCE_API_REPORT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_JOBPOSTING_C3_WS2_PERSISTENCE_API_REPORT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_WS2_PERSISTENCE_API_REPORT.md",
+      "summary": "Execution report covering the persistence and API-shell workstream for the JobPosting Agent.",
+      "tags": [
+        "documentation",
+        "report",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_WS3_TOOLS_RUNTIME_REPORT.md",
+      "type": "document",
+      "name": "FANG_NEXT_PHASE_JOBPOSTING_C3_WS3_TOOLS_RUNTIME_REPORT.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_WS3_TOOLS_RUNTIME_REPORT.md",
+      "summary": "Execution report for the tools and runtime workstream behind the JobPosting Agent.",
+      "tags": [
+        "documentation",
+        "report",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:scripts/backfill_summary.json",
+      "type": "config",
+      "name": "backfill_summary.json",
+      "filePath": "scripts/backfill_summary.json",
+      "summary": "Summary output from the C3 candidate language and province backfill run.",
+      "tags": [
+        "configuration",
+        "backfill",
+        "jobposting-agent"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:scripts/backfill_language_cert_summary.json",
+      "type": "config",
+      "name": "backfill_language_cert_summary.json",
+      "filePath": "scripts/backfill_language_cert_summary.json",
+      "summary": "Summary output from the language-certificate backfill run used by the C3 workflow.",
+      "tags": [
+        "configuration",
+        "backfill",
+        "jobposting-agent"
       ],
       "complexity": "simple"
     }
@@ -3487,6 +4007,503 @@
       "type": "documents",
       "weight": 0.5,
       "direction": "forward"
+    },
+    {
+      "source": "file:app/main.py",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_jobposting_agent.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_jobposting_agent.py",
+      "target": "file:app/models/jobposting_agent.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_jobposting_agent.py",
+      "target": "file:app/services/jobposting_agent_persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_jobposting_agent.py",
+      "target": "file:app/services/jobposting_agent_query.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_agent_query.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_agent_query.py",
+      "target": "file:app/models/jobposting_agent.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_agent_query.py",
+      "target": "file:app/services/jobposting_agent_persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_agent_query.py",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_agent_persistence.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_agent_persistence.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_agent_runtime.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_agent_runtime.py",
+      "target": "file:app/services/jobposting_tools.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_tools.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_tools.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_tools.py",
+      "target": "file:app/services/nmaiex_mapper_service.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_tools.py",
+      "target": "file:app/services/nmaiex_ranking_service.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:smoke_tests/test_jobposting_agent_api.py",
+      "target": "file:app/main.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_jobposting_agent_persistence.py",
+      "target": "file:app/services/jobposting_agent_persistence.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_jobposting_agent_runtime.py",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_jobposting_agent_tools.py",
+      "target": "file:app/services/jobposting_tools.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_routes_jobposting_agent.py",
+      "target": "file:app/main.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:tests/unit/unit_test_routes_jobposting_agent.py",
+      "target": "file:app/models/jobposting_agent.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/apply_c3_language_certificate_schema.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/apply_c3_language_certificate_schema.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_candidate_language_province.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_candidate_language_province.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_candidate_language_province.py",
+      "target": "file:app/services/nmaiex_candidate_enrichment.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_candidate_language_province.py",
+      "target": "file:app/services/nmaiex_mapper_service.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_candidate_language_province.py",
+      "target": "file:app/services/rag_orchestrator.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_language_certificates_from_synthetic_batches.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_language_certificates_from_synthetic_batches.py",
+      "target": "file:app/core/logging.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_language_certificates_from_synthetic_batches.py",
+      "target": "file:app/services/nmaiex_candidate_enrichment.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_language_certificates_from_synthetic_batches.py",
+      "target": "file:app/services/nmaiex_mapper_service.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_language_certificates_from_synthetic_batches.py",
+      "target": "file:app/services/rag_orchestrator.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/smoke_parse_enrich_sample_cv.py",
+      "target": "file:app/core/config.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/smoke_parse_enrich_sample_cv.py",
+      "target": "file:app/core/database.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/smoke_parse_enrich_sample_cv.py",
+      "target": "file:app/services/cv_parser.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/smoke_parse_enrich_sample_cv.py",
+      "target": "file:app/services/nmaiex_candidate_enrichment.py",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/main.py",
+      "target": "file:smoke_tests/test_jobposting_agent_api.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/api/routes_jobposting_agent.py",
+      "target": "file:tests/unit/unit_test_routes_jobposting_agent.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_agent_persistence.py",
+      "target": "file:tests/unit/unit_test_jobposting_agent_persistence.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_agent_runtime.py",
+      "target": "file:tests/unit/unit_test_jobposting_agent_runtime.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_tools.py",
+      "target": "file:tests/unit/unit_test_jobposting_agent_tools.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "file:app/services/jobposting_agent_query.py",
+      "target": "file:smoke_tests/test_jobposting_agent_api.py",
+      "type": "tested_by",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/GET v2-agent-job-posting-conversations-messages.request.yaml",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/GET v2-agent-job-posting-conversations.request.yaml",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-cv-drilldown.request.yaml",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-language-filter.request.yaml",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-scope-negative.request.yaml",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-top-candidates.request.yaml",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "routes",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE0_BASELINE_ORCHESTRATOR_PROMPT.md",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE1_WS1_DATA_FOUNDATION_PROMPT.md",
+      "target": "file:scripts/apply_c3_language_certificate_schema.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE1_WS2_PERSISTENCE_API_SHELL_PROMPT.md",
+      "target": "file:app/services/jobposting_agent_persistence.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE2_WS3_TOOLS_RUNTIME_PROMPT.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE3_FINAL_INTEGRATION_REVIEW_PROMPT.md",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE4_RISK_A_REENRICHMENT_PROMPT.md",
+      "target": "file:scripts/backfill_c3_candidate_language_province.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE5_POSTMAN_API_SMOKE_PROMPT.md",
+      "target": "file:smoke_tests/test_jobposting_agent_api.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/C3_PHASE6_FULL_SYSTEM_POSTMAN_PSQL_TEST_PROMPT.md",
+      "target": "file:smoke_tests/test_jobposting_agent_api.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_FINAL_INTEGRATION_REVIEW_REPORT.md",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_LANGUAGE_CERTIFICATE_BACKFILL_REPORT.md",
+      "target": "file:scripts/backfill_c3_language_certificates_from_synthetic_batches.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_PHASE0_BASELINE_REPORT.md",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_POSTMAN_API_SMOKE_REPORT.md",
+      "target": "file:smoke_tests/test_jobposting_agent_api.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_RISK_A_REENRICH_REPORT.md",
+      "target": "file:scripts/backfill_c3_candidate_language_province.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_WS1_DATA_FOUNDATION_REPORT.md",
+      "target": "file:scripts/apply_c3_language_certificate_schema.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_WS2_PERSISTENCE_API_REPORT.md",
+      "target": "file:app/services/jobposting_agent_persistence.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/FANG_NEXT_PHASE_JOBPOSTING_C3_WS3_TOOLS_RUNTIME_REPORT.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_candidate_language_province.py",
+      "target": "config:scripts/backfill_summary.json",
+      "type": "writes_to",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "file:scripts/backfill_c3_language_certificates_from_synthetic_batches.py",
+      "target": "config:scripts/backfill_language_cert_summary.json",
+      "type": "writes_to",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:pytest.ini",
+      "target": "file:tests/unit/unit_test_routes_jobposting_agent.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
+    },
+    {
+      "source": "config:pytest.ini",
+      "target": "file:smoke_tests/test_jobposting_agent_api.py",
+      "type": "configures",
+      "weight": 0.6,
+      "direction": "forward"
     }
   ],
   "layers": [
@@ -3504,13 +4521,14 @@
         "config:.pre-commit-config.yaml",
         "file:.understand-anything/.understandignore",
         "file:app/__init__.py",
-        "document:requirements.txt"
+        "document:requirements.txt",
+        "config:pytest.ini"
       ]
     },
     {
       "id": "layer:documentation",
       "name": "Documentation",
-      "description": "Reference material, architecture notes, and workflow documents that explain how the system is intended to work.",
+      "description": "Reference material, architecture notes, workflow documents, and phase reports that explain how the system and C3 JobPosting rollout are intended to work.",
       "nodeIds": [
         "document:agent_workflow_doc/[NMAIex]_PROVINCE_MERGER_GUIDE.md",
         "document:agent_workflow_doc/AI_MANUAL_UPDATE.md",
@@ -3551,7 +4569,7 @@
     {
       "id": "layer:api-surface",
       "name": "API Surface",
-      "description": "Application entry points, HTTP route handlers, and externally visible request definitions for chat, ingestion, and ranking flows.",
+      "description": "Application entry points, HTTP route handlers, and external request definitions for chat, ingestion, ranking, and JobPosting Agent flows.",
       "nodeIds": [
         "file:app/api/__init__.py",
         "file:app/api/nmaiex_routes_management.py",
@@ -3585,13 +4603,14 @@
         "config:postman/collections/FANG v2 API Test Suite/Smoke Tests/Test Health Check.request.yaml",
         "config:postman/FANG_v2_Collection.postman_collection.json",
         "config:postman/globals/workspace.globals.yaml",
-        "file:test_api.http"
+        "file:test_api.http",
+        "file:app/api/routes_jobposting_agent.py"
       ]
     },
     {
       "id": "layer:application-core",
       "name": "Application Core",
-      "description": "Shared configuration, data models, and service-layer implementation that execute the AI, ingestion, and ranking workflows.",
+      "description": "Shared configuration, data models, and service-layer implementation that execute the AI, ingestion, ranking, and JobPosting Agent workflows.",
       "nodeIds": [
         "file:app/core/__init__.py",
         "file:app/core/config.py",
@@ -3618,7 +4637,12 @@
         "file:app/services/persistence.py",
         "file:app/services/rag_model_adapters.py",
         "file:app/services/rag_orchestrator.py",
-        "file:app/services/rag_query.py"
+        "file:app/services/rag_query.py",
+        "file:app/models/jobposting_agent.py",
+        "file:app/services/jobposting_agent_persistence.py",
+        "file:app/services/jobposting_agent_query.py",
+        "file:app/services/jobposting_agent_runtime.py",
+        "file:app/services/jobposting_tools.py"
       ]
     },
     {
@@ -3636,7 +4660,7 @@
     {
       "id": "layer:tooling-and-tests",
       "name": "Tooling And Tests",
-      "description": "Operational scripts, smoke tests, and unit tests that validate and maintain the application.",
+      "description": "Operational scripts, backfill helpers, smoke tests, and unit tests that validate and maintain the application.",
       "nodeIds": [
         "file:scripts/extract_markdown_base64_images.py",
         "file:scripts/fetch_available_models.py",
@@ -3658,7 +4682,16 @@
         "file:tests/unit/unit_test_nmaiex_candidate_enrichment.py",
         "file:tests/unit/unit_test_nmaiex_score_clipping.py",
         "file:tests/unit/unit_test_parser_policy.py",
-        "file:tests/unit/unit_test_persistence.py"
+        "file:tests/unit/unit_test_persistence.py",
+        "file:scripts/apply_c3_language_certificate_schema.py",
+        "file:scripts/backfill_c3_candidate_language_province.py",
+        "file:scripts/backfill_c3_language_certificates_from_synthetic_batches.py",
+        "file:scripts/smoke_parse_enrich_sample_cv.py",
+        "file:smoke_tests/test_jobposting_agent_api.py",
+        "file:tests/unit/unit_test_jobposting_agent_persistence.py",
+        "file:tests/unit/unit_test_jobposting_agent_runtime.py",
+        "file:tests/unit/unit_test_jobposting_agent_tools.py",
+        "file:tests/unit/unit_test_routes_jobposting_agent.py"
       ]
     }
   ],
@@ -3674,7 +4707,7 @@
     {
       "order": 2,
       "title": "Architecture Narrative",
-      "description": "Read the architecture notes before diving into code so the ingestion, chat, and ranking subsystems have a clear shared frame.",
+      "description": "Read the architecture notes before diving into code so the ingestion, chat, ranking, and JobPosting Agent subsystems have a clear shared frame.",
       "nodeIds": [
         "document:docs/system_architecture.md",
         "document:docs/strategy/integration_strategy.md"
@@ -3683,12 +4716,13 @@
     {
       "order": 3,
       "title": "Application Entry Point",
-      "description": "Move to the FastAPI bootstrap and router layer to see how the runtime starts and how top-level HTTP surfaces are partitioned.",
+      "description": "Move to the FastAPI bootstrap and router layer to see how the runtime starts and how the top-level HTTP surfaces are partitioned.",
       "nodeIds": [
         "file:app/main.py",
         "file:app/api/routes_chat.py",
         "file:app/api/routes_ingestion.py",
-        "file:app/api/nmaiex_routes_ranking.py"
+        "file:app/api/nmaiex_routes_ranking.py",
+        "file:app/api/routes_jobposting_agent.py"
       ]
     },
     {
@@ -3727,22 +4761,52 @@
     },
     {
       "order": 7,
-      "title": "Persistence And Seed Data",
-      "description": "Review the SQL assets and reset script to understand the database structures and local bootstrap path behind the service.",
+      "title": "JobPosting Agent Stack",
+      "description": "Follow the new C3 JobPosting Agent from the route layer into the query shell, runtime, tool layer, persistence, and unit coverage.",
       "nodeIds": [
-        "table:database/schema_ai_core.sql",
-        "table:database/schema_web_core.sql",
-        "table:database/seed_data.sql",
-        "file:scripts/reset_and_seed_db.py"
+        "file:app/api/routes_jobposting_agent.py",
+        "file:app/models/jobposting_agent.py",
+        "file:app/services/jobposting_agent_query.py",
+        "file:app/services/jobposting_agent_runtime.py",
+        "file:app/services/jobposting_tools.py",
+        "file:app/services/jobposting_agent_persistence.py",
+        "file:tests/unit/unit_test_routes_jobposting_agent.py",
+        "file:tests/unit/unit_test_jobposting_agent_runtime.py",
+        "file:tests/unit/unit_test_jobposting_agent_tools.py",
+        "file:tests/unit/unit_test_jobposting_agent_persistence.py"
       ]
     },
     {
       "order": 8,
+      "title": "Persistence And Backfill",
+      "description": "Review the SQL assets, schema helper, and backfill scripts that keep the persistence layer and C3 enrichment data aligned.",
+      "nodeIds": [
+        "table:database/schema_ai_core.sql",
+        "table:database/schema_web_core.sql",
+        "table:database/seed_data.sql",
+        "file:scripts/reset_and_seed_db.py",
+        "file:scripts/apply_c3_language_certificate_schema.py",
+        "file:scripts/backfill_c3_candidate_language_province.py",
+        "file:scripts/backfill_c3_language_certificates_from_synthetic_batches.py",
+        "config:scripts/backfill_summary.json",
+        "config:scripts/backfill_language_cert_summary.json"
+      ]
+    },
+    {
+      "order": 9,
       "title": "Verification Surface",
-      "description": "Finish with the Postman assets and test modules that exercise the public API and the most critical data-processing paths.",
+      "description": "Finish with the Postman assets, smoke script, and test modules that exercise the public API and the most critical data-processing paths.",
       "nodeIds": [
         "config:postman/FANG_v2_Collection.postman_collection.json",
-        "file:smoke_tests/test_e2e_pipeline.py",
+        "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/GET v2-agent-job-posting-conversations-messages.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/GET v2-agent-job-posting-conversations.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-cv-drilldown.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-language-filter.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-scope-negative.request.yaml",
+        "config:postman/collections/FANG v2 API Test Suite/JobPosting Agent API/POST v2-agent-job-posting-query-top-candidates.request.yaml",
+        "config:pytest.ini",
+        "file:scripts/smoke_parse_enrich_sample_cv.py",
+        "file:smoke_tests/test_jobposting_agent_api.py",
         "file:tests/unit/unit_test_parser_policy.py"
       ]
     }
