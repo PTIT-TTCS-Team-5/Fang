@@ -33,6 +33,7 @@ class ToolCallDetail(BaseModel):
     toolName: str
     args: dict[str, Any]
     resultSummary: str
+    resultPreview: dict[str, Any] | None = None
     status: str
     latencyMs: int | None = None
     errorMsg: str | None = None

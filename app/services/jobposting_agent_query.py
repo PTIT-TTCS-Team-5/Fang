@@ -141,6 +141,7 @@ async def process_jobposting_agent_query(
         tc_name = tc.get("toolName")
         tc_args = tc.get("args") or {}
         tc_summary = tc.get("resultSummary") or ""
+        tc_preview = tc.get("resultPreview")
         tc_status = tc.get("status") or "success"
         tc_latency = tc.get("latencyMs")
         tc_error = tc.get("errorMsg")
@@ -159,6 +160,8 @@ async def process_jobposting_agent_query(
 
         # Save tool_result message
         result_meta = {"summary": tc_summary, "status": tc_status}
+        if tc_preview is not None:
+            result_meta["preview"] = tc_preview
         if tc_error:
             result_meta["error"] = tc_error
 
@@ -178,7 +181,7 @@ async def process_jobposting_agent_query(
             hr_id=request.hrId,
             tool_name=tc_name,
             tool_input=tc_args,
-            tool_output_meta={"summary": tc_summary},
+            tool_output_meta={"summary": tc_summary, "preview": tc_preview},
             status=tc_status,
             latency_ms=tc_latency,
             error_msg=tc_error,
@@ -218,6 +221,7 @@ async def process_jobposting_agent_query(
                 toolName=tc.get("toolName"),
                 args=tc.get("args") or {},
                 resultSummary=tc.get("resultSummary") or "",
+                resultPreview=tc.get("resultPreview"),
                 status=tc.get("status") or "success",
                 latencyMs=tc.get("latencyMs"),
                 errorMsg=tc.get("errorMsg"),

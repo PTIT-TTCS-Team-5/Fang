@@ -96,6 +96,8 @@ class JobPostingAgentRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["source_job_app_ids"], [101])
         self.assertEqual(result["working_set"]["jobAppIds"], [101])
         self.assertEqual(result["state"]["workingSetJobAppIds"], [101])
+        self.assertIn("resultPreview", result["tool_calls"][0])
+        self.assertEqual(result["tool_calls"][0]["resultPreview"]["ok"], True)
 
     async def test_max_steps_exceeded_returns_warning(self) -> None:
         with patch.object(runtime.settings, "jobposting_agent_max_tool_steps", 1):

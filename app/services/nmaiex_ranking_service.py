@@ -602,6 +602,8 @@ async def rank_candidates_for_job(
                         "skill_score": round(skill_score, 4),
                         "skill_alpha": alpha,
                         "seniority_penalty": round(seniority_penalty, 4),
+                        "language_penalty": round(lang_penalty, 4),
+                        "language_bonus": round(lang_bonus, 4),
                         "hard_filter_passed": True,
                     },
                 }

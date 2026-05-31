@@ -98,6 +98,110 @@ class JobPostingAgentToolsTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(result["data"]["candidates"]), 1)
         self.assertTrue(any(w["type"] == "data_quality" for w in result["warnings"]))
+        candidate = result["data"]["candidates"][0]
+        self.assertEqual(candidate["match_label"], "Ứng viên nổi trội")
+        self.assertIn("explanation", candidate)
+
+    @patch(
+        "app.services.jobposting_tools._resolve_language_filter", new_callable=AsyncMock
+    )
+    @patch("app.services.jobposting_tools.acquire_conn")
+    async def test_language_certificate_filter_uses_normalized_score(
+        self, mock_acquire, mock_lang_filter
+    ) -> None:
+        conn = AsyncMock()
+        conn.fetch.return_value = [
+            {
+                "job_app_id": 101,
+                "candidate_id": 7,
+                "application_status": "SUBMITTED",
+                "candidate_name": "A",
+                "province_id": "TPHCM",
+                "province_name": "TP.HCM",
+                "years_experience": 3,
+                "lang_code": "en",
+                "lang_name": "English",
+                "proficiency": "ADVANCED",
+                "cert_code": "TOEIC",
+                "cert_name": "TOEIC",
+                "raw_text": "TOEIC 650",
+                "normalized_score": "650",
+            }
+        ]
+        mock_acquire.return_value = MockAcquire(conn)
+        mock_lang_filter.return_value = {"query": None, "code": None, "name": None}
+
+        result = await tools.find_candidates_by_language_certificate(
+            12, certificate="TOEIC", min_score=600
+        )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["total_matches"], 1)
+        cert = result["data"]["results"][0]["languages"][0]["certificate"]
+        self.assertEqual(cert["score"], 650)
+
+    @patch("app.services.jobposting_tools.acquire_conn")
+    async def test_work_location_remote_includes_other_provinces(
+        self, mock_acquire
+    ) -> None:
+        conn = AsyncMock()
+        conn.fetchrow.return_value = {
+            "province_id": "HANOI",
+            "region_id": "NORTH",
+            "work_mode": "REMOTE",
+            "work_location": "Remote",
+        }
+        conn.fetch.return_value = [
+            {
+                "job_app_id": 101,
+                "candidate_id": 7,
+                "application_status": "SUBMITTED",
+                "candidate_name": "A",
+                "province_id": "TPHCM",
+                "province_name": "TP.HCM",
+                "region_id": "SOUTH",
+                "years_experience": 3,
+            }
+        ]
+        mock_acquire.return_value = MockAcquire(conn)
+
+        result = await tools.filter_candidates_by_work_location(12)
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["total_matches"], 1)
+        self.assertTrue(result["data"]["results"][0]["evidence"]["remote_inclusive"])
+
+    @patch("app.services.jobposting_tools.acquire_conn")
+    async def test_education_filter_normalizes_bachelor(self, mock_acquire) -> None:
+        conn = AsyncMock()
+        conn.fetch.return_value = [
+            {
+                "job_app_id": 101,
+                "candidate_id": 7,
+                "application_status": "SUBMITTED",
+                "candidate_name": "A",
+                "province_id": "TPHCM",
+                "province_name": "TP.HCM",
+                "years_experience": 3,
+                "parsed_json": {
+                    "education": [
+                        {
+                            "degree": "Cử nhân Công nghệ thông tin",
+                            "school": "Đại học A",
+                        }
+                    ]
+                },
+            }
+        ]
+        mock_acquire.return_value = MockAcquire(conn)
+
+        result = await tools.filter_candidates_by_education_level(
+            12, min_degree_level="bachelor"
+        )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["total_matches"], 1)
+        self.assertEqual(result["data"]["results"][0]["degree_level"], "bachelor")
 
     @patch("app.services.jobposting_tools.acquire_conn")
     async def test_scope_check_blocks_other_job_application(self, mock_acquire) -> None:

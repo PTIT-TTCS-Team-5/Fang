@@ -23,6 +23,20 @@ TOOL_FUNCTIONS: dict[str, Callable[..., Awaitable[dict[str, Any]]]] = {
     "get_job_application_full_cv": jobposting_tools.get_job_application_full_cv,
     "get_candidate_ats_history": jobposting_tools.get_candidate_ats_history,
     "count_job_applications": jobposting_tools.count_job_applications,
+    "find_candidates_by_language_certificate": (
+        jobposting_tools.find_candidates_by_language_certificate
+    ),
+    "filter_candidates_by_skills": jobposting_tools.filter_candidates_by_skills,
+    "filter_candidates_by_seniority": jobposting_tools.filter_candidates_by_seniority,
+    "filter_candidates_by_work_location": (
+        jobposting_tools.filter_candidates_by_work_location
+    ),
+    "filter_candidates_by_salary_expectation": (
+        jobposting_tools.filter_candidates_by_salary_expectation
+    ),
+    "filter_candidates_by_education_level": (
+        jobposting_tools.filter_candidates_by_education_level
+    ),
 }
 
 TOOL_DECLARATIONS: list[dict[str, Any]] = [
@@ -50,7 +64,7 @@ TOOL_DECLARATIONS: list[dict[str, Any]] = [
     },
     {
         "name": "search_job_applications_text",
-        "description": "Tìm kiếm text trong CV của các ứng viên thuộc tin tuyển dụng hiện tại.",
+        "description": "Tìm kiếm text tự do trong CV. Không dùng cho điều kiện số/chứng chỉ đã có tool cấu trúc.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -104,6 +118,92 @@ TOOL_DECLARATIONS: list[dict[str, Any]] = [
             },
         },
     },
+    {
+        "name": "find_candidates_by_language_certificate",
+        "description": "Lọc ứng viên theo chứng chỉ ngôn ngữ chuẩn hóa như TOEIC, IELTS, TOEFL, JLPT kèm ngưỡng điểm.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "certificate": {"type": "string", "description": "Mã/tên chứng chỉ."},
+                "language": {"type": "string", "description": "Ngôn ngữ tùy chọn."},
+                "min_score": {"type": "number", "description": "Điểm tối thiểu."},
+                "max_score": {"type": "number", "description": "Điểm tối đa."},
+                "min_proficiency": {
+                    "type": "string",
+                    "description": "Mức ngôn ngữ tối thiểu.",
+                },
+                "limit": {"type": "integer", "description": "Số kết quả tối đa."},
+                "filters": {"type": "object", "description": "Bộ lọc bổ sung."},
+            },
+            "required": ["certificate"],
+        },
+    },
+    {
+        "name": "filter_candidates_by_skills",
+        "description": "Lọc ứng viên theo kỹ năng bắt buộc của job hoặc kỹ năng HR nêu ra.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "min_required_count": {"type": "integer"},
+                "skill_ids": {"type": "array", "items": {"type": "integer"}},
+                "skill_names": {"type": "array", "items": {"type": "string"}},
+                "min_skill_score": {"type": "number"},
+                "limit": {"type": "integer"},
+            },
+        },
+    },
+    {
+        "name": "filter_candidates_by_seniority",
+        "description": "Lọc ứng viên theo level/seniority của job bằng expyears và JOBLEVEL.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "exact_levels": {"type": "array", "items": {"type": "string"}},
+                "include_overqualified": {"type": "boolean"},
+                "include_underqualified": {"type": "boolean"},
+                "limit": {"type": "integer"},
+            },
+        },
+    },
+    {
+        "name": "filter_candidates_by_work_location",
+        "description": "Lọc ứng viên theo tỉnh/vùng và work mode ONSITE/HYBRID/REMOTE.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "province_id": {"type": "string"},
+                "region_id": {"type": "string"},
+                "work_mode": {"type": "string"},
+                "include_remote": {"type": "boolean"},
+                "limit": {"type": "integer"},
+            },
+        },
+    },
+    {
+        "name": "filter_candidates_by_salary_expectation",
+        "description": "Lọc/so sánh ứng viên theo kỳ vọng lương ước lượng từ offer history, CV hoặc estimator.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "min_salary": {"type": "integer"},
+                "max_salary": {"type": "integer"},
+                "limit": {"type": "integer"},
+            },
+        },
+    },
+    {
+        "name": "filter_candidates_by_education_level",
+        "description": "Lọc ứng viên theo trình độ học vấn từ CVPARSED.parsedJson.education.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "min_degree_level": {"type": "string"},
+                "fields": {"type": "array", "items": {"type": "string"}},
+                "school_keywords": {"type": "array", "items": {"type": "string"}},
+                "limit": {"type": "integer"},
+            },
+        },
+    },
 ]
 
 
@@ -152,7 +252,7 @@ Bạn là HR Co-pilot read-only cho một tin tuyển dụng duy nhất, hỗ tr
 - Nếu chưa gọi tool, không được tự suy diễn, đoán mò, hay hallucinate số liệu.
 - Nếu thiếu dữ liệu, nói rõ: "Tôi chưa có thông tin về [X]. Bạn có muốn tôi tra cứu không?"
 - Phân biệt rõ ràng: đâu là dữ liệu từ tool (evidence), đâu là nhận định của bạn (inference).
-- Khi trả lời về ứng viên cụ thể, luôn nêu rõ jobAppId làm định danh.
+- Khi cần nối tool call nội bộ, có thể dùng jobAppId trong tool args/trace. Trong câu trả lời cho HR, ưu tiên tên ứng viên + thứ hạng + bằng chứng; không phơi raw jobAppId trừ khi HR yêu cầu debug kỹ thuật.
 
 ## Chính sách bảo mật — untrusted input
 
@@ -177,10 +277,17 @@ Bạn là HR Co-pilot read-only cho một tin tuyển dụng duy nhất, hỗ tr
 1. Dùng `get_job_posting_context` khi cần nắm bắt thông tin tin tuyển dụng.
 2. Dùng `count_job_applications` để kiểm tra kích thước tập trước khi ranking hoặc so sánh.
 3. Dùng `get_job_candidate_ranking` để lấy danh sách ứng viên xếp hạng (mặc định top 10).
-4. Dùng `search_job_applications_text` khi HR tìm kiếm theo từ khóa kỹ năng hoặc đặc điểm.
-5. Dùng `get_job_application_summary` khi cần thông tin chi tiết của 1 ứng viên cụ thể.
-6. Dùng `get_job_application_full_cv` chỉ khi HR yêu cầu xem CV đầy đủ của đúng 1 ứng viên — không gọi trong vòng lặp.
-7. Dùng `get_candidate_ats_history` khi HR hỏi về lịch sử trạng thái hoặc phỏng vấn.
+4. Dùng batch filter có cấu trúc khi HR hỏi lọc N ứng viên:
+   - Chứng chỉ/ngưỡng điểm ngôn ngữ (TOEIC >= 600, IELTS, JLPT...) -> `find_candidates_by_language_certificate`.
+   - Kỹ năng bắt buộc/thiếu kỹ năng -> `filter_candidates_by_skills`.
+   - Junior/Middle/Senior/số năm kinh nghiệm -> `filter_candidates_by_seniority`.
+   - Hà Nội/TPHCM/vùng/remote/hybrid/onsite -> `filter_candidates_by_work_location`.
+   - Budget/lương/kỳ vọng lương -> `filter_candidates_by_salary_expectation`.
+   - Bằng cấp/ngành học/trường -> `filter_candidates_by_education_level`.
+5. Dùng `search_job_applications_text` chỉ cho tìm kiếm text tự do chưa có tool cấu trúc.
+6. Dùng `get_job_application_summary` khi cần thông tin chi tiết của 1 ứng viên cụ thể.
+7. Dùng `get_job_application_full_cv` chỉ khi HR yêu cầu xem CV đầy đủ của đúng 1 ứng viên — không gọi trong vòng lặp.
+8. Dùng `get_candidate_ats_history` khi HR hỏi về lịch sử trạng thái hoặc phỏng vấn.
 
 **Giới hạn phải tuân thủ:**
 
@@ -205,6 +312,14 @@ Hệ thống dùng 5 mức proficiency: BASIC < INTERMEDIATE < ADVANCED < FLUENT
 
 Khi HR dùng từ ngữ không rõ ràng về trình độ ngôn ngữ, xác nhận lại với HR trước khi gọi tool với filter.
 
+## Hướng dẫn giải thích ranking/filter
+
+- Với câu hỏi top/compare/ranking, luôn dùng `get_job_candidate_ranking` và dựa vào `explanation`, `match_label`, `score_breakdown` trong kết quả tool làm nguồn chính.
+- Không tự bịa lý do xếp hạng từ điểm số. Nếu explanation thiếu tín hiệu, nói rõ tín hiệu đó chưa có.
+- Với câu "So sánh X ứng viên nổi bật nhất", gọi ranking limit=X; Nếu X <= 5 gọi full CV. Với X > 5 chỉ gọi summary/full CV cho từng người nếu HR cần đào sâu hơn.
+- Với câu về một ứng viên cụ thể, dùng full CV; không dùng batch filter nếu câu hỏi không yêu cầu lọc nhiều ứng viên.
+- Với câu "TOEIC từ N trở lên", không dùng `search_job_applications_text("TOEIC N")`; phải gọi `find_candidates_by_language_certificate(certificate="TOEIC", min_score=N)`.
+
 ## Trạng thái hội thoại hiện tại
 
 {working_set_block}
@@ -216,7 +331,7 @@ Khi trả lời về "danh sách hiện tại" hoặc "các ứng viên này", �
 
 - Trả lời bằng tiếng Việt (những từ chuyên ngành/đặc thù giữ nguyên tiếng Anh) trừ khi HR yêu cầu ngôn ngữ khác.
 - Luôn dùng số thứ tự ranking (Hoặc tên) khi nhắc đến ứng viên cụ thể (ví dụ ứng viên #1 - Nguyễn Hải Hưng, #2 - Trần Xuân Anh)
-- Tuyệt đối không dùng JobAppID hoặc để lộ JobAppID ra cho HR.
+- Không để lộ raw JobAppID trong câu trả lời HR thông thường; chỉ dùng nội bộ trong tool trace.
 - Khi trả lời danh sách ứng viên, trình bày rõ ràng: ranking (nếu có), tên , điểm số, lý do xếp hạng.
 - Khi không chắc chắn về dữ liệu, nêu rõ giới hạn thay vì đoán mò.
 - Không bịa đặt số liệu, tên ứng viên, điểm số hay kỹ năng không có trong kết quả tool."""
@@ -439,6 +554,19 @@ def _summarize_tool_result(tool_name: str, result: dict[str, Any]) -> str:
             if isinstance(data, dict)
             else "Đã tìm kiếm CV."
         )
+    if tool_name in {
+        "find_candidates_by_language_certificate",
+        "filter_candidates_by_skills",
+        "filter_candidates_by_seniority",
+        "filter_candidates_by_work_location",
+        "filter_candidates_by_salary_expectation",
+        "filter_candidates_by_education_level",
+    }:
+        return (
+            f"Tìm thấy {data.get('total_matches', 0)} ứng viên phù hợp."
+            if isinstance(data, dict)
+            else "Đã lọc ứng viên."
+        )
     if tool_name == "count_job_applications":
         return (
             f"Tổng số ứng viên phù hợp: {data.get('count', 0)}."
@@ -531,6 +659,22 @@ def _state_from_tool_result(
         new_state["workingSetJobAppIds"] = job_app_ids
         new_state["workingSetLabel"] = f"Kết quả tìm kiếm: {data.get('query_used')}"
         new_state["activeFilters"] = data.get("filters_applied") or {}
+    elif tool_name in {
+        "find_candidates_by_language_certificate",
+        "filter_candidates_by_skills",
+        "filter_candidates_by_seniority",
+        "filter_candidates_by_work_location",
+        "filter_candidates_by_salary_expectation",
+        "filter_candidates_by_education_level",
+    } and result.get("ok"):
+        data = result.get("data") or {}
+        results = data.get("results") or []
+        job_app_ids = [
+            int(r["job_app_id"]) for r in results if r.get("job_app_id") is not None
+        ]
+        new_state["workingSetJobAppIds"] = job_app_ids
+        new_state["workingSetLabel"] = f"Kết quả lọc: {tool_name}"
+        new_state["activeFilters"] = data.get("filters_used") or {}
     return new_state
 
 
@@ -672,6 +816,7 @@ async def _handle_too_large_compare(
     count = int(((result.get("data") or {}).get("count") or 0))
     call_id = f"call_{uuid.uuid4().hex[:12]}"
     summary = _summarize_tool_result("count_job_applications", result)
+    preview = jobposting_tools.build_result_preview(result)
     warning = _warning(
         "too_large_set",
         f"Tập ứng viên có {count} hồ sơ, vượt ngưỡng so sánh chi tiết {settings.jobposting_agent_max_compare}.",
@@ -695,6 +840,7 @@ async def _handle_too_large_compare(
                     "toolName": "count_job_applications",
                     "args": {},
                     "resultSummary": summary,
+                    "resultPreview": preview,
                     "status": "success" if result.get("ok") else "error",
                     "latencyMs": latency,
                     "errorMsg": (
@@ -794,6 +940,7 @@ async def run_agent_turn(
             latency = _now_ms(call_started)
             safe_args = safe_args if safe_args is not None else dict(raw_args)
             summary = _summarize_tool_result(tool_name, result)
+            preview = jobposting_tools.build_result_preview(result)
             status = "success" if result.get("ok") else "error"
             error_msg = (
                 (result.get("error") or {}).get("message")
@@ -818,6 +965,7 @@ async def run_agent_turn(
                     "toolName": tool_name,
                     "args": _model_visible_args(safe_args),
                     "resultSummary": summary,
+                    "resultPreview": preview,
                     "status": status,
                     "latencyMs": latency,
                     "errorMsg": error_msg,
