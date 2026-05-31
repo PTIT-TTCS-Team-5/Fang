@@ -18,8 +18,8 @@
       "pgvector"
     ],
     "description": "AI layer for the miCareer ecosystem built on FastAPI. Implements a 5-Tier CV parser, 7-mode RAG chat pipeline, NMAIex bidirectional ranking, and the C3 JobPosting Agent runtime for job-scoped HR assistance.",
-    "analyzedAt": "2026-05-30T02:31:38.804932Z",
-    "gitCommitHash": "f213f133b21a502ad74d19b6c20e41f578474bd9"
+    "analyzedAt": "2026-05-31T09:44:19.616Z",
+    "gitCommitHash": "2fd5d7b77411d2fb4d41ca22ba35f55bbae60da7"
   },
   "nodes": [
     {
@@ -1728,11 +1728,12 @@
       "type": "file",
       "name": "jobposting_agent_runtime.py",
       "filePath": "app/services/jobposting_agent_runtime.py",
-      "summary": "Implements the Gemini tool-calling runtime for the JobPosting Agent, including fallback model selection and tool execution limits.",
+      "summary": "Implements the Gemini tool-calling runtime for the JobPosting Agent, including model fallback, working-set-aware prompt construction, tool orchestration, and HR/compliance guardrails.",
       "tags": [
         "service",
         "jobposting-agent",
-        "python"
+        "python",
+        "tool-calling"
       ],
       "complexity": "complex"
     },
