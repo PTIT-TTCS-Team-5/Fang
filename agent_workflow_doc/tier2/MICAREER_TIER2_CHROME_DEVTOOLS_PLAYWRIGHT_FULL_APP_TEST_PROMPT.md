@@ -74,6 +74,10 @@ Bạn là Model Tier 2 phụ trách **thực thi** UI test. Không tự thiết 
 
 ## Required Playwright Deliverable
 
+- **IMPORTANT**: CHECK IF ANY PREVIOUS TEST SCRIPT EXIT. run it again first
+- Analyze the log, if the test fail -> investigate and report to user
+- Don't change the code without user verify
+
 Create or update a Playwright test script under `miCareer-mini` that automates:
 
 - HR login.

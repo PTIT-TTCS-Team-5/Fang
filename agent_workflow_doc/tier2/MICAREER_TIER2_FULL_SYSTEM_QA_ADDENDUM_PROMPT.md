@@ -17,6 +17,22 @@ from hr
 join "user" on "user".userid = hr.userid
 join company on company.compid = hr.compid) là thấy danh sách HR + công ty. DATABASE_URL=postgresql://postgres:hungklv123@localhost:5432/micareer_lite_db
 
+## Current JobPosting Agent UI Contract
+
+Trang JobPosting Agent vừa cập nhật UI. Khi viết selector/assertion, dùng contract mới này:
+
+- Chat input placeholder là `Tìm nhanh ứng viên sáng giá cùng FANG.`
+- Empty state hiển thị lời chào `Xin chào, mình là FANG` và đúng 3 suggested prompts:
+  - `Xếp hạng 10 ứng viên phù hợp nhất.`
+  - `Những ứng viên nào có chứng chỉ tiếng Anh TOEIC từ 600 trở lên?`
+  - `So sánh 3 ứng viên nổi bật nhất.`
+- Quick prompts không còn là block riêng ở sidebar sau khi đã có message; đừng assert 6 quick prompt cũ.
+- Tool step có expander cấp ngoài dạng `Bước ...`; bên trong có nested expander `📤 Kết quả lệnh` với container scrollable. Test phải mở cả hai tầng nếu cần đọc output chi tiết.
+- Working set hiển thị trong expander dạng `📋 <label> — <n> ứng viên`, mặc định có thể collapsed. Test phải mở expander trước khi click chip.
+- Source section `🔗 Nguồn được trích dẫn trong câu trả lời` chỉ hiển thị khi source IDs khác working set IDs. Nếu source trùng working set và section bị ẩn, đó là expected behavior, không fail.
+- Sidebar có expander `📄 Job Posting`, bên trong có metadata job và các action `✏️ Sửa Job`, `👥 Xem ứng viên`. Các action này là entry points hợp lệ để test navigation.
+- Application list button đã đổi sang `Đánh giá CV`; không dùng selector `Đánh giá RAG`.
+
 
 ## Provider Stop Rule And Paid API Cost Control
 
@@ -292,7 +308,7 @@ Steps:
 
 Expected:
 - Empty state visible.
-- Suggested prompts are recruitment-scoped.
+- Suggested prompts render theo Current JobPosting Agent UI Contract.
 - No stale working set/source chips.
 
 #### TC21 — Agent Top Candidates Happy Path
@@ -305,7 +321,8 @@ Prompt:
 Expected:
 - Assistant response not empty.
 - Tool steps visible.
-- Working set/source chips visible.
+- Working set visible inside `📋 ... ứng viên` expander.
+- Source section visible only when source IDs differ from working set IDs; if hidden because identical, record as PASS with note.
 - Response stays recruitment-scoped.
 
 #### TC22 — Agent Tool Expanders And Output Evidence
@@ -317,14 +334,16 @@ Steps:
 Expected:
 - Expanders open.
 - Tool names readable.
+- Nested `📤 Kết quả lệnh` expander opens when present.
 - Output/error summary stable.
 
 #### TC23 — Agent Candidate Chip Navigation
 
 Steps:
-1. Click one source/working set chip.
-2. Verify application detail.
-3. Return to Agent.
+1. Open the working set expander first.
+2. Click one working set chip, or source chip if the source expander is visible.
+3. Verify application detail.
+4. Return to Agent.
 
 Expected:
 - Navigation correct.
