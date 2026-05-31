@@ -1,0 +1,87 @@
+[
+  {
+    "order": 1,
+    "title": "Entry Point — How FANG Starts",
+    "description": "Understand how the FastAPI app initializes, connects to the database, and registers routers. This is the 'skeleton' of the application showing all entry points and middleware configuration.",
+    "nodeIds": [
+      "file:app/main.py"
+    ],
+    "languageLesson": "FastAPI lifespan context managers: Use @asynccontextmanager to manage async startup/shutdown lifecycle. This pattern ensures database connections are created on app startup and properly closed on shutdown."
+  },
+  {
+    "order": 2,
+    "title": "Configuration Layer — The System's Brain",
+    "description": "Learn how all system behavior is parametrized via Pydantic Settings. Database, embedding, LLM providers, retry policies, and context budgets are all externalized here. This is where you understand how the system is tuned.",
+    "nodeIds": [
+      "config:app/core/config.py"
+    ],
+    "languageLesson": "Pydantic BaseSettings with SettingsConfigDict: Use .env files for environment-specific configuration. This pattern separates deployment concerns from code, enabling different settings for dev/staging/production without code changes."
+  },
+  {
+    "order": 3,
+    "title": "Multi-Provider Abstraction — The Adapter Pattern",
+    "description": "Discover the critical abstraction that makes FANG's fallback strategy possible. The ProviderAdapter base class defines a unified interface for all LLM providers. This enables cost-optimized fallback: if Gemini fails, code automatically tries OpenAI, then Anthropic.",
+    "nodeIds": [
+      "file:app/services/cv_parser_adapters.py",
+      "class:app/services/cv_parser_adapters.py:ProviderAdapter"
+    ],
+    "languageLesson": "Adapter Pattern: Use abstract base classes (ABC) to define a contract that multiple implementations must follow. This enables loose coupling—callers depend on the interface, not concrete providers. New providers can be added without changing service layer code."
+  },
+  {
+    "order": 4,
+    "title": "Gemini Provider Implementation",
+    "description": "See how Gemini is implemented as the primary (cost-optimized) provider. This implementation uses Google's Generative AI vision API to extract PDF structure as JSON. Learn model resolution strategy for forward compatibility.",
+    "nodeIds": [
+      "class:app/services/cv_parser_adapters.py:GeminiProviderAdapter"
+    ],
+    "languageLesson": "Vision API calls: PDFs are sent as base64-encoded binary data with schema constraints. Model resolution uses candidate lists to gracefully handle API model name changes without code updates."
+  },
+  {
+    "order": 5,
+    "title": "OpenAI Provider Implementation",
+    "description": "Explore OpenAI as the second-choice fallback. Unlike Gemini's vision approach, OpenAI uses JSON mode for structured output. This shows how the same ProviderAdapter interface accommodates different API patterns.",
+    "nodeIds": [
+      "class:app/services/cv_parser_adapters.py:OpenAIProviderAdapter"
+    ],
+    "languageLesson": "API heterogeneity: Different providers use different approaches (vision, JSON mode, text encoding). The adapter pattern shields the caller from these differences—all adapters return the same ParsedCV type regardless of internal implementation."
+  },
+  {
+    "order": 6,
+    "title": "Anthropic Provider Implementation",
+    "description": "Understand Claude as the safety-net fallback (most reliable but highest cost). Anthropic has unique patterns: explicit max_tokens requirement, different media type headers for PDFs. This completes the 5-tier fallback chain.",
+    "nodeIds": [
+      "class:app/services/cv_parser_adapters.py:AnthropicProviderAdapter"
+    ],
+    "languageLesson": "Cost-quality tradeoff: Gemini Flash is fast+cheap (Tier 1), GPT-5.5 is expensive+capable (Tier 5), Claude is reliable+moderate cost (fallback). Architecture reflects business priorities: optimize for cost, then for quality, then for reliability."
+  },
+  {
+    "order": 7,
+    "title": "RAG Query Pipeline — The Chat Engine",
+    "description": "See how everything comes together: user prompt → vector search in parsed CVs → context bundling (job, candidate, ATS history) → budget check → LLM generation → persistence. This is the complete request lifecycle.",
+    "nodeIds": [
+      "file:app/services/rag_query.py"
+    ],
+    "languageLesson": "Context window management: RAG systems must prevent token overflow. FANG uses a budget allocation pattern—Lite models get 180k tokens (safe for 200k window), Pro get 960k. If usage exceeds 80%, warn. Beyond 95%, reject and ask for summarization."
+  },
+  {
+    "order": 8,
+    "title": "REST API Endpoints — The Public Contract",
+    "description": "Learn the external interface: POST /v2/chat/query receives a prompt and returns an AI response. This endpoint is the boundary between client and FANG. Understand request/response shapes, error handling, and versioning (v2 primary, v1 backward-compatible).",
+    "nodeIds": [
+      "endpoint:/v2/chat/query"
+    ],
+    "languageLesson": "API design: Use versioning (v2 prefix) to support both new and legacy clients. Return structured errors with status codes. Design endpoints around domain concepts (conversations, messages) rather than technical operations (list, create, update)."
+  },
+  {
+    "order": 9,
+    "title": "Integration Guides & Documentation",
+    "description": "Learn how frontend developers integrate FANG into their applications. Understand full-CV chat architecture, embedding configuration, and database schema. See the complete integration workflow and database design patterns.",
+    "nodeIds": [
+      "document:docs/guide/integration_guide.md",
+      "document:docs/guide/job_application_full_cv_chat_guide.md",
+      "document:docs/guide/embedding_guide.md",
+      "document:docs/guide/database_guide.md"
+    ],
+    "languageLesson": "Integration workflow: Clients create conversations, then send prompts, which trigger RAG pipelines. Database tables (conversations, messages, cv_chunks with pgvector embeddings) store the data. pgvector enables semantic search—similar CVs are retrieved regardless of keyword match."
+  }
+]
