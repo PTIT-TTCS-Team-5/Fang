@@ -509,6 +509,136 @@ Expected:
 - No Streamlit traceback exposed to user.
 - If not safe to simulate, SKIP with reason.
 
+### Group H — JobPosting Agent Batch Tool Deep QA
+
+Chạy Group H sau khi TC18-TC30 cơ bản đã ổn. Đây là phần bắt buộc để validate các batch tools mới. Mỗi TC cần ghi expected tool, actual tool, resultPreview evidence, response grounding, và prompt-learning note.
+
+#### TC38 — Agent Ranking Explanation Contract
+
+LLM-dependent. Apply Provider Stop Rule.
+
+Prompt:
+`Xếp hạng 10 ứng viên phù hợp nhất. Với mỗi ứng viên hãy nêu nhãn phù hợp, điểm, 2 điểm mạnh và rủi ro chính dựa trên evidence.`
+
+Expected:
+- Tool route: `get_job_candidate_ranking`.
+- Tool output has `candidates`, `match_label`, `explanation`, `score_breakdown`.
+- `score_breakdown` includes skill/seniority and language bonus/penalty fields when available.
+- Labels use the approved Vietnamese label set: `Ứng viên nổi trội`, `Mức độ phù hợp cao`, `Mức độ phù hợp tốt`, `Cần đánh giá thêm`, `Tín hiệu phù hợp thấp`.
+- Response uses explanation/evidence, not raw score-only reasoning.
+- No evidence of score clipping assumption; if score >1 or <0 appears, report as valid raw score.
+
+#### TC39 — Agent Language Certificate Filter: TOEIC >= 600
+
+LLM-dependent. Apply Provider Stop Rule.
+
+Prompt:
+`Những ứng viên nào có chứng chỉ tiếng Anh TOEIC từ 600 trở lên?`
+
+Expected:
+- Tool route: `find_candidates_by_language_certificate`.
+- Must not use only `search_job_applications_text` with query `TOEIC 600`.
+- Tool args include certificate `TOEIC` and `min_score` 600.
+- `resultPreview.data.filters_used` includes certificate/score condition.
+- If `total_matches=0`, response must say normalized language-certificate data was checked and must not hallucinate candidates.
+
+#### TC40 — Agent Skill Requirement Filter
+
+LLM-dependent. Apply Provider Stop Rule.
+
+Prompt:
+`Ứng viên nào thiếu nhiều kỹ năng bắt buộc nhất? Nêu matched_skills và missing_skills.`
+
+Expected:
+- Tool route: `filter_candidates_by_skills`.
+- Tool output includes `matched_skills`, `missing_skills`, `matched_count`, `exact_overlap`, `fuzzy_overlap`, `skill_score`.
+- Response cites matched/missing evidence.
+
+#### TC41 — Agent Seniority/Level Filter
+
+LLM-dependent. Apply Provider Stop Rule.
+
+Prompt:
+`Ứng viên nào phù hợp level Junior hoặc Middle? Phân loại underqualified, fit, overqualified nếu có.`
+
+Expected:
+- Tool route: `filter_candidates_by_seniority`.
+- Tool output includes `classification`, `gap_years`, `years_experience`.
+- Response does not treat overqualified as automatic reject.
+
+#### TC42 — Agent Work Location And Remote Filter
+
+LLM-dependent. Apply Provider Stop Rule.
+
+Prompt:
+`Ứng viên nào ở Hà Nội hoặc vẫn phù hợp nếu job cho làm remote/hybrid?`
+
+Expected:
+- Tool route: `filter_candidates_by_work_location`.
+- Tool output includes `work_mode`, province evidence, `remote_inclusive` evidence if remote applies.
+- Missing candidate `provId` should be surfaced as data-quality warning, not silent hallucination.
+
+#### TC43 — Agent Salary Expectation Filter
+
+LLM-dependent. Apply Provider Stop Rule.
+
+Prompt:
+`Ứng viên nào có kỳ vọng lương nằm trong budget của job? Nêu nguồn ước lượng và confidence.`
+
+Expected:
+- Tool route: `filter_candidates_by_salary_expectation`.
+- Tool output includes `expected_salary`, `salary_source`, `confidence`, `within_range`, `gap_amount`, `gap_ratio`.
+- Response clearly states salary expectation is an estimate, not ground truth.
+- If source is low confidence, response must say so.
+
+#### TC44 — Agent Education Level Filter
+
+LLM-dependent. Apply Provider Stop Rule.
+
+Prompt:
+`Ứng viên nào có bằng đại học trở lên ngành liên quan?`
+
+Expected:
+- Tool route: `filter_candidates_by_education_level`.
+- Tool output includes `degree_level`, `education_matches`, raw degree/school evidence.
+- Response must distinguish deterministic parsing from HR final evaluation.
+
+#### TC45 — Agent Tool Output Preview UX
+
+Steps:
+1. Use one successful Group H tool call.
+2. Open outer `Bước ...` expander.
+3. Open nested `📤 Kết quả lệnh`.
+4. Inspect visible JSON/content.
+
+Expected:
+- Output is not empty and not only `resultSummary`.
+- Shows sanitized structured fields such as `filters_used`, `total_matches`, `results`, `match_label`, or evidence.
+- No raw phone/email/address/raw CV long text.
+- Long output is scrollable/readable.
+
+#### TC46 — Agent Structured Tool Routing Negative
+
+LLM-dependent. Apply Provider Stop Rule.
+
+Prompt:
+`Tìm ứng viên có AWS-SAA hoặc chứng chỉ cloud chuyên ngành.`
+
+Expected:
+- Because professional certification normalized schema is not implemented, Agent should not pretend there is a normalized professional-certification tool.
+- Acceptable behavior: use summary/text search with clear limitation, or state professional certification is not normalized and offer text search.
+- Must not call language certificate tool for AWS-SAA.
+
+#### TC47 — Agent Prompt/System Learning Extraction
+
+After TC38-TC46, produce a mini analysis:
+
+- Which prompt routed to expected tool.
+- Which prompt routed incorrectly.
+- Whether tool result preview gave enough HR-visible evidence.
+- Whether response used deterministic explanation.
+- Specific system prompt/few-shot update recommendation, if any.
+
 ## Playwright Deliverable Bắt Buộc
 
 Create or update a Playwright script under `C:\Users\os\Desktop\cur_prj\miCareer-mini`, for example:
@@ -522,6 +652,7 @@ Automate at minimum:
 - TC11 if provider OK.
 - TC15, TC17 if data available.
 - TC18, TC20, TC21 if provider OK, TC23, TC28, TC29, TC30.
+- Group H TC38-TC45 when provider OK, at least TC39 and TC45 must be automated if any Agent LLM case is automated.
 - TC31, TC33 non-destructive.
 - TC34, TC36 desktop.
 
@@ -531,6 +662,7 @@ Script requirements:
 - Use `run_id` timestamp for all generated names.
 - Avoid exact global counts.
 - If provider stop occurs, record `PROVIDER_STOP`, skip remaining LLM-dependent TC, continue non-LLM TC when safe.
+- For JobPosting Agent tool tests, record expected tool vs actual tool and inspect nested `📤 Kết quả lệnh`.
 - Do not modify app code or stable DB data to make tests pass.
 - Do not retry provider/billing/context errors.
 
@@ -551,6 +683,9 @@ Required sections:
 - Provider stop section if any: exact error, provider, action requested from user.
 - Playwright command and script path.
 - Bugs requiring Tier 1 action.
+- JobPosting Agent tool routing matrix: prompt, expected tool, actual tool, PASS/FAIL/SKIP.
+- ResultPreview/evidence matrix: toolName, keys observed, total count, truncation/warnings, PII check.
+- System Prompt Learning Findings: concrete prompt/tool behavior to feed back into JobPosting Agent prompt engineering.
 - Provider/key/context issues separated from app bugs.
 - Skipped mutation/destructive cases and exact reason.
 

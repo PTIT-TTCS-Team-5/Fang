@@ -1,6 +1,6 @@
-# Tier 2 Prompt — miCareer-mini Full App Verification With Chrome DevTools MCP + Playwright
+# Tier 2 Prompt — miCareer-mini Lite Full-App Verification With JobPosting Agent Batch Tools
 
-Bạn là Model Tier 2 phụ trách **thực thi** UI test. Không tự thiết kế lại scope test. Dùng Chrome DevTools MCP để thao tác thật trên app, sau đó viết/chạy Playwright để tự động hóa các case dưới đây.
+Bạn là Model Tier 2 phụ trách **thực thi** UI test bằng Chrome DevTools MCP và Playwright. Không thiết kế lại scope. Không sửa app code để test pass. Nếu phải sửa test script Playwright để phản ánh UI/tool contract mới thì được phép.
 
 ## Context
 
@@ -10,101 +10,105 @@ Bạn là Model Tier 2 phụ trách **thực thi** UI test. Không tự thiết 
 - Frontend URL: `http://localhost:8501`
 - FANG API env expected by frontend: `FANG_API_URL=http://localhost:8000/v2`
 - Reference style only: `C:\Users\os\Desktop\cur_prj\miCareer-mini\agent_workflow_doc\try-hard-jobposting-agent\test_full.md`
-- Do not reset DB and do not redesign test cases.
-- Fixture hồ sơ ưu tiên: candidate username `nguyenhaihung`, `candidate/userId=518`, `jobAppId=2002`, `jobPostId=13`, có CV thật `C:\Users\os\Desktop\cur_prj\Fang\sample_2.pdf` và `CVPARSED` usable.
+- Do not reset DB, seed DB, or mutate stable job/candidate data.
+- Fixture ưu tiên: candidate username `nguyenhaihung`, `candidate/userId=518`, `jobAppId=2002`, `jobPostId=13`, CV `C:\Users\os\Desktop\cur_prj\Fang\sample_2.pdf`, `CVPARSED` usable.
+
+## Current JobPosting Agent Contract
+
+- Chat input placeholder: `Tìm nhanh ứng viên sáng giá cùng FANG.`
+- Empty state greeting: `Xin chào, mình là FANG`
+- Suggested prompts exactly:
+  - `Xếp hạng 10 ứng viên phù hợp nhất.`
+  - `Những ứng viên nào có chứng chỉ tiếng Anh TOEIC từ 600 trở lên?`
+  - `So sánh 3 ứng viên nổi bật nhất.`
+- Tool step expander label starts with `Bước ...`.
+- Nested tool output expander: `📤 Kết quả lệnh`.
+- Nested output should show sanitized structured data from `resultPreview`, not only a short summary.
+- Working set expander: `📋 <label> — <n> ứng viên`.
+- Source section `🔗 Nguồn được trích dẫn trong câu trả lời` may be hidden when sources equal working set; do not fail that case.
+- Internal IDs may appear in tool trace, but HR-facing assistant answer should prefer candidate name/rank/evidence.
+
+## Provider Stop Rule
+
+For LLM-dependent cases, run each official prompt at most once. If provider/API key/quota/rate/context failure occurs:
+
+- Mark current TC as `PROVIDER_STOP`.
+- Stop remaining LLM-dependent TCs.
+- Continue non-LLM UI/navigation/rename/archive tests when safe.
+- Record provider, prompt, UI/API error, and short backend log evidence.
+- Do not switch to paid/xịn key or spam retries without user confirmation.
 
 ## Required Manual Verification With Chrome DevTools MCP
 
-1. App startup
-   - Open `http://localhost:8501`.
-   - Verify home page renders.
-   - Verify HR and Candidate entry points are visible.
+### A. App, Auth, Navigation
 
-2. HR login and navigation
-   - Login HR with fixture account, prefer `hr_helios` and password used by local seed (`1` or `123456`; verify from DB if needed).
-   - Verify HR job list renders.
-   - Verify each job row has job detail, applications, and JobPosting Agent entry points.
+1. Open `http://localhost:8501`; verify home page, HR entry, Candidate entry.
+2. Login HR with fixture account, prefer `hr_helios` or query DB for an HR fixture if needed.
+3. Verify HR job list has job detail, applications, and JobPosting Agent entry points.
+4. Open job detail, edit page render-only, and applications page.
+5. Open application detail for `nguyenhaihung`/`jobAppId=2002` when available; verify full-CV chat wording and no old `top-0 chunks`.
+6. Open AI Ranking and verify ranking page/results or stable provider/env error.
+7. Login candidate fixture and verify job list/job detail/apply page render without submit.
 
-3. Job detail and edit smoke
-   - Open a job detail page.
-   - Verify job metadata renders.
-   - Open edit page and verify content/settings tabs render.
-   - Do not save destructive edits unless using disposable fixture.
+### B. JobPosting Agent Lite Batch Regression
 
-4. Applications and single JobApplication full-CV chat
-   - Open applications for a job.
-   - Prefer the `nguyenhaihung` application (`jobAppId=2002`) if visible; otherwise open one application detail via “Đánh giá CV”.
-   - Verify CV panel renders.
-   - Verify HR Co-pilot no longer says `top-0 chunks` after a chat response; it should show `Full CV context`.
-   - Verify loading text uses full-CV/hồ sơ wording, not RAG pipeline wording.
-   - Send a scoped candidate-evaluation question and verify response renders.
-   - Verify model/latency/context caption renders.
-   - If context warning appears, test summarize and branch buttons.
+Open JobPosting Agent for fixture job and run these LLM-dependent prompts until Provider Stop:
 
-5. Full-CV chat negative/edge UI
-   - If an application without `CVPARSED` is available, open it and verify the UI blocks chat with full-CV/CV parsed wording.
-   - If no fixture exists, report SKIP with reason.
+| Lite TC | Prompt | Expected Tool/Behavior |
+|---|---|---|
+| JA-L1 | `Xếp hạng 10 ứng viên phù hợp nhất.` | Calls `get_job_candidate_ranking`; response includes candidates, labels/scores/reasons; tool output has `returned` or `candidates`. |
+| JA-L2 | `Những ứng viên nào có chứng chỉ tiếng Anh TOEIC từ 600 trở lên?` | Calls `find_candidates_by_language_certificate`, not literal `search_job_applications_text("TOEIC 600")`; output has `filters_used.certificate`, `min_score`, `total_matches`. |
+| JA-L3 | `So sánh 3 ứng viên nổi bật nhất.` | Calls ranking limit 3; response uses `match_label`, `explanation`, strengths/risks/score breakdown evidence. |
+| JA-L4 | Choose one: skill gap, seniority, location/remote, salary budget, or education prompt | Must call the matching structured filter tool, not generic text search. |
 
-6. AI Ranking regression
-   - Open AI Ranking from job/application flow.
-   - Run ranking if provider/API state allows.
-   - Verify ranked list or stable provider/env error.
-   - Verify navigating from ranking result to application detail works.
+For every JA-L* case:
 
-7. JobPosting Agent full flow
-   - Open JobPosting Agent from job list.
-   - Verify empty state suggested prompts.
-   - Send top candidates prompt.
-   - Verify assistant response, tool steps, working set, source chips.
-   - Send language filter follow-up in same conversation.
-   - Click candidate/source chip and verify navigation to application detail.
-   - Return to JobPosting Agent.
-   - Rename conversation using unique timestamp.
-   - Create new conversation and verify old working set is cleared.
-   - Trigger a suggested prompt.
-   - Archive the timestamped conversation and verify it disappears.
-   - Open JobPosting Agent from job detail and applications page entry points.
+1. Assert assistant response renders.
+2. Open outer `Bước ...` expander.
+3. Open nested `📤 Kết quả lệnh`.
+4. Record actual `toolName`, `args`, `resultPreview.data` keys, `total_matches/returned`, warnings, and whether output is scrollable/readable.
+5. Record whether HR-facing answer is grounded and does not expose raw PII.
 
-8. Candidate flow smoke
-   - Login as a candidate fixture account.
-   - Verify job list renders.
-   - Open job detail.
-   - Verify apply/profile page renders.
-   - Do not upload or submit unless using disposable fixture; if not safe, report SKIP for final submit.
+### C. Conversation And UI State
+
+1. Click a working-set/source chip after opening the correct expander; verify navigation to application detail and return.
+2. Rename conversation with `run_id = LITEQA_<YYYYMMDD_HHMMSS>`.
+3. Create new conversation; verify old working set/source chips clear.
+4. Trigger one suggested prompt.
+5. Archive only the conversation created by this run.
+6. Open JobPosting Agent from job list, job detail, and applications page.
 
 ## Required Playwright Deliverable
 
-- **IMPORTANT**: CHECK IF ANY PREVIOUS TEST SCRIPT EXIT. run it again first
-- Analyze the log, if the test fail -> investigate and report to user
-- Don't change the code without user verify
-
-Create or update a Playwright test script under `miCareer-mini` that automates:
-
-- HR login.
-- Job list render.
-- Application detail full-CV chat caption check.
-- JobPosting Agent top-candidates prompt.
-- JobPosting Agent follow-up prompt.
-- Rename and archive conversation with timestamp.
-- Candidate login/job list smoke.
-
-The script must:
-
-- Use robust Streamlit selectors based on visible labels/text and stable grouping.
-- Avoid relying on old persistent conversation names.
-- Use timestamped names for rename/archive tests.
-- Treat provider quota/auth failures as environment issues only when UI/backend exposes a stable error and logs support that classification.
+- First inspect existing scripts in `C:\Users\os\Desktop\cur_prj\miCareer-mini`.
+- Update or create a Playwright script, preferably `test_playwright_full.py` for Lite full-app smoke and `test_playwright_job_agent.py` for focused Agent smoke.
+- Script must automate at minimum:
+  - HR login and job list render.
+  - Application detail full-CV chat caption check.
+  - JobPosting Agent JA-L1, JA-L2, JA-L3 when provider OK.
+  - Opening nested tool output and checking it is not empty.
+  - Rename/new/archive conversation with timestamp.
+  - Candidate login/job list smoke.
+- Use robust Streamlit selectors: visible text, role labels, `data-testid`, and expander text.
+- Do not rely on old quick prompts, old placeholder `Hỏi về ứng viên của job này...`, or exact global conversation counts.
 
 ## Final Report Format
 
-Return one Markdown report with:
+Return one Markdown report:
 
-- Browser, frontend URL, backend URL, fixture accounts/IDs used.
+| TC | Status | Evidence | Notes |
+|---|---|---|---|
+| ... | PASS/FAIL/SKIP/PROVIDER_STOP | screenshot/log/DOM/tool output | ... |
+
+Required sections:
+
+- `run_id`, browser, viewport, frontend/backend URL.
+- Fixture accounts and IDs used.
 - Manual Chrome DevTools result table.
-- Playwright result table and command used.
-- Path to Playwright script.
-- Screenshots or key DOM evidence if available.
+- Playwright command and script path.
+- Tool routing table: prompt, expected tool, actual tool, status.
+- Result preview evidence table: toolName, preview keys, total, truncation/warnings.
 - Bugs requiring Tier 1 action.
-- Skipped cases and exact reason.
-
-Do not redesign the test plan. Execute the cases above and report evidence.
+- Prompt/System Prompt Learning Findings: where Agent routed wrong, hallucinated, lacked evidence, or needs stronger few-shot guidance.
+- Provider/key/context issues separated from app bugs.
+- Skipped destructive cases and exact reason.
