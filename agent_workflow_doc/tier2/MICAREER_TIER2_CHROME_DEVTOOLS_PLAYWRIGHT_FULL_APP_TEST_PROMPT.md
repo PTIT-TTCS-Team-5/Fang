@@ -11,7 +11,7 @@ Bạn là Model Tier 2 phụ trách **thực thi** UI test. Không tự thiết 
 - FANG API env expected by frontend: `FANG_API_URL=http://localhost:8000/v2`
 - Reference style only: `C:\Users\os\Desktop\cur_prj\miCareer-mini\agent_workflow_doc\try-hard-jobposting-agent\test_full.md`
 - Do not reset DB and do not redesign test cases.
-- Fixture hồ sơ ưu tiên: candidate username `nguyenhaihung`, `candidate/userId=518`, `jobAppId=2002`, `jobPostId=13`, có CV thật `sample_2` và `CVPARSED` usable.
+- Fixture hồ sơ ưu tiên: candidate username `nguyenhaihung`, `candidate/userId=518`, `jobAppId=2002`, `jobPostId=13`, có CV thật `C:\Users\os\Desktop\cur_prj\Fang\sample_2.pdf` và `CVPARSED` usable.
 
 ## Required Manual Verification With Chrome DevTools MCP
 

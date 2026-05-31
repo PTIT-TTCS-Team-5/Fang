@@ -10,7 +10,7 @@ Bạn là Model Tier 2 phụ trách **thực thi** test API bằng Postman MCP. 
 - Test matrix source: `postman/FANG_V2_FULL_API_TEST_MATRIX.md`
 - Không chạy reset DB, không seed DB. Local DB là fixture ổn định.
 - Nếu gặp lỗi quota/API key của LLM provider, phân loại là provider/environment issue khi backend log chứng minh rõ.
-- Fixture hồ sơ ưu tiên: username `nguyenhaihung`, `candidate_id=518`, `job_app_id_full_cv=2002`, `job_post_id=13`, có `CVPARSED.parsedJson` và `rawText`; CV thật `sample_2` ở `https://res.cloudinary.com/dfwkw1guc/raw/upload/v1778998872/nmaiex/sample_2`.
+- Fixture hồ sơ ưu tiên: username `nguyenhaihung`, `candidate_id=518`, `job_app_id_full_cv=2002`, `job_post_id=13`, có `CVPARSED.parsedJson` và `rawText`; CV thật `sample_2` ở `C:\Users\os\Desktop\cur_prj\Fang\sample_2.pdf`
 
 ## Environment Variables
 
