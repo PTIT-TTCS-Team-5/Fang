@@ -1,0 +1,12 @@
+$kind: http-request
+name: GET /docs
+method: GET
+url: '{{base_url}}/docs'
+order: 120
+headers: []
+description: |-
+  OpenAPI documentation smoke check.
+
+  Expected assertions:
+  - HTTP 200
+  - Response body contains Swagger UI or OpenAPI documentation HTML

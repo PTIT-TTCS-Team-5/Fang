@@ -177,8 +177,8 @@ Hiện tại FANG chỉ truy xuất CV chunks từ `AIDOCUMENTCHUNK`. Trong th�
 - **Candidate profile**: Bio, năm kinh nghiệm, kỹ năng đã ghi nhận
 - **Luồng ATS**: Lịch sử interview, feedback của interviewer, offer đã gửi, email trao đổi
 
-> [!WARNING]
-> **Trạng thái hiện tại:** Code chỉ fetch: job title/description, candidate basic fields (tên/email/phone/bio/expyears/location), interview feedback. Các nguồn bổ sung (skills, salary/work mode/level, offers, emails) thuộc phần việc CHAT_FULL_CV và P1_A_B_inc.
+> [!NOTE]
+> **Cập nhật 2026-05-29 (CHAT_FULL_CV merged):** Multi-source context đã được mở rộng trong luồng `/v2/chat/query` cho JobApplication. Hiện fetch: JobPosting (title, description, salary range, work mode, location, levels, categories, required skills), Candidate profile (basic + skills), interview feedback, Offer (3 versions gần nhất), EmailLog (5 emails gần nhất với body trunc 300 chars). Đồng thời CV source đã chuyển sang full markdown thay cho top-k chunks — xem `job_application_full_cv_chat_strategy.md` để biết chi tiết data source, prompt blocks và policy.
 
 ### 7.2 Kiến trúc Context Assembly
 
@@ -221,7 +221,7 @@ Bio: {bio}
 ```
 
 > [!IMPORTANT]
-> **Quyết định đã chốt:** JobApplication chat sẽ chuyển từ fixed chunk-RAG sang full CV markdown context. Xem `agent_workflow_doc/FANG_NEXT_PHASE_DECISIONS.md`. Code và tài liệu chi tiết sẽ cập nhật khi implementation hoàn tất (work package CHAT_FULL_CV).
+> **Cập nhật 2026-05-29:** Section 7.3 trên đây mô tả format CV chunks **legacy**. JobApplication chat hiện dùng full CV markdown thay cho top-k chunks. Format thực tế: `[UNTRUSTED CV — FULL MARKDOWN (parsed)]` hoặc `[UNTRUSTED CV — RAW TEXT FALLBACK]` (khi parsedJson lỗi). Xem `job_application_full_cv_chat_strategy.md` §3-4 cho data source và prompt policy đầy đủ với 8 guardrails.
 
 ```
 
@@ -344,8 +344,8 @@ Nguồn cập nhật (04/2026):
 
 Khuyến nghị vận hành: dùng budget khoảng 75-85% context limit để chừa headroom cho system prompt, retrieval context, và output tokens.
 
-> [!WARNING]
-> **Trạng thái hiện tại:** Code dùng group budget (Lite 180k, Pro 960k) và vẫn gọi LLM khi vượt ngưỡng, chỉ trả `contextWarning`. Per-model budget và stop-at-threshold behavior thuộc phần việc CHAT_FULL_CV + P1_A_B_inc.
+> [!NOTE]
+> **Cập nhật 2026-05-29 (CHAT_FULL_CV merged):** Stop-at-threshold đã implement. `context_budget_hard_limit = 0.95` mới: khi token total vượt 95% budget → FANG **không** gọi LLM, trả deterministic response hướng dẫn HR summarize/branch (`contextWarning.type = "budget_over_hard_limit"`). Group budget (Lite 180k / Pro 960k) vẫn được giữ — per-model thực sự để work package sau nếu data cho thấy cần. Budget được tính cho TOÀN BỘ payload (system prompt + history + user prompt), không chỉ history. Xem `job_application_full_cv_chat_strategy.md` §5.
 
 ### 10.3 Chiến lược: Token Budget + Summarization (KHÔNG Sliding Window)
 
@@ -439,7 +439,12 @@ context_budget_warning_threshold: float = 0.80   # Cảnh báo khi > 80%
 context_summarization_model: str = "gemini-flash" # Model dùng để tóm tắt
 ```
 
-## 11. Pipeline Xử Lý Một Request (12 bước)
+## 11. Pipeline Xử Lý Một Request
+
+> [!NOTE]
+> **Cập nhật 2026-05-29:** Pipeline JobApplication chat đã đổi từ 12 bước (có embed prompt + vector search) sang 11 bước (full-CV markdown). Bước 3-4 cũ (embed prompt + vector search) đã bị bỏ. Xem chi tiết ở `job_application_full_cv_chat_guide.md` §1. Section dưới đây giữ làm lịch sử kiến trúc; **không phải runtime truth hiện tại** cho luồng JobApplication.
+
+### 11.1 Pipeline cũ — chunk RAG (legacy reference)
 
 Luồng chi tiết khi nhận `POST /v2/chat/query`:
 

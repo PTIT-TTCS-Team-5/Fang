@@ -21,8 +21,7 @@ Tài liệu này định nghĩa kiến trúc giao tiếp giữa FANG AI Core v2 
 | Quản lý conversation lifecycle | `GET /v2/chat/conversations`, `GET .../messages` |
 | Tóm tắt & tiếp tục hội thoại | `POST /v2/chat/conversations/{id}/summarize` |
 | Tạo hội thoại mới từ summary | `POST /v2/chat/conversations/{id}/branch-new` |
-| Embed prompt + vector search | Nội bộ |
-| Context đa nguồn (CV + JD + ATS) | Nội bộ |
+| Full-CV markdown context + context đa nguồn (CV + JD + ATS + Offer + EmailLog) | Nội bộ |
 | 5-tier parser + ProTierGate, 7 modelMode generation + fallback | Nội bộ |
 | Persist chat, audit log | Nội bộ (AICHATMESSAGE, AIQUERYLOG) |
 | Ingestion pipeline (parse→chunk→embed) | `POST /v2/ingestion/jobs` |
@@ -37,14 +36,14 @@ Tài liệu này định nghĩa kiến trúc giao tiếp giữa FANG AI Core v2 
 | Render chat UI | Gọi FANG API, hiển thị response |
 | Upload CV | Upload lên Cloudinary → gọi FANG ingestion API |
 | Polling trạng thái CV processing | Gọi FANG `GET /v2/ingestion/jobs/{id}` |
-| Kiểm tra eligibility cho chat | Kiểm tra ingestion status = SUCCESS trước khi cho phép chat |
+| Kiểm tra eligibility cho chat | Kiểm tra `CVPARSED` usable trước khi cho phép chat full-CV |
 
 ## 3. API Contract Đầy Đủ
 
 ### 3.1 Chat API
 
 #### `POST /v2/chat/query`
-Nhận prompt từ HR, FANG tự xử lý toàn bộ pipeline RAG với context đa nguồn.
+Nhận prompt từ HR, FANG tự xử lý full-CV chat với context đa nguồn.
 
 **Request:**
 ```json
@@ -75,7 +74,7 @@ Nhận prompt từ HR, FANG tự xử lý toàn bộ pipeline RAG với context 
     "modelMode": "auto-lite",
     "fallbackPath": "tier1:google:gemini-flash(succeeded)",
     "latencyMs": 1200,
-    "topK": 3,
+    "topK": 0,
     "contextWarning": null
 }
 ```
@@ -88,7 +87,7 @@ Nhận prompt từ HR, FANG tự xử lý toàn bộ pipeline RAG với context 
     "response": "...",
     "model": "google:gemini-3.1-flash-lite-preview",
     "latencyMs": 1200,
-    "topK": 3,
+    "topK": 0,
     "contextWarning": {
         "type": "budget_near_limit",
         "usedPercent": 85,
@@ -100,7 +99,7 @@ Nhận prompt từ HR, FANG tự xử lý toàn bộ pipeline RAG với context 
 **Error (4xx/5xx):**
 ```json
 {
-    "detail": "Ingestion chưa hoàn thành cho jobAppId=123. Trạng thái hiện tại: PROCESSING"
+    "detail": "Không tìm thấy CVPARSED cho jobAppId=123."
 }
 ```
 

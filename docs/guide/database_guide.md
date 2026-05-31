@@ -29,15 +29,13 @@ Trong FANG v2, role `system` được sử dụng với mục đích đặc bi�
 1. **Context Summarization**: Khi hội thoại quá dài (vượt ngưỡng Token Budget), hệ thống sẽ dùng LLM tóm tắt phần cũ và lưu lại thành một message `system`. 
 2. **Context Persistence**: Giúp khôi phục ngữ cảnh nhanh chóng mà không cần gửi lại toàn bộ lịch sử tin nhắn thô lên LLM.
 
-## 3. Công cụ Khởi Tạo (`reset_and_seed_db.py`)
-Script này sẽ tự động xóa và tạo lại toàn bộ schema (bao gồm cả các bảng chat v2).
-```bash
-python scripts/reset_and_seed_db.py --reset
-```
-*Lưu ý: Chỉ chạy lệnh này trong môi trường DEV.*
+## 3. Chính sách dữ liệu local
+
+Local DB hiện được xem là fixture ổn định cho test tích hợp. Không reset DB
+trong quy trình test thông thường vì thao tác này sẽ xóa dữ liệu ứng viên,
+conversation, ranking và JobPosting Agent đang dùng để kiểm thử.
 
 ## 4. Bảo mật & Safeguard
-- Hệ thống chỉ cho phép thực thi Reset trên Database có tên `micareer_lite_db`.
 - Mọi truy vấn vector sử dụng cosine distance (`<=>`) để tìm kiếm mức độ tương đồng.
 
 ---

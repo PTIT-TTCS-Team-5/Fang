@@ -1,18 +1,18 @@
 $kind: http-request
 name: 'POST /v2/chat/conversations/{id}/summarize'
 method: POST
-url: '{{base_url}}/v2/chat/conversations/a1b2c3d4-5e6f-7890-abcd-ef1234567890/summarize'
+url: '{{base_url}}/v2/chat/conversations/{{conversation_id}}/summarize'
 order: 4000
 headers:
   - key: Content-Type
     value: application/json
-body:
-  type: json
-  content: |-
-    {
-        "conversationId": "a1b2c3d4-5e6f-7890-abcd-ef1234567890"
-    }
 pathVariables:
   - key: id
-    value: a1b2c3d4-5e6f-7890-abcd-ef1234567890
-description: Summarize old conversation history to reduce token usage
+    value: '{{conversation_id}}'
+description: |-
+  Summarize old conversation history to reduce token usage.
+
+  Expected assertions:
+  - HTTP 200 when conversation has at least 4 unsummarized non-system messages
+  - summarizedMessageCount > 0
+  - Follow-up chat should keep the system summary and exclude summarized user/assistant turns from LLM context

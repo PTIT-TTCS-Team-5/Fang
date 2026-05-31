@@ -12,12 +12,12 @@ body:
     {
         "jobPostId": {{job_post_id}},
         "hrId": {{hr_id}},
-        "prompt": "Xem chi tiết CV đã mask PII của ứng viên jobAppId={{job_app_id}} và tóm tắt điểm mạnh/yếu.",
-        "conversationId": "{{conversation_id}}"
+        "prompt": "Xem chi tiết CV của ứng viên jobAppId={{job_app_id_full_cv}} và tóm tắt điểm mạnh/yếu.",
+        "conversationId": "{{agent_conversation_id}}"
     }
 description: |-
   Smoke Case 4 — JobPosting query: full CV drill-down with PII masking.
-  Use {{job_app_id}} = 1 (candidateId=18, jobPostId=1).
+  Use {{job_app_id_full_cv}} as a JobApplication with parsed CV context.
 
   Expected assertions:
   - HTTP 200
@@ -28,4 +28,4 @@ description: |-
 
   Notes:
   - Run AFTER Case 2 to have a valid {{conversation_id}}
-  - {{job_app_id}} default: 1 (first application for jobPostId=1)
+  - {{job_app_id_full_cv}} default should point to a parsed CV application

@@ -75,14 +75,12 @@ Khác với Unit test, Smoke Test sẽ tương tác trực tiếp với Database
 
 ### Chuẩn Bị Dữ Liệu
 
-> [!CAUTION]
-> **NÊN RESET DATABASE SAU KHI CẬP NHẬT SCHEMA**
-> Cần đọc kỹ file `database/schema_ai_core.sql` để hiểu cấu trúc, và chạy lệnh reset db để áp dụng schema mới nhất (lưu ý: lệnh này sẽ xóa toàn bộ dữ liệu hiện có):
->
-> ```bash
-> python scripts/reset_and_seed_db.py --reset
-> ```
-> *Ghi lại `jobAppId` và `hrId` được in ra trong console để sử dụng cho các bài test tiếp theo.*
+Local DB hiện được xem là fixture ổn định. Không reset/seed DB trước khi chạy
+smoke test trừ khi có chỉ đạo riêng. Trước khi test, chọn sẵn các ID tồn tại:
+
+- `hrId`
+- `jobAppId` có `CVPARSED` usable cho full-CV chat
+- `jobPostId` cho ranking/JobPosting Agent
 
 ### 3.1. Test E2E Ingestion Pipeline (`test_e2e_pipeline.py`)
 
@@ -135,5 +133,5 @@ Cách test tốt nhất để đảm bảo End-to-End thực sự hoạt động
 1.  Bật FANG server: `uvicorn app.main:app`
 2.  Bật miCareer-mini: `python -m streamlit run app.py`
 3.  Thực hiện "Luồng Candidate": Đăng nhập ứng viên -> Upload CV. Quan sát progress bar chạy.
-4.  Thực hiện "Luồng HR": Đăng nhập HR -> Mở chi tiết ứng viên vừa nộp -> Chat RAG.
+4.  Thực hiện "Luồng HR": Đăng nhập HR -> Mở chi tiết ứng viên vừa nộp -> Chat full-CV.
 5.  Thử đổi Model Mode ở giao diện HR (ví dụ: ép chạy `auto-pro`) và quan sát kết quả trả về + log của FANG.

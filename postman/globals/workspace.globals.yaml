@@ -1,2 +1,32 @@
 name: Globals
-values: []
+values:
+  - key: base_url
+    value: http://localhost:8000
+    enabled: true
+  - key: hr_id
+    value: "2"
+    enabled: true
+  - key: job_post_id
+    value: "13"
+    enabled: true
+  - key: job_app_id_full_cv
+    value: "2002"
+    enabled: true
+  - key: job_app_id_missing_cv
+    value: "999999"
+    enabled: true
+  - key: candidate_id
+    value: "518"
+    enabled: true
+  - key: conversation_id
+    value: ""
+    enabled: true
+  - key: agent_conversation_id
+    value: ""
+    enabled: true
+  - key: ingestion_job_id
+    value: ""
+    enabled: true
+  - key: cv_snap_url
+    value: https://res.cloudinary.com/dfwkw1guc/raw/upload/v1778998872/nmaiex/sample_2
+    enabled: true

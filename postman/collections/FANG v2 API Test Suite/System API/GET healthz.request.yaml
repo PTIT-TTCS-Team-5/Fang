@@ -1,0 +1,12 @@
+$kind: http-request
+name: GET /healthz
+method: GET
+url: '{{base_url}}/healthz'
+order: 100
+headers: []
+description: |-
+  System smoke check for backward-compatible health endpoint.
+
+  Expected assertions:
+  - HTTP 200
+  - JSON object has ok=true

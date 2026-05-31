@@ -1,9 +1,15 @@
 $kind: http-request
 name: 'GET /v2/chat/conversations/{id}/messages'
 method: GET
-url: '{{base_url}}/v2/chat/conversations/a1b2c3d4-5e6f-7890-abcd-ef1234567890/messages'
+url: '{{base_url}}/v2/chat/conversations/{{conversation_id}}/messages'
 order: 3000
 pathVariables:
   - key: id
-    value: a1b2c3d4-5e6f-7890-abcd-ef1234567890
-description: Get message history for a conversation
+    value: '{{conversation_id}}'
+description: |-
+  Get visible message history for a full-CV chat conversation.
+
+  Expected assertions:
+  - HTTP 200 after {{conversation_id}} is populated
+  - Response is an array of user/assistant messages
+  - System summary messages are not returned by this endpoint

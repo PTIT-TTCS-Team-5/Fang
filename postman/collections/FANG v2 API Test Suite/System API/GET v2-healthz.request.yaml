@@ -1,0 +1,13 @@
+$kind: http-request
+name: GET /v2/healthz
+method: GET
+url: '{{base_url}}/v2/healthz'
+order: 110
+headers: []
+description: |-
+  System smoke check for v2 health endpoint.
+
+  Expected assertions:
+  - HTTP 200
+  - JSON object has ok=true
+  - version is present

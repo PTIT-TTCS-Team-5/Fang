@@ -54,8 +54,6 @@ FANG/
 |   |   `-- *.pdf (các báo cáo nghiên cứu hỗ trợ quyết định kỹ thuật)
 |   |-- archive/
 |   `-- docx/
-|-- scripts/
-|   `-- reset_and_seed_db.py
 |-- smoke_tests/
 |   |-- test_chunking.py
 |   |-- test_e2e_pipeline.py

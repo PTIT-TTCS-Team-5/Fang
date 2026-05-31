@@ -67,15 +67,16 @@ ANTHROPIC_MODEL_CANDIDATES: dict[str, list[str]] = {
 
 GEMINI_MODEL_CANDIDATES: dict[str, list[str]] = {
     "gemini-flash": [
-        "gemini-flash",
+        "gemini-2.5-flash",
+        "gemini-flash-latest",
         "gemini-3.1-flash",
         "gemini-3.1-flash-preview",
         "gemini-3.1-flash-lite-preview",
-        "gemini-2.5-flash",
-        "gemini-flash-latest",
+        "gemini-flash",
     ],
     # Tier 4 — Pro
     "gemini-pro": [
+        "gemini-2.5-pro",
         "gemini-3.1-pro-preview",
         "gemini-3.1-pro",
         "gemini-pro",

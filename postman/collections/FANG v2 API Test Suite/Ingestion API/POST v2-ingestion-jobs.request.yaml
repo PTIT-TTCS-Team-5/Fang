@@ -4,14 +4,20 @@ method: POST
 url: "{{base_url}}/v2/ingestion/jobs"
 order: 1000
 headers:
-  Content-Type: application/json
+  - key: Content-Type
+    value: application/json
 body:
   type: json
   content: |-
     {
-        "cvUrl": "https://res.cloudinary.com/dfwkw1guc/raw/upload/v1777525993/ttcs/sample",
-        "candidateId": 26,
-        "jobAppId": 40,
-        "modelMode": "auto-lite"
+        "jobAppId": {{job_app_id_full_cv}},
+        "cvSnapUrl": "{{cv_snap_url}}"
     }
-description: Trigger CV processing (parse -> chunk -> embed)
+description: |-
+  Trigger CV processing (parse -> chunk -> embed) for a known JobApplication.
+
+  Expected assertions:
+  - HTTP 202
+  - indexJobId is integer > 0; save as {{ingestion_job_id}}
+  - status is QUEUED
+  - Do not run any DB reset/seed before or after this request

@@ -10,12 +10,13 @@ body:
   type: json
   content: |-
     {
-        "description": "Full pipeline test: Parse CV → Store → Query Chat → Get Ranking",
+        "description": "Full pipeline test without DB reset: Health → Full-CV Chat → Ranking → JobPosting Agent",
         "steps": [
-            "1. POST /v2/ingestion/jobs (parse CV)",
-            "2. GET /v2/ingestion/jobs/{id} (wait for SUCCESS)",
-            "3. POST /v2/chat/query (query with context)",
-            "4. GET /v2/nmaiex/ranking/candidates/{job_id} (verify ranking)"
+            "1. GET /v2/healthz",
+            "2. POST /v2/chat/query with job_app_id_full_cv (expect topK=0)",
+            "3. GET /v2/chat/conversations/{conversation_id}/messages",
+            "4. GET /v2/nmaiex/ranking/candidates/{job_post_id}",
+            "5. POST /v2/agent/job-posting/query"
         ]
     }
-description: Manual test flow (follow steps in body)
+description: Manual test flow (follow steps in body). Do not reset or seed DB.

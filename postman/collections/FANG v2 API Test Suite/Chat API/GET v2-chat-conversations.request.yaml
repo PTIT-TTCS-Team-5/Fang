@@ -1,10 +1,15 @@
 $kind: http-request
 name: GET /v2/chat/conversations
 method: GET
-url: "{{base_url}}/v2/chat/conversations?hrId=22&limit=20&jobAppId=42"
+url: "{{base_url}}/v2/chat/conversations?hrId={{hr_id}}&jobAppId={{job_app_id_full_cv}}"
 order: 2000
 queryParams:
-  hrId: "22"
-  limit: "20"
-  jobAppId: "42"
-description: Get list of conversations for an HR
+  hrId: "{{hr_id}}"
+  jobAppId: "{{job_app_id_full_cv}}"
+description: |-
+  List full-CV chat conversations for one HR + JobApplication.
+
+  Expected assertions:
+  - HTTP 200
+  - Response is an array
+  - Each item has conversationId, jobAppId, hrId, createdAt, lastMessageAt, messageCount

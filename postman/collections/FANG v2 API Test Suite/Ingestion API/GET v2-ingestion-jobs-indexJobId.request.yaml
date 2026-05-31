@@ -1,9 +1,15 @@
 $kind: http-request
 name: 'GET /v2/ingestion/jobs/{indexJobId}'
 method: GET
-url: '{{base_url}}/v2/ingestion/jobs/550e8400-e29b-41d4-a716-446655440000'
+url: '{{base_url}}/v2/ingestion/jobs/{{ingestion_job_id}}'
 order: 2000
 pathVariables:
   - key: indexJobId
-    value: 550e8400-e29b-41d4-a716-446655440000
-description: Check ingestion job status (PENDING, PROCESSING, SUCCESS, FAILED)
+    value: '{{ingestion_job_id}}'
+description: |-
+  Check ingestion job status.
+
+  Expected assertions:
+  - HTTP 200
+  - status is one of QUEUED, PROCESSING, SUCCESS, FAILED
+  - errorMsg is null unless status is FAILED

@@ -10,10 +10,22 @@ body:
   type: json
   content: |-
     {
-        "jobAppId": 1,
-        "hrId": 1,
-        "prompt": "Ứng viên này có kinh nghiệm AI/ML không?",
+        "jobAppId": {{job_app_id_full_cv}},
+        "hrId": {{hr_id}},
+        "prompt": "Dựa trên toàn bộ CV, ứng viên này phù hợp với vị trí ở những điểm nào? Nêu evidence theo nguồn.",
         "conversationId": null,
         "modelMode": "auto-lite"
     }
-description: Send a query to FANG chat with RAG context
+description: |-
+  Chat full-CV happy path. This API no longer requires AIINDEXJOB SUCCESS;
+  it requires a usable CVPARSED row for {{job_app_id_full_cv}}.
+
+  Expected assertions:
+  - HTTP 200
+  - conversationId is UUID; save as {{conversation_id}}
+  - messageId is integer > 0
+  - response is non-empty Vietnamese text
+  - modelMode equals request modelMode
+  - topK equals 0
+  - contextWarning is null or has type, usedPercent, options
+  - fallbackPath is null/string

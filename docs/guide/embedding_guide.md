@@ -131,7 +131,9 @@ Ví dụ:
 * runtime đang dùng `EMBEDDING_DIM=1536`
 * schema DB lại đang là `halfvec(256)`
 
-Khi đó insert sẽ lỗi do vector không khớp chiều. Dùng `scripts/reset_and_seed_db.py --reset` để khởi tạo lại schema với placeholder injection (`__TTCS_EMBEDDING_DIM__`, `__NMAIEX_SKILL_EMBEDDING_DIM__`).
+Khi đó insert sẽ lỗi do vector không khớp chiều. Không reset DB trong test
+thông thường; cần lập kế hoạch migration/schema rebuild riêng nếu đổi embedding
+dimension hoặc vector storage type.
 
 ### Lệch kiểu vector
 

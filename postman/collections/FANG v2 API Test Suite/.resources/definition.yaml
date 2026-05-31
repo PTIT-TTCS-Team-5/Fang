@@ -1,7 +1,34 @@
 $kind: collection
 name: FANG v2 API Test Suite
-description: Complete API test collection for FANG v2 (Chat, Ingestion, NMAIex Ranking, Master Data)
+description: Complete API test collection for FANG v2 (System, Chat full-CV, Ingestion, NMAIex, JobPosting Agent)
 variables:
   - key: base_url
     value: 'http://localhost:8000'
+    type: string
+  - key: hr_id
+    value: '2'
+    type: string
+  - key: job_post_id
+    value: '13'
+    type: string
+  - key: job_app_id_full_cv
+    value: '2002'
+    type: string
+  - key: job_app_id_missing_cv
+    value: '999999'
+    type: string
+  - key: candidate_id
+    value: '518'
+    type: string
+  - key: conversation_id
+    value: ''
+    type: string
+  - key: agent_conversation_id
+    value: ''
+    type: string
+  - key: ingestion_job_id
+    value: ''
+    type: string
+  - key: cv_snap_url
+    value: 'https://res.cloudinary.com/dfwkw1guc/raw/upload/v1778998872/nmaiex/sample_2'
     type: string

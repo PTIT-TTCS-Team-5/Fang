@@ -56,7 +56,7 @@ Nếu response trả về `contextWarning != null`, Frontend **phải** hiển t
 - **Polling trạng thái**: `GET /v2/ingestion/jobs/{id}`
 
 ## 5. Quy Tắc Xử Lý Lỗi
-- **400 Bad Request**: Thường do `jobAppId` chưa được ingestion thành công. Cần kiểm tra status ingestion là `SUCCESS` trước khi cho phép chat.
+- **400 Bad Request**: Với `/v2/chat/query`, thường do `jobAppId` chưa có `CVPARSED` usable, conversation không tồn tại, hoặc `modelMode` không hợp lệ. Chat full-CV không còn yêu cầu `AIINDEXJOB.SUCCESS`.
 - **502 Bad Gateway**: Lỗi từ phía Provider LLM (Google/OpenAI). Frontend nên hiển thị thông báo "AI đang bận, vui lòng thử lại sau".
 - **504 Gateway Timeout**: Quá trình sinh câu trả lời quá lâu.
 
