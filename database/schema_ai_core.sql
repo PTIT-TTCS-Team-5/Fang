@@ -115,3 +115,97 @@ CREATE TABLE AICHATMESSAGE (
 
 CREATE INDEX IF NOT EXISTS idx_chatmessage_conversation
   ON AICHATMESSAGE (conversationId, createdAt);
+
+-- ========== JobPosting Agent (FANG C3.1) ==========
+
+-- Tool catalog: registry of all 7 MVP JobPosting Agent tools
+CREATE TABLE AIJOBPOSTINGTOOL (
+    toolId           SERIAL PRIMARY KEY,
+    toolName         VARCHAR(100) NOT NULL UNIQUE,
+    displayName      VARCHAR(200) NOT NULL,
+    description      TEXT,
+    inputSchemaJson  JSONB,
+    outputSchemaJson JSONB,
+    isEnabled        BOOLEAN NOT NULL DEFAULT TRUE,
+    category         VARCHAR(50),
+    createdAt        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Conversations scoped to a single jobPostId + hrId pair.
+-- No cascade delete from JOBPOSTING or HR; archive is soft-delete only.
+CREATE TABLE AIJOBPOSTINGCHATCONVERSATION (
+    conversationId UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    jobPostId      INT NOT NULL,
+    hrId           INT NOT NULL,
+    title          VARCHAR(200) NOT NULL DEFAULT 'Cuộc trò chuyện mới',
+    createdAt      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    lastMessageAt  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    isArchived     BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (jobPostId) REFERENCES JOBPOSTING(jobPostId),
+    FOREIGN KEY (hrId) REFERENCES HR(userId)
+);
+
+CREATE INDEX IF NOT EXISTS idx_jpchat_conv_jobpost_hr
+    ON AIJOBPOSTINGCHATCONVERSATION (jobPostId, hrId);
+
+-- Messages: user, assistant, tool_call, tool_result, system
+CREATE TABLE AIJOBPOSTINGCHATMESSAGE (
+    messageId      SERIAL PRIMARY KEY,
+    conversationId UUID NOT NULL,
+    role           VARCHAR(20) NOT NULL,
+    content        TEXT NOT NULL,
+    toolName       VARCHAR(100),
+    toolCallId     VARCHAR(100),
+    model          VARCHAR(100),
+    modelMode      VARCHAR(50),
+    latencyMs      INT,
+    summarized     BOOLEAN NOT NULL DEFAULT FALSE,
+    createdAt      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversationId) REFERENCES AIJOBPOSTINGCHATCONVERSATION(conversationId)
+);
+
+CREATE INDEX IF NOT EXISTS idx_jpchat_msg_conv_created
+    ON AIJOBPOSTINGCHATMESSAGE (conversationId, createdAt);
+
+-- Persistent working-set state for each conversation (1-to-1)
+CREATE TABLE AIJOBPOSTINGCHATSTATE (
+    conversationId UUID PRIMARY KEY,
+    stateJson      JSONB NOT NULL DEFAULT '{}',
+    updatedAt      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversationId) REFERENCES AIJOBPOSTINGCHATCONVERSATION(conversationId)
+);
+
+-- Sanitized tool call audit log (no raw CV/email/phone data)
+CREATE TABLE AIJOBPOSTINGTOOLCALLLOG (
+    toolCallLogId  SERIAL PRIMARY KEY,
+    conversationId UUID NOT NULL,
+    messageId      INT,
+    jobPostId      INT NOT NULL,
+    hrId           INT NOT NULL,
+    toolId         INT,
+    toolName       VARCHAR(100) NOT NULL,
+    toolInput      JSONB,
+    toolOutputMeta JSONB,
+    status         VARCHAR(20) NOT NULL DEFAULT 'success',
+    latencyMs      INT,
+    errorMsg       TEXT,
+    createdAt      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversationId) REFERENCES AIJOBPOSTINGCHATCONVERSATION(conversationId),
+    FOREIGN KEY (messageId) REFERENCES AIJOBPOSTINGCHATMESSAGE(messageId),
+    FOREIGN KEY (toolId) REFERENCES AIJOBPOSTINGTOOL(toolId)
+);
+
+CREATE INDEX IF NOT EXISTS idx_jpchat_toollog_conv
+    ON AIJOBPOSTINGTOOLCALLLOG (conversationId);
+
+-- ---- Seed: 7 MVP tool catalog rows ----
+INSERT INTO AIJOBPOSTINGTOOL (toolName, displayName, description, category) VALUES
+    ('get_job_posting_context',    'Xem thông tin tin tuyển dụng', 'Lấy thông tin đầy đủ về tin tuyển dụng, yêu cầu và số lượng ứng viên.', 'context'),
+    ('get_job_candidate_ranking',  'Xếp hạng ứng viên',            'Xếp hạng ứng viên phù hợp nhất cho tin tuyển dụng dựa trên điểm tổng hợp.', 'ranking'),
+    ('search_job_applications_text','Tìm kiếm ứng viên',           'Tìm kiếm ứng viên bằng full-text search trên CV/hồ sơ.', 'search'),
+    ('get_job_application_summary','Tóm tắt ứng viên',             'Xem tóm tắt thông tin ứng viên: kỹ năng, kinh nghiệm, ngôn ngữ, địa chỉ.', 'detail'),
+    ('get_job_application_full_cv','Xem CV đầy đủ',                'Xem toàn bộ nội dung CV của ứng viên (có masking PII).', 'detail'),
+    ('get_candidate_ats_history',  'Lịch sử tuyển dụng',           'Xem lịch sử trạng thái ứng tuyển, phỏng vấn và phản hồi của ứng viên.', 'detail'),
+    ('count_job_applications',     'Đếm ứng viên',                 'Đếm tổng số ứng viên với các bộ lọc tùy chọn.', 'aggregate')
+ON CONFLICT (toolName) DO NOTHING;
+

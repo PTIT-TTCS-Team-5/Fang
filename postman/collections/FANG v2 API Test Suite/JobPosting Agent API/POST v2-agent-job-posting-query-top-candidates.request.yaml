@@ -1,0 +1,35 @@
+$kind: http-request
+name: 'POST /v2/agent/job-posting/query — Top Candidates'
+method: POST
+url: '{{base_url}}/v2/agent/job-posting/query'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "jobPostId": {{job_post_id}},
+        "hrId": {{hr_id}},
+        "prompt": "Liệt kê top 10 ứng viên phù hợp nhất cho job này, nêu lý do ngắn gọn.",
+        "conversationId": null
+    }
+description: |-
+  Smoke Case 2 — JobPosting query: top candidates.
+  Real DB IDs: hrId=2, jobPostId=1 (500 applications, companyId=1).
+
+  Expected assertions:
+  - HTTP 200
+  - response.conversationId is a valid UUID (save as {{conversation_id}})
+  - response.messageId is an integer > 0
+  - response.response is a non-empty string
+  - response.model is a non-empty string
+  - response.toolCalls is an array (may be empty)
+  - response.warnings is an array (may be empty)
+
+  When API key quota is exhausted (Gemini 429 RESOURCE_EXHAUSTED):
+  - HTTP 500 with {"detail": "Lỗi hệ thống không mong đợi."}
+  - Server log shows: google.genai.errors.ClientError: 429 RESOURCE_EXHAUSTED
+  - Classification: model/provider availability issue — NOT a backend bug
+  - Action: replenish Gemini API quota or switch to paid tier

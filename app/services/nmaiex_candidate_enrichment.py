@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import datetime as dt
 import json
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 from typing import Any
 
 from app.core.database import acquire_conn
@@ -12,7 +13,11 @@ from app.core.logging import logger
 from app.core.nmaiex_config import nmaiex_settings
 from app.models.nmaiex_schemas import SkillMappingResult
 from app.services.embedding import embed_chunks
-from app.services.nmaiex_mapper_service import map_skills
+from app.services.nmaiex_mapper_service import (
+    map_skills,
+    map_string_to_province_id,
+    normalize_proficiency,
+)
 
 ENRICHMENT_STATUS_QUEUED = "QUEUED"
 ENRICHMENT_STATUS_PROCESSING = "PROCESSING"
@@ -20,10 +25,93 @@ ENRICHMENT_STATUS_SUCCESS = "SUCCESS"
 ENRICHMENT_STATUS_FAILED = "FAILED"
 
 
+# [NMAIex C3 WS1] Fast alias map: raw language name (lowercased) → langCode
+_LANGUAGE_ALIAS_MAP: dict[str, str] = {
+    # English
+    "english": "en",
+    "tiếng anh": "en",
+    "tieng anh": "en",
+    "anh": "en",
+    # Japanese
+    "japanese": "ja",
+    "tiếng nhật": "ja",
+    "tieng nhat": "ja",
+    "nhật": "ja",
+    "nhat": "ja",
+    # Chinese
+    "chinese": "zh",
+    "mandarin": "zh",
+    "tiếng trung": "zh",
+    "tieng trung": "zh",
+    "trung": "zh",
+    # Korean
+    "korean": "ko",
+    "tiếng hàn": "ko",
+    "tieng han": "ko",
+    "hàn": "ko",
+    "han": "ko",
+    # French
+    "french": "fr",
+    "tiếng pháp": "fr",
+    "tieng phap": "fr",
+    "pháp": "fr",
+    "phap": "fr",
+    # German
+    "german": "de",
+    "tiếng đức": "de",
+    "tieng duc": "de",
+    "đức": "de",
+    "duc": "de",
+    # Vietnamese
+    "vietnamese": "vi",
+    "tiếng việt": "vi",
+    "tieng viet": "vi",
+    "việt": "vi",
+    "viet": "vi",
+    # Spanish
+    "spanish": "es",
+    "tiếng tây ban nha": "es",
+    # Portuguese
+    "portuguese": "pt",
+    "tiếng bồ đào nha": "pt",
+    # Italian
+    "italian": "it",
+    "tiếng ý": "it",
+    # Russian
+    "russian": "ru",
+    "tiếng nga": "ru",
+    # Thai
+    "thai": "th",
+    "tiếng thái": "th",
+}
+
+_LANGUAGE_CERTIFICATE_PATTERNS: dict[str, re.Pattern[str]] = {
+    "IELTS": re.compile(r"\bIELTS\b(?:\s*[:\-]?\s*([0-9](?:\.[05])?))?", re.I),
+    "TOEIC": re.compile(r"\bTOEIC\b(?:\s*[:\-]?\s*(\d{3,4}))?", re.I),
+    "TOEFL": re.compile(r"\bTOEFL\b(?:\s*[:\-]?\s*(\d{2,3}))?", re.I),
+    "CAMBRIDGE": re.compile(
+        r"\b(CAMBRIDGE|KET|PET|FCE|CAE|CPE)\b(?:\s*[:\-]?\s*([A-C][12]?))?",
+        re.I,
+    ),
+    "JLPT": re.compile(r"\bJLPT\b\s*[:\-]?\s*(N[1-5])\b|\b(N[1-5])\b", re.I),
+    "HSK": re.compile(r"\bHSK\b(?:\s*[:\-]?\s*([1-6]))?", re.I),
+    "TOPIK": re.compile(r"\bTOPIK\b(?:\s*[:\-]?\s*([1-6]))?", re.I),
+    "DELF": re.compile(r"\bDELF\b(?:\s*[:\-]?\s*([A-C][12]?))?", re.I),
+    "DALF": re.compile(r"\bDALF\b(?:\s*[:\-]?\s*([A-C][12]?))?", re.I),
+    "GOETHE": re.compile(
+        r"\bGOETHE\b(?:[-\s]?ZERTIFIKAT)?(?:\s*[:\-]?\s*([A-C][12]?))?", re.I
+    ),
+    "TESTDAF": re.compile(r"\bTESTDAF\b(?:\s*[:\-]?\s*(TDN\s*[3-5]))?", re.I),
+}
+
+
 @dataclass(frozen=True)
 class EnrichmentPayload:
     experience: list[Any]
     skills: list[str]
+    languages: list[dict[str, Any]] = field(default_factory=list)
+    certificates: list[str] = field(default_factory=list)
+    candidate_location: str | None = None
 
 
 async def ensure_enrichment_schema(conn: Any | None = None) -> None:
@@ -253,7 +341,12 @@ async def enrich_candidate_structured_data(
     parsed_payload: Any,
     conn: Any | None = None,
 ) -> None:
-    """Update candidate expyears and NMAIex skills as an atomic DB write."""
+    """Update candidate expyears, NMAIex skills, normalized languages, and province.
+
+    [NMAIex C3 WS1] Extended to persist CANDIDATELANGUAGE rows and update
+    user.provId best-effort. All new enrichment steps degrade gracefully:
+    partial mapper failure does not abort the DB transaction.
+    """
 
     payload = _coerce_enrichment_payload(parsed_payload)
     computed_exp_years = compute_exp_years(payload.experience)
@@ -300,6 +393,21 @@ async def enrich_candidate_structured_data(
                     ],
                 )
 
+            # [C3 WS1] Normalize and persist languages
+            await _normalize_and_persist_languages(
+                candidate_id=candidate_id,
+                raw_languages=payload.languages,
+                raw_certificates=payload.certificates,
+                conn=target_conn,
+            )
+
+            # [C3 WS1] Update province best-effort (no abort if unknown)
+            await _normalize_and_update_province(
+                candidate_id=candidate_id,
+                raw_location=payload.candidate_location,
+                conn=target_conn,
+            )
+
     if conn is not None:
         await _apply(conn)
         return
@@ -339,6 +447,13 @@ def compute_exp_years(experience_entries: list[Any]) -> int:
 
 
 def _coerce_enrichment_payload(parsed_payload: Any) -> EnrichmentPayload:
+    """Coerce raw parsed CV payload into a typed EnrichmentPayload.
+
+    [NMAIex C3 WS1] Extended to extract languages and candidate_location.
+    ParsedCV.languages is list[LanguageEntry] — coerced to list[dict] here
+    so the enrichment layer remains decoupled from cv_models.
+    ParsedCV.candidateInfo is list[CandidateInfo] — first entry's location is used.
+    """
     if hasattr(parsed_payload, "model_dump"):
         parsed_payload = parsed_payload.model_dump()
 
@@ -354,7 +469,324 @@ def _coerce_enrichment_payload(parsed_payload: Any) -> EnrichmentPayload:
 
     raw_skills = parsed_payload.get("skills") or []
     skills = [str(skill).strip() for skill in raw_skills if str(skill).strip()]
-    return EnrichmentPayload(experience=experience, skills=skills)
+
+    raw_certificates = parsed_payload.get("certificates") or []
+    certificates = [
+        str(certificate).strip()
+        for certificate in raw_certificates
+        if str(certificate).strip()
+    ]
+
+    # [C3 WS1] Extract languages: list[LanguageEntry | dict]
+    raw_languages_raw = parsed_payload.get("languages") or []
+    languages: list[dict[str, Any]] = []
+    if isinstance(raw_languages_raw, list):
+        for entry in raw_languages_raw:
+            if hasattr(entry, "model_dump"):
+                entry = entry.model_dump()
+            if isinstance(entry, dict):
+                languages.append(entry)
+            elif isinstance(entry, str) and entry.strip():
+                # Legacy: old parsers may return list[str]
+                languages.append({"language": entry.strip(), "proficiency": None})
+
+    # [C3 WS1] Extract candidate_location from candidateInfo[0].location
+    candidate_location: str | None = None
+    candidate_info_list = parsed_payload.get("candidateInfo") or []
+    if isinstance(candidate_info_list, list) and candidate_info_list:
+        first_info = candidate_info_list[0]
+        if hasattr(first_info, "model_dump"):
+            first_info = first_info.model_dump()
+        if isinstance(first_info, dict):
+            loc = first_info.get("location") or first_info.get("address") or None
+            if loc and str(loc).strip():
+                candidate_location = str(loc).strip()
+    # Fallback: top-level personalInfo (older parsers)
+    if candidate_location is None:
+        personal_info = parsed_payload.get("personalInfo") or {}
+        if isinstance(personal_info, dict):
+            loc = personal_info.get("location") or personal_info.get("address")
+            if loc and str(loc).strip():
+                candidate_location = str(loc).strip()
+
+    return EnrichmentPayload(
+        experience=experience,
+        skills=skills,
+        languages=languages,
+        certificates=certificates,
+        candidate_location=candidate_location,
+    )
+
+
+async def _map_language_to_lang_id(
+    raw_language: str,
+    conn: Any,
+) -> int | None:
+    """Map a raw language name to a LANGUAGE.langId.
+
+    Resolution order:
+    1. Fast alias map (_LANGUAGE_ALIAS_MAP) → langCode
+    2. DB lookup by langCode (case-insensitive)
+    3. DB lookup by langName (case-insensitive)
+    4. Returns None (unknown) — caller preserves rawName
+    """
+    if not raw_language or not raw_language.strip():
+        return None
+
+    key = raw_language.strip().lower()
+
+    # 1. Alias map → langCode
+    lang_code = _LANGUAGE_ALIAS_MAP.get(key)
+
+    if lang_code:
+        row = await conn.fetchrow(
+            "SELECT langId FROM LANGUAGE WHERE LOWER(langCode) = LOWER($1)",
+            lang_code,
+        )
+        if row:
+            return row["langid"]
+
+    # 2. Direct DB lookup by langCode
+    row = await conn.fetchrow(
+        "SELECT langId FROM LANGUAGE WHERE LOWER(langCode) = LOWER($1)",
+        raw_language.strip(),
+    )
+    if row:
+        return row["langid"]
+
+    # 3. DB lookup by langName
+    row = await conn.fetchrow(
+        "SELECT langId FROM LANGUAGE WHERE LOWER(langName) = LOWER($1)",
+        raw_language.strip(),
+    )
+    if row:
+        return row["langid"]
+
+    return None
+
+
+async def _normalize_and_persist_languages(
+    candidate_id: int,
+    raw_languages: list[dict[str, Any]],
+    conn: Any,
+    raw_certificates: list[str] | None = None,
+) -> None:
+    """Delete old CANDIDATELANGUAGE rows and insert fresh normalized rows.
+
+    [NMAIex C3 WS1] Called inside the enrichment transaction.
+    Unknown languages are written with langId=NULL, rawName preserved.
+    Proficiency failures fall back to BASIC (via normalize_proficiency).
+    Any DB write failure will propagate and trigger the enrichment retry.
+    """
+    await conn.execute(
+        "DELETE FROM CANDIDATELANGUAGE WHERE userId = $1",
+        candidate_id,
+    )
+
+    if not raw_languages:
+        return
+
+    for entry in raw_languages:
+        raw_name: str | None = entry.get("language") or None
+        raw_prof: str | None = entry.get("proficiency") or None
+        certification: str | None = entry.get("certification") or None
+
+        if not raw_name or not raw_name.strip():
+            continue
+
+        raw_name = raw_name.strip()
+
+        # Map to langId (best-effort; None = unknown)
+        try:
+            lang_id = await _map_language_to_lang_id(raw_name, conn)
+        except Exception as exc:
+            logger.warning(
+                "[NMAIex C3 WS1] Language ID lookup failed for '%s': %s. langId=NULL.",
+                raw_name,
+                exc,
+            )
+            lang_id = None
+
+        # Normalize proficiency (best-effort; fallback BASIC)
+        try:
+            normalized_prof = await normalize_proficiency(raw_prof)
+        except Exception as exc:
+            logger.warning(
+                "[NMAIex C3 WS1] Proficiency normalization failed for '%s': %s. BASIC.",
+                raw_prof,
+                exc,
+            )
+            normalized_prof = "BASIC"
+
+        candidate_lang_id = await conn.fetchval(
+            """
+            INSERT INTO CANDIDATELANGUAGE
+                (userId, langId, rawName, proficiency, rawProficiency, certification)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT DO NOTHING
+            RETURNING candidateLangId
+            """,
+            candidate_id,
+            lang_id,
+            raw_name,
+            normalized_prof,
+            raw_prof,
+            certification,
+        )
+        if candidate_lang_id is None:
+            candidate_lang_id = await conn.fetchval(
+                """
+                SELECT candidateLangId
+                FROM CANDIDATELANGUAGE
+                WHERE userId = $1
+                  AND (
+                        (langId IS NOT NULL AND langId = $2)
+                     OR (langId IS NULL AND $2 IS NULL AND LOWER(rawName) = LOWER($3))
+                  )
+                ORDER BY candidateLangId DESC
+                LIMIT 1
+                """,
+                candidate_id,
+                lang_id,
+                raw_name,
+            )
+        if candidate_lang_id is not None:
+            await _persist_language_certificates(
+                candidate_lang_id=candidate_lang_id,
+                lang_id=lang_id,
+                raw_texts=[
+                    value
+                    for value in (
+                        raw_prof,
+                        certification,
+                        *(raw_certificates or []),
+                    )
+                    if value
+                ],
+                conn=conn,
+            )
+
+    logger.info(
+        "[NMAIex C3 WS1] Persisted %d language rows for candidateId=%d",
+        len(raw_languages),
+        candidate_id,
+    )
+
+
+async def _persist_language_certificates(
+    *,
+    candidate_lang_id: int,
+    lang_id: int | None,
+    raw_texts: list[str],
+    conn: Any,
+) -> None:
+    """Persist normalized certificate links for one CANDIDATELANGUAGE row.
+
+    This is deterministic and best-effort. It extracts known certificate names
+    from raw proficiency/certification text and top-level ParsedCV.certificates.
+    Non-language certificates such as AWS are ignored because they do not match
+    LANGUAGECERTIFICATE.
+    """
+    cert_matches = _extract_language_certificate_matches(raw_texts)
+    if not cert_matches:
+        return
+
+    for cert_code, raw_text, normalized_score in cert_matches:
+        cert_row = await conn.fetchrow(
+            """
+            SELECT certId, langId
+            FROM LANGUAGECERTIFICATE
+            WHERE certCode = $1
+            """,
+            cert_code,
+        )
+        if not cert_row:
+            continue
+
+        cert_lang_id = cert_row["langid"]
+        if lang_id is not None and cert_lang_id is not None and cert_lang_id != lang_id:
+            continue
+
+        await conn.execute(
+            """
+            INSERT INTO CANDIDATELANGUAGECERTIFICATE
+                (candidateLangId, certId, rawText, normalizedScore)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT DO NOTHING
+            """,
+            candidate_lang_id,
+            cert_row["certid"],
+            raw_text[:200],
+            normalized_score,
+        )
+
+
+def _extract_language_certificate_matches(
+    raw_texts: list[str],
+) -> list[tuple[str, str, str | None]]:
+    """Return unique (certCode, rawText, normalizedScore) from raw text snippets."""
+    matches: list[tuple[str, str, str | None]] = []
+    seen: set[tuple[str, str]] = set()
+    for raw_text in raw_texts:
+        text = str(raw_text or "").strip()
+        if not text:
+            continue
+        for cert_code, pattern in _LANGUAGE_CERTIFICATE_PATTERNS.items():
+            for match in pattern.finditer(text):
+                groups = [group for group in match.groups() if group]
+                normalized_score = (
+                    groups[-1].upper().replace(" ", "") if groups else None
+                )
+                key = (cert_code, text.lower())
+                if key in seen:
+                    continue
+                seen.add(key)
+                matches.append((cert_code, text, normalized_score))
+    return matches
+
+
+async def _normalize_and_update_province(
+    candidate_id: int,
+    raw_location: str | None,
+    conn: Any,
+) -> None:
+    """Update user.provId when province mapping returns a valid value.
+
+    [NMAIex C3 WS1] Best-effort: unknown or None location leaves provId unchanged.
+    Mapper failure is logged but does not propagate.
+    """
+    if not raw_location or not raw_location.strip():
+        return
+
+    try:
+        prov_id = await map_string_to_province_id(raw_location)
+    except Exception as exc:
+        logger.warning(
+            "[NMAIex C3 WS1] Province mapping failed for candidateId=%d location='%s': %s",
+            candidate_id,
+            raw_location,
+            exc,
+        )
+        return
+
+    if prov_id is None:
+        logger.debug(
+            "[NMAIex C3 WS1] Province unknown for candidateId=%d location='%s'. provId unchanged.",
+            candidate_id,
+            raw_location,
+        )
+        return
+
+    await conn.execute(
+        'UPDATE "user" SET provId = $1 WHERE userId = $2',
+        prov_id,
+        candidate_id,
+    )
+    logger.info(
+        "[NMAIex C3 WS1] Updated provId='%s' for candidateId=%d",
+        prov_id,
+        candidate_id,
+    )
 
 
 def _get_field(item: Any, field_name: str) -> Any:

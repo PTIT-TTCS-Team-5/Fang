@@ -1,0 +1,11 @@
+{
+  "mapper": "deterministic",
+  "dry_run": false,
+  "backup_path": "backups/micareer_lite_db_before_c3_language_cert_20260530_082714.dump",
+  "batches_seen": 100,
+  "candidates_seen": 500,
+  "candidates_written": 500,
+  "language_rows_written": 479,
+  "certificate_links_written": 126,
+  "failures": []
+}

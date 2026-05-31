@@ -1,0 +1,24 @@
+$kind: http-request
+name: 'GET /v2/agent/job-posting/conversations/{id}/messages'
+method: GET
+url: '{{base_url}}/v2/agent/job-posting/conversations/{{conversation_id}}/messages'
+order: 1004
+headers: []
+description: |-
+  Smoke Case 5b — Get message history for a JobPosting conversation.
+  Use {{conversation_id}} from Case 2, or set manually.
+
+  Example verified UUID: 1a858940-a53b-4644-968e-65e121c9d14a
+
+  Expected assertions:
+  - HTTP 200
+  - Response is an array of messages
+  - Each message has: messageId, role, content, createdAt
+  - Roles include: user, assistant, tool_call, tool_result
+  - Messages ordered by createdAt ASC
+
+  Query params (optional):
+  - includeToolMessages=true (default) — include tool_call / tool_result rows
+  - includeSystem=false (default) — exclude system prompt row
+
+  Verified PASS on 2026-05-29: 4 messages (user + assistant + tool_call + tool_result).

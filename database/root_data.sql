@@ -100,6 +100,77 @@ INSERT INTO LANGUAGE (langCode, langName) VALUES
 ('fr', 'French'),
 ('de', 'German');
 
+-- [NMAIex C3.2] LANGUAGECERTIFICATE catalog
+-- Dùng để chuẩn hóa chứng chỉ được khai trong CV, sau đó nối qua
+-- CANDIDATELANGUAGECERTIFICATE. Bảng SKILL vẫn giữ TOEIC/IELTS vì đây từng
+-- được dùng như skill signal trong ranking cũ; catalog này dành riêng cho
+-- language normalization.
+INSERT INTO LANGUAGECERTIFICATE (certCode, certName, langId, description)
+SELECT 'IELTS', 'International English Language Testing System', l.langId,
+       'Chứng chỉ tiếng Anh học thuật quốc tế'
+FROM LANGUAGE l WHERE l.langCode = 'en'
+ON CONFLICT (certCode) DO NOTHING;
+
+INSERT INTO LANGUAGECERTIFICATE (certCode, certName, langId, description)
+SELECT 'TOEIC', 'Test of English for International Communication', l.langId,
+       'Chứng chỉ tiếng Anh giao tiếp quốc tế'
+FROM LANGUAGE l WHERE l.langCode = 'en'
+ON CONFLICT (certCode) DO NOTHING;
+
+INSERT INTO LANGUAGECERTIFICATE (certCode, certName, langId, description)
+SELECT 'TOEFL', 'Test of English as a Foreign Language', l.langId,
+       'Chứng chỉ tiếng Anh quốc tế'
+FROM LANGUAGE l WHERE l.langCode = 'en'
+ON CONFLICT (certCode) DO NOTHING;
+
+INSERT INTO LANGUAGECERTIFICATE (certCode, certName, langId, description)
+SELECT 'CAMBRIDGE', 'Cambridge English Qualifications', l.langId,
+       'Nhóm chứng chỉ Cambridge English'
+FROM LANGUAGE l WHERE l.langCode = 'en'
+ON CONFLICT (certCode) DO NOTHING;
+
+INSERT INTO LANGUAGECERTIFICATE (certCode, certName, langId, description)
+SELECT 'JLPT', 'Japanese-Language Proficiency Test', l.langId,
+       'Chứng chỉ năng lực tiếng Nhật'
+FROM LANGUAGE l WHERE l.langCode = 'ja'
+ON CONFLICT (certCode) DO NOTHING;
+
+INSERT INTO LANGUAGECERTIFICATE (certCode, certName, langId, description)
+SELECT 'HSK', 'Hanyu Shuiping Kaoshi', l.langId,
+       'Chứng chỉ năng lực tiếng Trung'
+FROM LANGUAGE l WHERE l.langCode = 'zh'
+ON CONFLICT (certCode) DO NOTHING;
+
+INSERT INTO LANGUAGECERTIFICATE (certCode, certName, langId, description)
+SELECT 'TOPIK', 'Test of Proficiency in Korean', l.langId,
+       'Chứng chỉ năng lực tiếng Hàn'
+FROM LANGUAGE l WHERE l.langCode = 'ko'
+ON CONFLICT (certCode) DO NOTHING;
+
+INSERT INTO LANGUAGECERTIFICATE (certCode, certName, langId, description)
+SELECT 'DELF', 'Diplôme d''études en langue française', l.langId,
+       'Chứng chỉ tiếng Pháp DELF'
+FROM LANGUAGE l WHERE l.langCode = 'fr'
+ON CONFLICT (certCode) DO NOTHING;
+
+INSERT INTO LANGUAGECERTIFICATE (certCode, certName, langId, description)
+SELECT 'DALF', 'Diplôme approfondi de langue française', l.langId,
+       'Chứng chỉ tiếng Pháp DALF'
+FROM LANGUAGE l WHERE l.langCode = 'fr'
+ON CONFLICT (certCode) DO NOTHING;
+
+INSERT INTO LANGUAGECERTIFICATE (certCode, certName, langId, description)
+SELECT 'GOETHE', 'Goethe-Zertifikat', l.langId,
+       'Chứng chỉ tiếng Đức Goethe'
+FROM LANGUAGE l WHERE l.langCode = 'de'
+ON CONFLICT (certCode) DO NOTHING;
+
+INSERT INTO LANGUAGECERTIFICATE (certCode, certName, langId, description)
+SELECT 'TESTDAF', 'Test Deutsch als Fremdsprache', l.langId,
+       'Chứng chỉ tiếng Đức TestDaF'
+FROM LANGUAGE l WHERE l.langCode = 'de'
+ON CONFLICT (certCode) DO NOTHING;
+
 -- ============================================================
 -- 1. SKILL
 -- ============================================================

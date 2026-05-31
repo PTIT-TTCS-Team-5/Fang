@@ -1,0 +1,29 @@
+$kind: http-request
+name: 'POST /v2/agent/job-posting/query — Negative: Wrong HR scope (403)'
+method: POST
+url: '{{base_url}}/v2/agent/job-posting/query'
+order: 1005
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "jobPostId": 3,
+        "hrId": 2,
+        "prompt": "test scope mismatch — should be rejected",
+        "conversationId": null
+    }
+description: |-
+  Smoke Case 6 — Authorization / scope negative smoke.
+  hrId=2 belongs to companyId=1.
+  jobPostId=3 belongs to companyId=2 (HR of company 3 is hrId=4).
+
+  Expected assertions:
+  - HTTP 403 Forbidden
+  - {"detail": "HR không có quyền truy cập vào tin tuyển dụng này"}
+  - No conversation should be created in DB
+
+  Verified PASS on 2026-05-29: returned 403 with correct message immediately
+  (before any AI call — authorization check is in process_jobposting_agent_query).

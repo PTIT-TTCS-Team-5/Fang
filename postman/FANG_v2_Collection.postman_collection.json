@@ -21,12 +21,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"jobAppId\": 1,\n    \"hrId\": 1,\n    \"prompt\": \"Ứng viên này có kinh nghiệm AI/ML không?\",\n    \"conversationId\": null,\n    \"modelMode\": \"auto-lite\"\n}"
+              "raw": "{\n    \"jobAppId\": {{job_app_id}},\n    \"hrId\": {{hr_id}},\n    \"prompt\": \"Ứng viên này có kinh nghiệm AI/ML không?\",\n    \"conversationId\": null,\n    \"modelMode\": \"auto-lite\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/v2/chat/query",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "chat", "query"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "chat",
+                "query"
+              ]
             },
             "description": "Send a query to FANG chat with RAG context"
           },
@@ -38,13 +44,19 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/v2/chat/conversations?hrId=1&limit=20&offset=0",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "chat", "conversations"],
+              "raw": "{{base_url}}/v2/chat/conversations?hrId={{hr_id}}&limit=20&offset=0",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "chat",
+                "conversations"
+              ],
               "query": [
                 {
                   "key": "hrId",
-                  "value": "1"
+                  "value": "{{hr_id}}"
                 },
                 {
                   "key": "limit",
@@ -66,9 +78,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/v2/chat/conversations/a1b2c3d4-5e6f-7890-abcd-ef1234567890/messages",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "chat", "conversations", "a1b2c3d4-5e6f-7890-abcd-ef1234567890", "messages"]
+              "raw": "{{base_url}}/v2/chat/conversations/{{chat_conversation_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "chat",
+                "conversations",
+                "{{chat_conversation_id}}",
+                "messages"
+              ]
             },
             "description": "Get message history for a conversation"
           },
@@ -86,12 +106,20 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"conversationId\": \"a1b2c3d4-5e6f-7890-abcd-ef1234567890\"\n}"
+              "raw": "{\n    \"conversationId\": \"{{chat_conversation_id}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/v2/chat/conversations/a1b2c3d4-5e6f-7890-abcd-ef1234567890/summarize",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "chat", "conversations", "a1b2c3d4-5e6f-7890-abcd-ef1234567890", "summarize"]
+              "raw": "{{base_url}}/v2/chat/conversations/{{chat_conversation_id}}/summarize",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "chat",
+                "conversations",
+                "{{chat_conversation_id}}",
+                "summarize"
+              ]
             },
             "description": "Summarize old conversation history to reduce token usage"
           },
@@ -109,12 +137,20 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"conversationId\": \"a1b2c3d4-5e6f-7890-abcd-ef1234567890\",\n    \"hrId\": 1\n}"
+              "raw": "{\n    \"conversationId\": \"{{chat_conversation_id}}\",\n    \"hrId\": {{hr_id}}\n}"
             },
             "url": {
-              "raw": "{{base_url}}/v2/chat/conversations/a1b2c3d4-5e6f-7890-abcd-ef1234567890/branch-new",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "chat", "conversations", "a1b2c3d4-5e6f-7890-abcd-ef1234567890", "branch-new"]
+              "raw": "{{base_url}}/v2/chat/conversations/{{chat_conversation_id}}/branch-new",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "chat",
+                "conversations",
+                "{{chat_conversation_id}}",
+                "branch-new"
+              ]
             },
             "description": "Create a new conversation with summary from old one"
           },
@@ -137,12 +173,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"cvUrl\": \"https://res.cloudinary.com/micareer/image/upload/v1234567890/cv_abc123.pdf\",\n    \"candidateId\": 1,\n    \"jobAppId\": 1,\n    \"modelMode\": \"auto-lite\"\n}"
+              "raw": "{\n    \"cvUrl\": \"https://res.cloudinary.com/micareer/image/upload/v1234567890/cv_abc123.pdf\",\n    \"candidateId\": {{candidate_id}},\n    \"jobAppId\": {{job_app_id}},\n    \"modelMode\": \"auto-lite\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/v2/ingestion/jobs",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "ingestion", "jobs"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "ingestion",
+                "jobs"
+              ]
             },
             "description": "Trigger CV processing (parse -> chunk -> embed)"
           },
@@ -154,9 +196,16 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/v2/ingestion/jobs/550e8400-e29b-41d4-a716-446655440000",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "ingestion", "jobs", "550e8400-e29b-41d4-a716-446655440000"]
+              "raw": "{{base_url}}/v2/ingestion/jobs/{{index_job_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "ingestion",
+                "jobs",
+                "{{index_job_id}}"
+              ]
             },
             "description": "Check ingestion job status (PENDING, PROCESSING, SUCCESS, FAILED)"
           },
@@ -174,8 +223,16 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/v2/nmaiex/ranking/candidates/1?limit=20&province_id=HANOI&work_mode=REMOTE",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "nmaiex", "ranking", "candidates", "1"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "nmaiex",
+                "ranking",
+                "candidates",
+                "{{job_post_id}}"
+              ],
               "query": [
                 {
                   "key": "limit",
@@ -202,8 +259,16 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/v2/nmaiex/ranking/jobs/1?limit=20&province_id=HANOI&work_mode=REMOTE",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "nmaiex", "ranking", "jobs", "1"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "nmaiex",
+                "ranking",
+                "jobs",
+                "{{candidate_id}}"
+              ],
               "query": [
                 {
                   "key": "limit",
@@ -235,8 +300,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/v2/nmaiex/master/provinces",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "nmaiex", "master", "provinces"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "nmaiex",
+                "master",
+                "provinces"
+              ]
             },
             "description": "Get list of 34 provinces/regions (after 2025 merger)"
           },
@@ -249,8 +321,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/v2/nmaiex/master/levels",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "nmaiex", "master", "levels"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "nmaiex",
+                "master",
+                "levels"
+              ]
             },
             "description": "Get job level hierarchy (Intern, Fresher, Junior, ..., Director)"
           },
@@ -263,8 +342,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/v2/nmaiex/master/categories",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "nmaiex", "master", "categories"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "nmaiex",
+                "master",
+                "categories"
+              ]
             },
             "description": "Get job categories (Backend, Frontend, AI/ML, ..., 17 total)"
           },
@@ -277,8 +363,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/v2/nmaiex/master/skills",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "nmaiex", "master", "skills"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "nmaiex",
+                "master",
+                "skills"
+              ]
             },
             "description": "Get system skill catalog (used by LLM skill mapper)"
           },
@@ -296,8 +389,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/health",
-              "host": ["{{base_url}}"],
-              "path": ["health"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
             },
             "description": "Verify API is running"
           },
@@ -319,10 +416,196 @@
             },
             "url": {
               "raw": "{{base_url}}/v2/chat/query",
-              "host": ["{{base_url}}"],
-              "path": ["v2", "chat", "query"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "chat",
+                "query"
+              ]
             },
             "description": "Manual test flow (follow steps in body)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "JobPosting Agent API",
+      "description": "C3 JobPosting Agent smoke tests — POST /v2/agent/job-posting/query + conversations",
+      "item": [
+        {
+          "name": "Case 2: POST /v2/agent/job-posting/query — Top Candidates",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"jobPostId\": {{job_post_id}},\n    \"hrId\": {{hr_id}},\n    \"prompt\": \"Liệt kê top 10 ứng viên phù hợp nhất cho job này, nêu lý do ngắn gọn.\",\n    \"conversationId\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/agent/job-posting/query",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "agent",
+                "job-posting",
+                "query"
+              ]
+            },
+            "description": "Smoke Case 2. Save conversationId from response as {{conversation_id}}. Requires active Gemini API quota."
+          },
+          "response": []
+        },
+        {
+          "name": "Case 3: POST /v2/agent/job-posting/query — Language Filter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"jobPostId\": {{job_post_id}},\n    \"hrId\": {{hr_id}},\n    \"prompt\": \"Trong nhóm ứng viên này, lọc những người có tiếng Anh hạng C trở lên hoặc tương đương advanced trở lên.\",\n    \"conversationId\": \"{{conversation_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/agent/job-posting/query",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "agent",
+                "job-posting",
+                "query"
+              ]
+            },
+            "description": "Smoke Case 3. Requires {{conversation_id}} set from Case 2. Tests multi-turn + language filter tool."
+          },
+          "response": []
+        },
+        {
+          "name": "Case 4: POST /v2/agent/job-posting/query — CV Drill-down",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"jobPostId\": {{job_post_id}},\n    \"hrId\": {{hr_id}},\n    \"prompt\": \"Xem chi tiết CV đã mask PII của ứng viên jobAppId={{job_app_id}} và tóm tắt điểm mạnh/yếu.\",\n    \"conversationId\": \"{{conversation_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/agent/job-posting/query",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "agent",
+                "job-posting",
+                "query"
+              ]
+            },
+            "description": "Smoke Case 4. PII masking check: response must not expose raw email/phone/address."
+          },
+          "response": []
+        },
+        {
+          "name": "Case 5a: GET /v2/agent/job-posting/conversations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v2/agent/job-posting/conversations?jobPostId={{job_post_id}}&hrId={{hr_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "agent",
+                "job-posting",
+                "conversations"
+              ],
+              "query": [
+                {
+                  "key": "jobPostId",
+                  "value": "{{job_post_id}}"
+                },
+                {
+                  "key": "hrId",
+                  "value": "{{hr_id}}"
+                }
+              ]
+            },
+            "description": "Smoke Case 5a. Verified PASS 2026-05-29: HTTP 200, returned 4 active conversations."
+          },
+          "response": []
+        },
+        {
+          "name": "Case 5b: GET /v2/agent/job-posting/conversations/{id}/messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v2/agent/job-posting/conversations/{{conversation_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "agent",
+                "job-posting",
+                "conversations",
+                "{{conversation_id}}",
+                "messages"
+              ]
+            },
+            "description": "Smoke Case 5b. Verified PASS 2026-05-29: HTTP 200, 4 messages (user/assistant/tool_call/tool_result)."
+          },
+          "response": []
+        },
+        {
+          "name": "Case 6: POST /v2/agent/job-posting/query — Negative 403 Scope",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"jobPostId\": 3,\n    \"hrId\": 2,\n    \"prompt\": \"test scope mismatch — should be rejected\",\n    \"conversationId\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v2/agent/job-posting/query",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v2",
+                "agent",
+                "job-posting",
+                "query"
+              ]
+            },
+            "description": "Smoke Case 6. hrId=2 (companyId=1) + jobPostId=3 (companyId=2). Verified PASS 2026-05-29: HTTP 403."
           },
           "response": []
         }
@@ -334,6 +617,48 @@
       "key": "base_url",
       "value": "http://localhost:8000",
       "type": "string"
+    },
+    {
+      "key": "job_post_id",
+      "value": "1",
+      "type": "string",
+      "description": "Valid jobPostId from DB (companyId=1, 500 applications)"
+    },
+    {
+      "key": "hr_id",
+      "value": "2",
+      "type": "string",
+      "description": "Valid hrId from DB (belongs to companyId=1)"
+    },
+    {
+      "key": "conversation_id",
+      "value": "",
+      "type": "string",
+      "description": "Set after running Case 2 (POST query). Example: 1a858940-a53b-4644-968e-65e121c9d14a"
+    },
+    {
+      "key": "job_app_id",
+      "value": "2",
+      "type": "string",
+      "description": "Valid jobAppId from DB for jobPostId=1 (candidateId=18)"
+    },
+    {
+      "key": "candidate_id",
+      "value": "19",
+      "type": "string",
+      "description": "Valid candidateId from DB"
+    },
+    {
+      "key": "chat_conversation_id",
+      "value": "2484ddaf-a14e-4aaf-b2f8-83d0a076e9e4",
+      "type": "string",
+      "description": "Valid chat conversation id"
+    },
+    {
+      "key": "index_job_id",
+      "value": "550e8400-e29b-41d4-a716-446655440000",
+      "type": "string",
+      "description": "Valid index job id"
     }
   ]
 }

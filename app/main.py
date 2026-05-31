@@ -7,6 +7,7 @@ from app.api.nmaiex_routes_management import router as management_router
 from app.api.nmaiex_routes_ranking import router as nmaiex_router
 from app.api.routes_chat import router as chat_router
 from app.api.routes_ingestion import router as ingestion_router
+from app.api.routes_jobposting_agent import router as jobposting_agent_router
 from app.core.config import settings
 from app.core.database import db
 
@@ -39,6 +40,7 @@ app.add_middleware(
 # --- v2 routes ---
 app.include_router(ingestion_router, prefix="/v2")
 app.include_router(chat_router, prefix="/v2")
+app.include_router(jobposting_agent_router, prefix="/v2/agent/job-posting")
 app.include_router(nmaiex_router, prefix="/v2/nmaiex")
 app.include_router(management_router, prefix="/v2/nmaiex")
 
