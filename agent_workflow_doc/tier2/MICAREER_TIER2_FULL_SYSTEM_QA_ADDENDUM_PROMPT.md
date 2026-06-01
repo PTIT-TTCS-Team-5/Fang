@@ -6,16 +6,79 @@ Bạn là Model Tier 2 đang test `miCareer-mini` bằng Chrome DevTools MCP và
 
 - Backend repo: `C:\Users\os\Desktop\cur_prj\Fang`
 - Frontend repo: `C:\Users\os\Desktop\cur_prj\miCareer-mini`
-- Backend URL: `http://localhost:8000` (dùng venv, tự chạy dùng lệnh để đọc log 'python -m uvicorn app.main:app -reload)
-- Frontend URL: `http://localhost:8501` (dùng venv, tự chạy dùng lệnh để đọc log 'python -m streamlit run app.py')
+- Backend URL: `http://localhost:8000`
+- Frontend URL: `http://localhost:8501`
 - FANG API env expected by frontend: `FANG_API_URL=http://localhost:8000/v2`
 - Reference style: `C:\Users\os\Desktop\cur_prj\miCareer-mini\agent_workflow_doc\try-hard-jobposting-agent\test_full.md`
 - Không reset DB, không seed DB, không tự sửa app code để test pass.
 - Fixture hồ sơ ưu tiên: candidate username `nguyenhaihung`, `candidate/userId=518`, `jobAppId=2002`, `jobPostId=13`, CV thật `C:\Users\os\Desktop\cur_prj\Fang\sample_2.pdf`, `CVPARSED` usable.
+- Account ứng viên chuẩn nhất: `nguyenhaihung`.
 - HR fixture tự chạy (select hr.userid, hr.compid, company.compname, "user".username, "user".pwd, "user".fname, "user".lname
 from hr
 join "user" on "user".userid = hr.userid
 join company on company.compid = hr.compid) là thấy danh sách HR + công ty. DATABASE_URL=postgresql://postgres:hungklv123@localhost:5432/micareer_lite_db
+- Máy có `psql`; có thể dùng `psql`, Python, hoặc công cụ DB khác để đọc fixture.
+
+## Preflight, Server Startup, And Logs — Bắt Buộc
+
+Tier 2 phải tự chạy backend + frontend bằng venv để đọc log khi test fail. Không dùng server mơ hồ không biết log nằm đâu. Trước khi mở browser hoặc chạy Playwright, chạy compile/pytest smoke.
+
+### 1. Backend compile/pytest
+
+```powershell
+cd C:\Users\os\Desktop\cur_prj\Fang
+.\venv\Scripts\python.exe -m py_compile app/main.py app/services/jobposting_tools.py app/services/jobposting_agent_runtime.py app/services/jobposting_agent_query.py app/models/jobposting_agent.py
+.\venv\Scripts\python.exe -m pytest tests/unit/unit_test_jobposting_agent_tools.py tests/unit/unit_test_jobposting_agent_runtime.py tests/unit/unit_test_jobposting_agent_persistence.py tests/unit/unit_test_routes_jobposting_agent.py -q
+```
+
+### 2. Frontend compile smoke
+
+```powershell
+cd C:\Users\os\Desktop\cur_prj\miCareer-mini
+.\venv\Scripts\python.exe -m py_compile app.py test_playwright.py test_playwright_full.py test_playwright_job_agent.py
+```
+
+### 3. Start backend with log files
+
+```powershell
+cd C:\Users\os\Desktop\cur_prj\Fang
+$backendOut = "agent_workflow_doc\tier2\backend_fullqa_stdout.log"
+$backendErr = "agent_workflow_doc\tier2\backend_fullqa_stderr.log"
+$backend = Start-Process -FilePath ".\venv\Scripts\python.exe" -ArgumentList @("-m","uvicorn","app.main:app","--reload","--host","127.0.0.1","--port","8000") -RedirectStandardOutput $backendOut -RedirectStandardError $backendErr -PassThru -WindowStyle Hidden
+Start-Sleep -Seconds 6
+Invoke-WebRequest http://localhost:8000/healthz -UseBasicParsing
+Get-Content $backendErr -Tail 80
+```
+
+### 4. Start frontend with log files
+
+```powershell
+cd C:\Users\os\Desktop\cur_prj\miCareer-mini
+$env:FANG_API_URL = "http://localhost:8000/v2"
+$frontendOut = "agent_workflow_doc\frontend_fullqa_stdout.log"
+$frontendErr = "agent_workflow_doc\frontend_fullqa_stderr.log"
+$frontend = Start-Process -FilePath ".\venv\Scripts\python.exe" -ArgumentList @("-m","streamlit","run","app.py","--server.address","127.0.0.1","--server.port","8501") -RedirectStandardOutput $frontendOut -RedirectStandardError $frontendErr -PassThru -WindowStyle Hidden
+Start-Sleep -Seconds 8
+Invoke-WebRequest http://localhost:8501 -UseBasicParsing
+Get-Content $frontendErr -Tail 80
+```
+
+If port 8000/8501 is already busy, verify it is the intended local backend/frontend and capture accessible logs. Otherwise stop the stale process safely before starting your own.
+
+### 5. DB fixture query guidance
+
+```powershell
+$env:DATABASE_URL = "postgresql://postgres:hungklv123@localhost:5432/micareer_lite_db"
+$hrQuery = @'
+select hr.userid, hr.compid, company.compname, "user".username, "user".pwd, "user".fname, "user".lname
+from hr
+join "user" on "user".userid = hr.userid
+join company on company.compid = hr.compid;
+'@
+psql $env:DATABASE_URL -c $hrQuery
+```
+
+Use the query result to choose an HR account for the same company/job under test. Record the chosen HR account and candidate account in the final report.
 
 ## Current JobPosting Agent UI Contract
 
@@ -644,6 +707,16 @@ After TC38-TC46, produce a mini analysis:
 Create or update a Playwright script under `C:\Users\os\Desktop\cur_prj\miCareer-mini`, for example:
 
 `test_playwright_full_system_qa_addendum.py`
+
+Standard commands after manual Chrome DevTools pass:
+
+```powershell
+cd C:\Users\os\Desktop\cur_prj\miCareer-mini
+.\venv\Scripts\python.exe test_playwright_full.py
+.\venv\Scripts\python.exe test_playwright_job_agent.py
+```
+
+Do not read/rewrite tests unnecessarily; run the standard commands, inspect failures, and only update selectors/cases when the prompt contract requires it.
 
 Automate at minimum:
 
