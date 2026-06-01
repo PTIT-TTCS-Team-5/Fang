@@ -11,7 +11,8 @@ Bạn là Model Tier 2 phụ trách **thực thi** UI test bằng Chrome DevTool
 - FANG API env expected by frontend: `FANG_API_URL=http://localhost:8000/v2`
 - Reference style only: `C:\Users\os\Desktop\cur_prj\miCareer-mini\agent_workflow_doc\try-hard-jobposting-agent\test_full.md`
 - Do not reset DB, seed DB, or mutate stable job/candidate data.
-- Fixture ưu tiên: candidate username `nguyenhaihung`, `candidate/userId=518`, `jobAppId=2002`, `jobPostId=13`, CV `C:\Users\os\Desktop\cur_prj\Fang\sample_2.pdf`, `CVPARSED` usable.
+- Fixture ưu tiên: candidate username `nguyenhaihung`, `candidate/userId=518`, `jobPostId=20`, job title `Junior Frontend Developer (ReactJS)`, company `MicroShop Corp`, CV `C:\Users\os\Desktop\cur_prj\Fang\sample_2.pdf`, `CVPARSED` usable.
+- Fixture `jobAppId` cho full-CV: ưu tiên `2018` nếu tồn tại trong DB hiện tại; nếu không tồn tại, query `nguyenhaihung` + `jobPostId=20` và dùng `jobAppId` thực tế. Local fallback đã quan sát: `2003`.
 - Account ứng viên chuẩn nhất: `nguyenhaihung`.
 - HR account không hard-code: nếu job/company đang test không thuộc HR mặc định, tự query DB để chọn HR cùng `compId`.
 - Máy có `psql`; có thể dùng `psql`, Python, hoặc công cụ DB khác để đọc fixture.
@@ -69,13 +70,26 @@ $env:DATABASE_URL = "postgresql://postgres:hungklv123@localhost:5432/micareer_li
 $hrQuery = @'
 select hr.userid, hr.compid, company.compname, "user".username, "user".pwd, "user".fname, "user".lname
 from hr
-join "user" on "user".userid = hr.userid
+join ""user"" on ""user"".userid = hr.userid
 join company on company.compid = hr.compid;
 '@
 psql $env:DATABASE_URL -c $hrQuery
+
+$fixtureQuery = @'
+select ja.jobappid, ja.jobpostid, ja.candidateid, u.username, u.fname, u.lname, jp.title, c.compname
+from jobapplication ja
+join candidate cand on cand.userid = ja.candidateid
+join ""user"" u on u.userid = cand.userid
+join jobposting jp on jp.jobpostid = ja.jobpostid
+join company c on c.compid = jp.compid
+where u.username = 'nguyenhaihung' and ja.jobpostid = 20
+order by ja.jobappid desc;
+'@
+psql $env:DATABASE_URL -c $fixtureQuery
 ```
 
 Use the query result to choose an HR account for the same company/job under test. Record the chosen HR account and candidate account in the final report.
+For the local fixture above, expected HR is usually `hr_microshop` / password `1`. Do not reuse old/manual JobPosting Agent conversations; create a fresh conversation for this run, include the `run_id` in rename/archive actions, and only assert conversations created by this run.
 
 ## Current JobPosting Agent Contract
 
@@ -107,10 +121,10 @@ For LLM-dependent cases, run each official prompt at most once. If provider/API 
 ### A. App, Auth, Navigation
 
 1. Open `http://localhost:8501`; verify home page, HR entry, Candidate entry.
-2. Login HR with fixture account, prefer `hr_helios` or query DB for an HR fixture if needed.
+2. Login HR with the HR account for `jobPostId=20`, usually `hr_microshop` / `1`; query DB for HR by `compId` if fixture differs.
 3. Verify HR job list has job detail, applications, and JobPosting Agent entry points.
 4. Open job detail, edit page render-only, and applications page.
-5. Open application detail for `nguyenhaihung`/`jobAppId=2002` when available; verify full-CV chat wording and no old `top-0 chunks`.
+5. Open application detail for `nguyenhaihung` on `jobPostId=20`; use verified `jobAppId` (`2018` if present, otherwise DB result such as local fallback `2003`); verify full-CV chat wording and no old `top-0 chunks`.
 6. Open AI Ranking and verify ranking page/results or stable provider/env error.
 7. Login candidate fixture and verify job list/job detail/apply page render without submit.
 

@@ -10,8 +10,10 @@ Bạn là Model Tier 2 đang test `miCareer-mini` bằng Chrome DevTools MCP và
 - Frontend URL: `http://localhost:8501`
 - FANG API env expected by frontend: `FANG_API_URL=http://localhost:8000/v2`
 - Reference style: `C:\Users\os\Desktop\cur_prj\miCareer-mini\agent_workflow_doc\try-hard-jobposting-agent\test_full.md`
-- Fixture ưu tiên: candidate username `nguyenhaihung`, `candidate/userId=518`, `jobAppId=2002`, `jobPostId=13`, CV thật `C:\Users\os\Desktop\cur_prj\Fang\sample_2.pdf`, `CVPARSED` usable.
-- HR fixture ưu tiên: `hr_helios`; password thử theo local fixture (`1` trước, nếu fail thử `123456`, nếu vẫn fail thì query DB/read existing test notes và ghi rõ).
+- Fixture ưu tiên: candidate username `nguyenhaihung`, `candidate/userId=518`, `jobPostId=20`, job title `Junior Frontend Developer (ReactJS)`, company `MicroShop Corp`, CV thật `C:\Users\os\Desktop\cur_prj\Fang\sample_2.pdf`, `CVPARSED` usable.
+- Fixture `jobAppId` cho full-CV: ưu tiên `2018` nếu tồn tại trong DB hiện tại; nếu không tồn tại, query `nguyenhaihung` + `jobPostId=20` và dùng `jobAppId` thực tế. Local fallback đã quan sát: `2003`.
+- HR fixture ưu tiên cho job 20: `hr_microshop`; password thử theo local fixture (`1` trước, nếu fail thì query DB/read existing test notes và ghi rõ).
+- Không dùng lại hội thoại JobPosting Agent cũ của user/manual run. Tạo conversation mới cho run hiện tại, rename/archive bằng `run_id`, và chỉ assert conversation do chính run này tạo.
 
 ## Provider Stop Rule And Paid API Cost Control
 
@@ -80,7 +82,7 @@ Expected:
 ### TC02 — Open Agent From Job List
 
 Steps:
-1. Từ job list, mở JobPosting Agent cho `jobPostId=13` nếu tìm được, nếu không chọn job fixture hợp lệ và ghi rõ.
+1. Từ job list, mở JobPosting Agent cho `jobPostId=20` / `Junior Frontend Developer (ReactJS)` nếu tìm được, nếu không chọn job fixture hợp lệ và ghi rõ.
 2. Verify URL/session/page state render Agent.
 
 Expected:
@@ -211,7 +213,7 @@ Expected:
 LLM-dependent. Apply Provider Stop Rule.
 
 Prompt:
-`Xem chi tiết CV của ứng viên jobAppId=2002 và tóm tắt điểm mạnh, điểm yếu, câu hỏi phỏng vấn.`
+`Xem chi tiết CV của ứng viên jobAppId=<verified_job_app_id> và tóm tắt điểm mạnh, điểm yếu, câu hỏi phỏng vấn.`
 
 Expected:
 - Agent load full CV đúng ứng viên `nguyenhaihung`.

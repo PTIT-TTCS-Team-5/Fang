@@ -10,7 +10,8 @@ Bạn là Model Tier 2 phụ trách **thực thi** test API bằng Postman MCP. 
 - Test matrix source: `postman/FANG_V2_FULL_API_TEST_MATRIX.md`
 - Không chạy reset DB, không seed DB. Local DB là fixture ổn định.
 - Nếu gặp lỗi quota/API key của LLM provider, phân loại là provider/environment issue khi backend log chứng minh rõ.
-- Fixture hồ sơ ưu tiên: username `nguyenhaihung`, `candidate_id=518`, `job_app_id_full_cv=2002`, `job_post_id=13`, có `CVPARSED.parsedJson` và `rawText`; CV thật `sample_2` ở `C:\Users\os\Desktop\cur_prj\Fang\sample_2.pdf`
+- Fixture hồ sơ ưu tiên: username `nguyenhaihung`, `candidate_id=518`, `job_post_id=20`, job title `Junior Frontend Developer (ReactJS)`, company `MicroShop Corp`, có `CVPARSED.parsedJson` và `rawText`; CV thật `sample_2` ở `C:\Users\os\Desktop\cur_prj\Fang\sample_2.pdf`
+- Fixture `job_app_id_full_cv`: ưu tiên `2018` nếu tồn tại trong DB hiện tại; nếu không tồn tại, bắt buộc query `nguyenhaihung` + `job_post_id=20` và overwrite biến bằng `jobAppId` thực tế. Local fallback đã quan sát: `2003`.
 - Account ứng viên chuẩn nhất để smoke candidate-related flows là `nguyenhaihung`.
 - HR account không hard-code: nếu cần HR phù hợp với company/job đang test, tự truy vấn DB để chọn HR cùng `compId`.
 - Máy có công cụ `psql`; có thể dùng `psql`, Python, hoặc công cụ DB khác để đọc fixture. Không mutate DB trừ case fixture-only được nêu rõ.
@@ -73,22 +74,35 @@ $env:DATABASE_URL = "postgresql://postgres:hungklv123@localhost:5432/micareer_li
 $hrQuery = @'
 select hr.userid, hr.compid, company.compname, "user".username, "user".pwd, "user".fname, "user".lname
 from hr
-join "user" on "user".userid = hr.userid
+join ""user"" on ""user"".userid = hr.userid
 join company on company.compid = hr.compid;
 '@
 psql $env:DATABASE_URL -c $hrQuery
+
+$fixtureQuery = @'
+select ja.jobappid, ja.jobpostid, ja.candidateid, u.username, u.fname, u.lname, jp.title, c.compname
+from jobapplication ja
+join candidate cand on cand.userid = ja.candidateid
+join ""user"" u on u.userid = cand.userid
+join jobposting jp on jp.jobpostid = ja.jobpostid
+join company c on c.compid = jp.compid
+where u.username = 'nguyenhaihung' and ja.jobpostid = 20
+order by ja.jobappid desc;
+'@
+psql $env:DATABASE_URL -c $fixtureQuery
 ```
 
 Nếu `psql` không tiện, dùng Python/asyncpg hoặc API list endpoint, nhưng báo rõ cách chọn fixture trong report.
+Không dùng lại hội thoại JobPosting Agent cũ của user/manual run. Với API Agent, tạo conversation mới bằng `conversationId=null`/rỗng, capture `agent_conversation_id` của run hiện tại, và chỉ rename/archive conversation do chính run này tạo.
 
 ## Environment Variables
 
 Set hoặc verify các biến Postman trước khi chạy:
 
 - `base_url=http://localhost:8000`
-- `hr_id=2`
-- `job_post_id=13`
-- `job_app_id_full_cv=2002`
+- `hr_id=7` cho fixture job 20 nếu DB đúng local; nếu DB khác, dùng HR có `compId` trùng `job_post_id=20`.
+- `job_post_id=20`
+- `job_app_id_full_cv=2018` nếu tồn tại; nếu không, query `nguyenhaihung` + `job_post_id=20` và overwrite bằng `jobAppId` thực tế trước khi chạy case full-CV.
 - `job_app_id_missing_cv=999999`
 - `candidate_id=518`
 - `conversation_id=` capture từ Chat happy path
