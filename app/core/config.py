@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     jobposting_agent_max_turn_seconds: int = 60
     jobposting_agent_temperature: float = 0.2
     jobposting_agent_max_output_tokens: int = 4096
-    jobposting_agent_max_tool_result_chars: int = 12000
+    jobposting_agent_max_tool_result_chars: int = 120000
 
     # [CHAT_FULL_CV Phase 2] Giới hạn data đưa vào prompt cho từng source phụ.
     # Tránh prompt phình do offer/email lịch sử nhiều, và giảm bề mặt injection.
