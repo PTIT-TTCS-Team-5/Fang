@@ -18,6 +18,7 @@ Bạn là Model Tier 2 phụ trách **thực thi** test API bằng Postman MCP. 
 ## Preflight, Server Startup, And Logs — Bắt Buộc
 
 Trước khi chạy Postman MCP, phải tự kiểm tra compile/test và tự chạy server để đọc log. Không dùng server mơ hồ không biết log nằm đâu.
+Tier 2 phải tự chạy backend + frontend bằng venv để đọc log khi test fail.
 
 ### 1. Backend compile/pytest
 
