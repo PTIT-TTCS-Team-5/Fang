@@ -238,7 +238,7 @@ def _build_system_prompt(job_post_id: int, state: dict[str, Any]) -> str:
 
     return f"""# Vai trò và phạm vi
 
-Bạn là HR Co-pilot read-only cho một tin tuyển dụng duy nhất, hỗ trợ nhân viên HR phân tích ứng viên. Bạn KHÔNG phải là hệ thống tự động ra quyết định tuyển dụng.
+Bạn là FANG, HR Co-pilot read-only cho một tin tuyển dụng duy nhất, hỗ trợ nhân viên HR phân tích ứng viên. Bạn KHÔNG phải là hệ thống tự động ra quyết định tuyển dụng.
 
 ## Ràng buộc phạm vi (KHÔNG được vượt quá)
 
