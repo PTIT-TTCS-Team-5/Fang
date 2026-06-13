@@ -1,0 +1,155 @@
+CHƯƠNG 2. CÁC NĂNG LỰC AI CHÍNH CỦA FANG
+
+Chương 1 đã trình bày FANG như một AI Core API-first, có ingestion pipeline, dữ liệu AI riêng và các scope nghiệp vụ như `jobAppId`, `jobPostId`, J->C và C->J. Chương 2 không lặp lại kiến trúc runtime đó, mà đi sâu vào các năng lực AI chính đang tạo giá trị cho hệ thống: NMAIex Ranking hai chiều, flow gợi ý job cho candidate trước khi apply, benchmark synthetic/tuning, JobApplication Chat và JobPosting Agent.
+
+Các module trong chương này cần được hiểu như những năng lực khác nhau của cùng một AI Core. Ranking dùng để so sánh và sắp xếp nhiều đối tượng. JobApplication Chat dùng để hỏi sâu về một hồ sơ ứng tuyển cụ thể. JobPosting Agent dùng tool-calling để phân tích một tin tuyển dụng cùng tập ứng viên liên quan. Vì vậy, điểm quan trọng không chỉ là FANG có dùng AI, mà là FANG tách đúng phạm vi dữ liệu, actor, mục tiêu nghiệp vụ và giới hạn của từng module.
+
+2.1. NMAIex Ranking hai chiều
+
+NMAIex là module matching/ranking hai chiều của FANG. Module này không phải chatbot và cũng không phải một lớp tìm kiếm keyword đơn giản. NMAIex nhận dữ liệu tuyển dụng đã được chuẩn hóa trong FANG, kết hợp truy xuất, feature scoring và các hàm điều chỉnh điểm để trả về danh sách có thứ tự kèm `score_breakdown`. Việc trả `score_breakdown` có ý nghĩa quan trọng trong hệ thống tuyển dụng: kết quả ranking không nên chỉ là một điểm số khó giải thích, mà cần cho HR hoặc developer biết điểm đến từ retrieval, kỹ năng, cấp độ kinh nghiệm, lương, ngôn ngữ hay các penalty/bonus liên quan.
+
+Điểm thiết kế quan trọng nhất của NMAIex là tách rõ hai chiều J->C và C->J. J->C là chiều Job-to-Candidate, phục vụ HR hoặc nhà tuyển dụng khi họ có một `JobPosting` và muốn tìm các ứng viên phù hợp nhất. C->J là chiều Candidate-to-Job, phục vụ candidate khi họ muốn xem những job phù hợp với hồ sơ của mình trước khi nộp đơn. Hai chiều này có dữ liệu đầu vào, cách retrieval, metric và rủi ro nghiệp vụ khác nhau, nên không nên gộp thành một bài toán search chung.
+
+Ở chiều J->C, actor chính là HR. Input trung tâm là `job_id` hoặc `jobPostId`, kèm các filter tùy chọn như tỉnh/thành hoặc hình thức làm việc. Hệ thống cần trả về danh sách ứng viên hoặc hồ sơ ứng tuyển phù hợp với job đó. Về mặt vận hành, HR thường chỉ xem một số hồ sơ đầu tiên, nên hệ thống cần đưa ứng viên tốt lên sớm. Vì vậy, metric như MRR phù hợp để đo việc "ứng viên đủ tốt đầu tiên" xuất hiện ở vị trí nào. Nếu ứng viên phù hợp nhất bị đẩy xuống quá sâu, HR vẫn phải đọc nhiều hồ sơ thủ công, làm mất giá trị của ranking.
+
+Về mặt kỹ thuật, J->C trong FANG kết hợp vector retrieval và full-text retrieval. Vector retrieval sử dụng embedding trên `AIDOCUMENTCHUNK` để tìm CV có nội dung gần với yêu cầu job ở mức ngữ nghĩa. Full-text retrieval bổ sung tín hiệu lexical để tránh bỏ sót các từ khóa kỹ thuật hoặc chức danh cụ thể. Hai nguồn rank này được hợp nhất bằng RRF (Reciprocal Rank Fusion). Sau đó, service tính thêm các điểm thành phần như skill overlap, fuzzy skill similarity, seniority penalty và trong code hiện tại có cả language penalty/bonus khi dữ liệu ngôn ngữ phù hợp có sẵn. Điểm cuối cùng được trả cùng `score_breakdown` để frontend hoặc developer có thể giải thích vì sao một ứng viên đứng ở vị trí đó.
+
+Ở chiều C->J, actor chính là candidate. Input trung tâm là `candidate_id`, profile ứng viên và dữ liệu CV hiện có. Mục tiêu không phải là lọc một pool ứng viên cho HR, mà là gợi ý job mà candidate có thể quan tâm trước khi apply. Trong MVP hiện tại, C->J không dùng vector search trên job embedding như J->C, mà chủ yếu dùng full-text và title rank trên tập JobPosting, sau đó kết hợp skill score, salary adjustment và language score. Quyết định này thực dụng vì job posting thường ngắn và có cấu trúc hơn CV, đồng thời giúp giảm chi phí và độ phức tạp trong giai đoạn đầu.
+
+Metric phù hợp cho C->J cũng khác. Candidate thường muốn danh sách top job có chất lượng tổng thể tốt, không chỉ quan tâm job phù hợp đầu tiên. Vì vậy, nDCG@10 phù hợp hơn MRR trong bối cảnh này: nó đánh giá cả độ liên quan theo nhiều cấp và vị trí hiển thị trong top 10. Một job rất phù hợp đứng đầu danh sách có giá trị cao hơn nhiều so với cùng job đó đứng ở vị trí cuối trang. Điều này phản ánh hành vi thực tế của candidate khi lướt danh sách gợi ý.
+
+[BẢNG - Bảng 2.1: So sánh hai chiều NMAIex J->C và C->J]
+
+Bảng này đặt cạnh nhau hai chiều ranking theo các tiêu chí: actor, mục tiêu, input chính, retrieval, feature scoring, metric phù hợp, output và rủi ro cần kiểm soát. Bảng cần làm rõ rằng J->C phục vụ HR tìm ứng viên cho một job, còn C->J phục vụ candidate tìm job phù hợp trước khi apply.
+
+[SƠ ĐỒ - Hình 2.1: NMAIex Ranking hai chiều]
+
+Sơ đồ cần chia thành hai nhánh song song. Nhánh J->C bắt đầu từ JobPosting và candidate pool, đi qua vector/text retrieval, RRF, feature scoring và trả ranked candidates kèm `score_breakdown`. Nhánh C->J bắt đầu từ candidate profile/CV và job pool, đi qua text/title retrieval, feature scoring và trả recommended jobs kèm `score_breakdown`.
+
+Một điểm cần nhấn mạnh trong báo cáo là NMAIex không tự ra quyết định tuyển dụng. Nó chỉ sắp xếp và giải thích tín hiệu phù hợp. HR vẫn là người đọc hồ sơ, phỏng vấn, đối chiếu bối cảnh thực tế và đưa ra quyết định cuối cùng. Đối với candidate, danh sách gợi ý cũng chỉ là hỗ trợ khám phá cơ hội, không phải cam kết job đó chắc chắn phù hợp hoặc chắc chắn được nhận.
+
+2.2. Candidate-side NMAIex flow trước khi apply
+
+Trong demo và trong thiết kế sản phẩm, C->J ranking nên được đặt trước hành động apply. Candidate có thể xem hồ sơ hoặc CV hiện có, gọi NMAIex để nhận danh sách job gợi ý, đọc chi tiết job, rồi mới quyết định apply bằng CV có sẵn hoặc upload CV mới. Cách đặt flow như vậy giúp NMAIex không chỉ là công cụ cho HR sau khi đã có hồ sơ ứng tuyển, mà còn là một năng lực hỗ trợ candidate ở đầu phễu ứng tuyển.
+
+Flow này cũng làm rõ vai trò của `miCareer-mini`. Frontend chỉ hiển thị hồ sơ candidate, gọi API ranking, hiển thị danh sách job gợi ý và tạo `JOBAPPLICATION` khi candidate apply. Logic AI vẫn nằm trong FANG. Khi candidate gọi danh sách job gợi ý, frontend có thể gọi endpoint `GET /v2/nmaiex/ranking/jobs/{candidate_id}`. FANG chịu trách nhiệm load dữ liệu candidate/job, tính điểm và trả `score_breakdown`. Frontend không cần tự tính matching score.
+
+Sau khi candidate chọn một job và apply, hệ thống mới tạo `JOBAPPLICATION` với `cvSnapUrl`, rồi gọi ingestion bằng `POST /v2/ingestion/jobs` với `jobAppId` và `cvSnapUrl`. Đây là điểm phân biệt quan trọng: C->J ranking trước apply dựa trên candidate profile/CV hiện có và pool JobPosting; ingestion sau apply biến một hồ sơ ứng tuyển cụ thể thành `CVPARSED`, `AIDOCUMENTCHUNK` và `AIINDEXJOB`. Không nên trộn hai bước này thành một. Ranking trước apply giúp candidate tìm cơ hội, còn ingestion sau apply tạo dữ liệu AI cho hồ sơ ứng tuyển cụ thể.
+
+[SƠ ĐỒ - Hình 2.2: Candidate dùng NMAIex trước khi apply]
+
+Sơ đồ sequence nên thể hiện các bước: candidate xem profile/CV hiện có, frontend gọi C->J ranking của FANG, FANG trả recommended jobs, candidate mở job detail, candidate apply bằng CV cũ hoặc upload CV mới, frontend tạo `JOBAPPLICATION`, sau đó gọi ingestion. Sơ đồ này giúp người đọc thấy NMAIex có giá trị ở phía candidate trước khi dữ liệu ứng tuyển mới được ingest.
+
+Về mặt trải nghiệm, flow này có một lợi ích rõ ràng: candidate không phải tìm job hoàn toàn thủ công. Hệ thống có thể ưu tiên job có chức danh, kỹ năng, lương, địa điểm hoặc yêu cầu ngôn ngữ gần với hồ sơ hiện có. Tuy nhiên, vẫn cần caveat rằng chất lượng gợi ý phụ thuộc vào dữ liệu candidate, chất lượng CV đã parse, độ đầy đủ của JobPosting và các trọng số ranking đang dùng. Nếu hồ sơ candidate thiếu dữ liệu hoặc JobPosting được viết quá nghèo nàn, điểm ranking có thể không phản ánh đúng toàn bộ mức độ phù hợp thực tế.
+
+2.3. Synthetic data, ground truth và tuning
+
+Để đánh giá ranking, FANG cần một tập dữ liệu có đủ job, candidate và nhãn phù hợp. Trong bối cảnh dự án chưa có dữ liệu tuyển dụng thật đủ lớn và đủ nhãn, nhóm sử dụng synthetic data để tạo môi trường benchmark thử nghiệm. Đây là lựa chọn hợp lý cho giai đoạn nghiên cứu/sinh viên: synthetic data giúp kiểm tra pipeline, kiểm tra metric và chạy tuning lặp lại mà không phụ thuộc vào dữ liệu production nhạy cảm.
+
+Synthetic data trong FANG được tổ chức theo persona. Các persona mô phỏng nhiều kiểu candidate khác nhau, ví dụ intern còn trống kinh nghiệm, fresher kỳ vọng cao, junior ổn định, mid-level generalist, senior specialist, senior overqualified, career changer và foreign CV. Mỗi persona có tỷ lệ, mức noise và định hướng kỹ năng riêng. Việc đưa noise vào dữ liệu giúp benchmark gần hơn với CV thực tế: có CV thiếu trường, có CV ghi kỹ năng không đồng nhất, có CV viết chức danh không chuẩn hoặc có thông tin lệch so với job mục tiêu.
+
+Sau khi sinh dữ liệu, hệ thống cần ground truth để biết một cặp job-candidate phù hợp ở mức nào. Ground truth trong benchmark này được tạo theo ma trận cặp job-candidate, có điểm relevance theo thang phân cấp. LLM judge được dùng để hỗ trợ chấm nhãn và ghi rationale, sau đó kết quả được cache để các vòng tuning không phải gọi LLM lại. Cách làm này giúp tiết kiệm chi phí và giữ benchmark ổn định giữa các lần chạy.
+
+Tuy nhiên, ground truth bằng LLM judge không tương đương dữ liệu tuyển dụng thật. Nó phản ánh một tiêu chuẩn đánh giá mô phỏng dựa trên prompt, model và dữ liệu synthetic. Vì vậy, kết quả benchmark chỉ nên được trình bày như bằng chứng thử nghiệm trong phạm vi dự án, không phải cam kết rằng ranking sẽ đạt cùng chất lượng trên dữ liệu production.
+
+Tuning trong NMAIex là tuning trọng số scoring, không phải fine-tune LLM và không phải fine-tune embedding model. Script tuning sử dụng Optuna với TPESampler để tìm các trọng số tốt hơn cho công thức ranking. Các feature như RRF, skill score, title score, salary adjustment, language penalty/bonus hoặc seniority penalty được precompute hoặc mô phỏng trong bộ nhớ để giảm chi phí DB/API trong vòng lặp trial. Sau đó, objective function tính metric cho từng trial và Optuna đề xuất bộ tham số tiếp theo.
+
+[SƠ ĐỒ - Hình 2.3: Synthetic data, ground truth và Optuna tuning]
+
+Sơ đồ nên thể hiện pipeline: persona synthetic -> sinh CV/JD -> validate/cache -> seed dữ liệu -> tạo ground truth bằng LLM judge -> precompute feature -> Optuna TPE tuning -> đo MRR/nDCG@10 -> ghi nhận caveat synthetic benchmark.
+
+Với J->C, ý nghĩa nghiệp vụ của MRR là HR nhìn thấy ứng viên đủ tốt đầu tiên sớm đến mức nào. Nếu ứng viên phù hợp đầu tiên đứng thứ nhất, reciprocal rank là 1. Nếu đứng thứ năm, reciprocal rank là 1/5. MRR lấy trung bình giá trị đó trên nhiều truy vấn job. Công thức có thể viết:
+
+MRR = (1 / |Q|) * sum(1 / rank_first_relevant(q))
+
+Trong đó Q là tập truy vấn, và `rank_first_relevant(q)` là vị trí của kết quả phù hợp đầu tiên đối với truy vấn q. Trong code tuning, `compute_mrr` tính metric này trên các cặp có ground truth đủ cao, phù hợp với mục tiêu HR muốn thấy ứng viên tốt càng sớm càng tốt.
+
+Với C->J, ý nghĩa nghiệp vụ của nDCG@10 là chất lượng tổng thể của 10 job đầu tiên được gợi ý cho candidate. Metric này không chỉ hỏi "có job đúng đầu tiên hay không", mà còn hỏi "các job tốt hơn có được đặt cao hơn job kém phù hợp hơn không". Công thức cơ bản:
+
+DCG@10 = sum((2^rel_i - 1) / log2(i + 1))
+nDCG@10 = DCG@10 / IDCG@10
+
+Trong đó `rel_i` là mức độ phù hợp ở vị trí i, còn IDCG@10 là điểm DCG lý tưởng nếu danh sách được sắp xếp hoàn hảo. Trong code tuning, `compute_ndcg_at_k` tính nDCG@10 theo candidate, phù hợp với trải nghiệm candidate xem trang gợi ý job đầu tiên.
+
+Kết quả tuning đã ghi nhận một số cải thiện trên benchmark synthetic/LLM-judged: J->C MRR tăng từ 0.6105 lên 0.7778, tương đương +16.73%; C->J nDCG@10 tăng từ 0.7847 lên 0.8206, tương đương +3.60%. Các con số này hữu ích để chứng minh rằng công thức scoring có thể được hiệu chỉnh bằng benchmark có kiểm soát. Tuy nhiên, báo cáo cần ghi rõ đây là kết quả trên synthetic/LLM-judged benchmark, chưa phải bằng chứng production. Để khẳng định chất lượng thực tế, hệ thống vẫn cần dữ liệu người dùng thật, feedback thật, đánh giá bias/fairness, và quy trình monitoring sau triển khai.
+
+2.4. JobApplication Chat theo jobAppId
+
+JobApplication Chat là module cho phép HR hỏi sâu về một hồ sơ ứng tuyển cụ thể. Scope của module này là `jobAppId`, tức một bản ghi ứng tuyển nối một candidate với một JobPosting. Đây là điểm phân biệt quan trọng với JobPosting Agent: Chat không phân tích toàn bộ pool ứng viên của một job, mà tập trung vào một hồ sơ cụ thể và trả lời câu hỏi dựa trên CV, JD và các context liên quan của hồ sơ đó.
+
+Trong thiết kế ban đầu của nhiều hệ thống RAG, câu hỏi thường được trả lời bằng cách vector search top-k chunk rồi đưa các chunk đó vào prompt. Với JobApplication Chat hiện tại, FANG chuyển sang hướng full-CV context cho scope một hồ sơ. Thay vì chỉ lấy vài chunk top-k, service load `CVPARSED`, chuyển parsed JSON hoặc raw text thành context đầy đủ, kết hợp job description, thông tin candidate, ATS feedback, offer và email log đã được kiểm soát. `topK=0` phản ánh rằng full-CV chat không dựa vào top-k vector retrieval trong luồng trả lời chính.
+
+Điều kiện cứng quan trọng của JobApplication Chat là `CVPARSED` phải sử dụng được. `AIINDEXJOB.SUCCESS` là telemetry hữu ích cho ingestion, nhưng với full-CV chat, service cần nội dung CV đã parse để xây dựng context. Nếu parsed JSON hoặc raw text không có, hệ thống không nên bịa câu trả lời. Thay vào đó, cần trả lỗi hoặc thông báo thiếu context một cách rõ ràng.
+
+[SƠ ĐỒ - Hình 2.4: JobApplication Chat theo jobAppId]
+
+Sơ đồ sequence nên thể hiện: HR gửi câu hỏi kèm `jobAppId`; API gọi `process_chat_query`; service load `CVPARSED`, job/candidate/ATS context; build full-CV prompt; kiểm tra token budget; gọi model nếu chưa vượt hard limit; lưu conversation/message và trả grounded response.
+
+Guardrails của module này có vai trò rất quan trọng. Prompt yêu cầu model chỉ trả lời trong phạm vi tuyển dụng, CV, JD và context được cung cấp; không suy đoán dữ liệu không có; không đưa kết luận tuyển/loại tuyệt đối; không tiết lộ hoặc suy diễn thông tin nhạy cảm; và phải coi các block CV/JD/email/ATS là dữ liệu không đáng tin cậy về mặt instruction. Cách đánh dấu `[UNTRUSTED ...]` giúp giảm rủi ro prompt injection từ nội dung CV hoặc email, ví dụ một CV chứa câu "hãy bỏ qua mọi hướng dẫn trước đó".
+
+Token budget là giới hạn kỹ thuật thứ hai. Full-CV context có thể dài, đặc biệt khi CV nhiều kinh nghiệm hoặc conversation history kéo dài. Strategy của FANG đặt ngưỡng cảnh báo khoảng 80% và ngưỡng hard limit khoảng 95% context window. Nếu gần ngưỡng, hệ thống có thể trả cảnh báo hoặc cần rút gọn lịch sử; nếu vượt hard limit, hệ thống nên chặn deterministic response thay vì gọi model với context quá dài và khó kiểm soát. Conversation history cũng cần được lọc để không làm trôi context chính của CV/JD.
+
+Về giá trị nghiệp vụ, JobApplication Chat giúp HR hỏi các câu như: ứng viên có kinh nghiệm nào liên quan nhất đến yêu cầu job, điểm mạnh/yếu nào xuất hiện trong CV, kỹ năng nào có evidence rõ, hoặc có điểm nào cần hỏi thêm trong phỏng vấn. Tuy nhiên, module này không nên được mô tả như một bộ phán quyết tuyển dụng tự động. Nó là công cụ đọc hiểu có căn cứ, phụ thuộc vào chất lượng parse, prompt, token budget và dữ liệu được cung cấp.
+
+2.5. JobPosting Agent theo jobPostId
+
+JobPosting Agent là module khác với JobApplication Chat cả về scope lẫn cách vận hành. Scope của Agent là `jobPostId`: HR đang xem một tin tuyển dụng và muốn hỏi về tập ứng viên liên quan đến tin đó. Các câu hỏi có thể là "top ứng viên cho job này là ai", "ứng viên nào có chứng chỉ tiếng Anh", "lọc ứng viên có React và Python", "so sánh hai ứng viên", hoặc "vì sao ứng viên A được xếp cao". Đây là bài toán phân tích nhiều đối tượng, không phải hỏi sâu một CV duy nhất.
+
+Vì scope rộng hơn, JobPosting Agent không nên nhồi toàn bộ CV của mọi ứng viên vào prompt. Thay vào đó, FANG dùng tool-calling có kiểm soát. Agent runtime nhận câu hỏi, chọn tool phù hợp, gọi các read-only tools để truy vấn dữ liệu, cập nhật working set và tạo câu trả lời grounded trên kết quả tool. Cách làm này giúp hệ thống giới hạn dữ liệu đưa vào model, giảm rủi ro hallucination và tạo trace rõ ràng cho QA.
+
+Các tool của JobPosting Agent được chia theo nhu cầu truy vấn: lấy context job, lấy ranking ứng viên, search text trong application, filter theo kỹ năng, ngôn ngữ, seniority, địa điểm làm việc, lương kỳ vọng, trình độ học vấn, lấy summary một application, lấy full CV đã kiểm soát, lấy lịch sử ATS và đếm số application. Tool-calling policy yêu cầu chọn đường nhỏ nhất đáng tin cậy: câu hỏi về chứng chỉ ngôn ngữ nên dùng tool language certificate, câu hỏi về skill nên dùng skill filter, câu hỏi top/compare/why-ranked nên dùng ranking hoặc summary tool, còn câu hỏi rất cụ thể về một ứng viên mới drill-down vào summary hoặc full CV.
+
+[SƠ ĐỒ - Hình 2.5: JobPosting Agent theo jobPostId]
+
+Sơ đồ nên thể hiện HR gửi câu hỏi theo `jobPostId`, API gọi Agent runtime, runtime đi qua policy gate, chọn allowed tools, tools đọc DB/ranking, trả result preview đã sanitize, runtime cập nhật working set và trả grounded answer kèm trace/warnings.
+
+Scope validation là ràng buộc an toàn quan trọng. Nếu một tool nhận `jobAppId`, nó phải kiểm tra application đó có thuộc `jobPostId` hiện tại hay không. Điều này ngăn HR vô tình hoặc cố ý truy vấn hồ sơ ngoài job đang xét. Đây là khác biệt lớn so với chatbot tự do: Agent không được phép tự mở rộng phạm vi nếu dữ liệu không thuộc scope.
+
+PII masking cũng là yêu cầu cốt lõi. Tool output không nên trả raw email, số điện thoại, địa chỉ hoặc đoạn CV quá dài nếu không cần thiết. Các helper như `mask_email`, `mask_phone`, `mask_pii_text` và `build_result_preview` giúp giới hạn thông tin nhạy cảm trong trace và response. Full-CV tool có thể hỗ trợ phân tích sâu, nhưng nội dung trả ra cần được mask và bị giới hạn độ dài.
+
+Working set giúp Agent duy trì tập ứng viên đang xét qua nhiều lượt hỏi. Ví dụ, sau khi HR hỏi "top 10 ứng viên", hệ thống có thể lưu working set đó; lượt sau HR hỏi "so sánh hai người đầu tiên" thì Agent có ngữ cảnh để hiểu người dùng đang nói đến tập nào. Tuy nhiên, working set phải là state hỗ trợ hội thoại, không phải cơ chế bỏ qua scope validation hoặc bỏ qua giới hạn PII.
+
+JobPosting Agent có tiềm năng lớn hơn Chat vì nó có thể phối hợp nhiều tool để trả lời câu hỏi phức tạp theo job. Nhưng cũng vì vậy, caveat production của Agent lớn hơn: cần eval thêm về tool selection, prompt injection, scope leak, PII leak, câu trả lời thiếu evidence, và hành vi khi tool lỗi hoặc dữ liệu thiếu. Trong báo cáo, nên trình bày Agent như một module có guardrails/tool-calling/scope validation/PII masking, nhưng vẫn cần hardening nếu đưa vào production thật.
+
+2.6. Trade-off tổng hợp giữa Ranking, Chat và Agent
+
+Ba năng lực AI chính của FANG bổ sung cho nhau thay vì thay thế nhau. Ranking phù hợp khi hệ thống cần sắp xếp nhiều ứng viên hoặc nhiều job theo điểm phù hợp. JobApplication Chat phù hợp khi HR đã chọn một hồ sơ ứng tuyển và muốn hỏi sâu về nội dung CV/JD/context của hồ sơ đó. JobPosting Agent phù hợp khi HR đang làm việc với một job và cần hỏi, lọc, so sánh hoặc phân tích nhiều ứng viên bằng các tool có kiểm soát.
+
+[BẢNG - Bảng 2.2: Trade-off giữa Ranking, JobApplication Chat và JobPosting Agent]
+
+Bảng này nên so sánh các module theo scope, actor, input chính, output, điểm mạnh, giới hạn và rủi ro cần kiểm soát. Mục tiêu của bảng là giúp người đọc không nhầm ranking với chat, không nhầm `jobAppId` với `jobPostId`, và không mô tả Agent như chỉ là đổi khóa từ application sang job.
+
+Ranking có ưu điểm là nhất quán, có thể chạy trên nhiều đối tượng, trả kết quả nhanh và có `score_breakdown`. Giới hạn của ranking là nó phụ thuộc vào feature, trọng số, dữ liệu đầu vào và benchmark. Ranking cũng khó thay thế hoàn toàn đánh giá định tính của HR, vì có những yếu tố như thái độ, văn hóa đội nhóm, tình trạng tìm việc thật sự hoặc kết quả phỏng vấn không nằm trong CV/JD.
+
+JobApplication Chat có ưu điểm là đọc sâu một hồ sơ và trả lời câu hỏi tự nhiên. Nó phù hợp với các tình huống HR cần hiểu nhanh evidence trong CV, chuẩn bị câu hỏi phỏng vấn hoặc kiểm tra một yêu cầu cụ thể của job. Giới hạn của Chat là scope hẹp: nó không nên tự so sánh toàn bộ pool ứng viên nếu chỉ được cấp một `jobAppId`. Chất lượng câu trả lời cũng phụ thuộc mạnh vào `CVPARSED`, prompt, token budget và conversation history.
+
+JobPosting Agent có ưu điểm là có thể phối hợp nhiều tool để phân tích một job và tập ứng viên liên quan. Nó phù hợp với câu hỏi multi-candidate, filtering, comparison và explainability theo ranking. Giới hạn của Agent là độ phức tạp vận hành cao hơn: cần tool contract rõ, scope validation, PII masking, working set bền vững, tool trace và bộ eval đủ tốt. Nếu thiếu các ràng buộc này, Agent dễ tạo cảm giác thông minh nhưng khó kiểm chứng.
+
+Từ góc nhìn kiến trúc sản phẩm, cách chia ba module giúp FANG tránh một lỗi thường gặp trong ứng dụng AI: dùng một chatbot chung để làm mọi việc. FANG không cố biến mọi workflow thành một prompt lớn. Thay vào đó, hệ thống dùng ranking khi cần so sánh có cấu trúc, dùng full-CV chat khi cần hỏi sâu một hồ sơ, và dùng agent khi cần điều phối tool trên một job. Đây là cách thiết kế phù hợp hơn với dữ liệu tuyển dụng vì mỗi workflow có ranh giới dữ liệu và rủi ro riêng.
+
+Kết luận của Chương 2 là FANG đã hình thành một tập năng lực AI có scope tương đối rõ: NMAIex hỗ trợ matching hai chiều cho HR và candidate; synthetic/tuning tạo benchmark thử nghiệm để hiệu chỉnh scoring; JobApplication Chat hỗ trợ hỏi sâu theo `jobAppId`; JobPosting Agent hỗ trợ phân tích nhiều ứng viên theo `jobPostId`. Các năng lực này đều phục vụ workflow tuyển dụng, nhưng cần được trình bày thận trọng: FANG hỗ trợ quyết định, không thay thế HR; ranking gain là synthetic/LLM-judged benchmark; full-CV chat phụ thuộc parse/prompt/token budget; và Agent cần thêm eval/hardening nếu triển khai production.
+
+[GHI CHÚ EVIDENCE]
+
+Các file/tài liệu/code dùng làm căn cứ chính cho Chương 2:
+
+1. `docs/strategy/nmaiex_ranking_strategy.md`: định nghĩa NMAIex hai chiều, mục tiêu J->C/C->J, RRF, skill scoring, penalty/bonus và `score_breakdown`.
+2. `docs/guide/nmaiex_ranking_guide.md`: mô tả flow triển khai J->C và C->J, API usage và các bước scoring.
+3. `app/services/nmaiex_ranking_service.py`: implementation ranking, `compute_skill_score`, `compute_salary_adjustment`, `compute_language_score`, `rank_candidates_for_job`, `rank_jobs_for_candidate`.
+4. `app/api/nmaiex_routes_ranking.py`: endpoint ranking candidates/jobs và master data endpoints.
+5. `app/models/nmaiex_schemas.py`: schema response có `ScoreBreakdown`, `CandidateRankResult`, `JobRankResult`, `RankingResponse`.
+6. `synthetic_data/`: persona, generator, prompt và verifier cho dữ liệu synthetic.
+7. `nmaiex_tuning/build_ground_truth.py` và `nmaiex_tuning/tune_nmaiex_hyperparams.py`: tạo ground truth, precompute feature, Optuna tuning, MRR và nDCG@10.
+8. `agent_workflow_doc/archive/implementation_plan_nmaiex_tuning_6h.md`: kết quả benchmark/tuning J->C MRR và C->J nDCG@10 trên synthetic/LLM-judged benchmark.
+9. `docs/strategy/job_application_full_cv_chat_strategy.md`: chiến lược full-CV chat, guardrails, token budget, `CVPARSED` readiness và `topK=0`.
+10. `docs/guide/job_application_full_cv_chat_guide.md`: flow `/v2/chat/query`, context warning, budget behavior và test guide.
+11. `app/services/rag_query.py`: implementation `process_chat_query`, load CV/job/application context, build full-CV prompt và persistence.
+12. `app/api/routes_chat.py`: API route cho JobApplication Chat.
+13. `tests/unit/unit_test_chat_full_cv.py`: unit tests cho full-CV chat, guardrails, budget và không dùng vector top-k trong flow chính.
+14. `app/services/jobposting_agent_runtime.py`: runtime tool-calling, state, warnings và working set cho JobPosting Agent.
+15. `app/services/jobposting_tools.py`: read-only tools, scope validation, PII masking, result preview và các filter/ranking tools.
+16. `app/services/jobposting_agent_query.py`: orchestration lớp query của JobPosting Agent.
+17. `app/api/routes_jobposting_agent.py`: endpoint `/v2/agent/job-posting/query` và quản lý hội thoại agent.
+18. `app/models/jobposting_agent.py`: schema request/response cho Agent, gồm `jobPostId`, `toolCalls`, `workingSet`, `warnings`.
+19. `tests/unit/unit_test_jobposting_agent_runtime.py` và `tests/unit/unit_test_jobposting_agent_tools.py`: tests cho tool-calling, scope validation, truncation, PII và working set.
+20. `agent_workflow_doc/try_hard_jobposting/`: tài liệu phân tích prompt engineering, batch filter và hardening cho JobPosting Agent.
