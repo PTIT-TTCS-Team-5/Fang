@@ -1,0 +1,125 @@
+CHƯƠNG 3. QUY TRÌNH KỸ THUẬT, TÀI LIỆU VÀ KIỂM THỬ
+
+Chương 1 đã trình bày FANG ở mức kiến trúc hệ thống, còn Chương 2 đã đi vào các năng lực AI chính như NMAIex Ranking, JobApplication Chat và JobPosting Agent. Chương 3 tập trung vào một khía cạnh khác: quy trình kỹ thuật giúp các năng lực đó có thể được hiểu, kiểm chứng và bàn giao. Với một hệ thống AI Core, code tính năng là chưa đủ; nhóm còn cần tài liệu quyết định, guide vận hành, test suite, API matrix, full-app QA và các tiêu chí kiểm thử đặc thù cho AI.
+
+Trong phạm vi báo cáo, Chương 3 không nhằm chứng minh rằng FANG đã production-ready tuyệt đối. Mục tiêu hợp lý hơn là chứng minh dự án có quy trình kỹ thuật có thể truy vết: vì sao chọn một hướng thiết kế, triển khai ở đâu, kiểm thử bằng cách nào, kết quả cần được báo cáo ra sao và còn rủi ro nào cần xử lý. Đây là cách trình bày thận trọng hơn, phù hợp với bản chất của FANG như một AI Core đang được phát triển và kiểm chứng trong phạm vi dự án.
+
+3.1. Hệ thống tài liệu kỹ thuật
+
+Hệ thống tài liệu của FANG được chia thành nhiều nhóm, mỗi nhóm trả lời một loại câu hỏi khác nhau. Cách tổ chức này quan trọng vì dự án có nhiều module AI với ranh giới nghiệp vụ riêng: ingestion, ranking, chat, agent, provider routing, dữ liệu synthetic, Postman QA và UI QA. Nếu mọi tài liệu đều đặt chung một nơi và cùng một kiểu văn phong, người đọc sẽ khó biết tài liệu nào là quyết định hiện tại, tài liệu nào chỉ là nghiên cứu, và tài liệu nào là hướng dẫn thực thi.
+
+Nhóm `docs/strategy` có vai trò giải thích quyết định kỹ thuật ở mức hệ thống. README của thư mục này nêu rõ strategy document trả lời câu hỏi "Tại sao chọn cách này?". Ví dụ, strategy có thể trình bày trade-off giữa RAG top-k và full-CV context, lý do tách J->C và C->J trong ranking, hoặc chính sách guardrail/token budget trong chat. Loại tài liệu này không chỉ mô tả thao tác, mà phải nêu bối cảnh, quyết định, lý do chọn và tác động của quyết định.
+
+Nhóm `docs/guide` có vai trò runbook: trả lời câu hỏi "Làm như thế nào?". Guide ưu tiên tính thực thi, nêu các bước triển khai, cấu hình, vận hành, kiểm thử nhanh và xử lý sự cố. Trong một dự án có nhiều agent hoặc nhiều thành viên cùng tham gia, guide giúp người thực thi không phải suy luận lại toàn bộ kiến trúc trước khi làm một việc cụ thể.
+
+Nhóm `agent_workflow_doc` là lớp điều phối workflow. README trong thư mục này cho biết đây không phải source code runtime, mà là nơi lưu tài liệu điều phối agent/thành viên, assignment, report, acceptance criteria, prompt QA và các ghi chú current workflow. Điểm quan trọng là `agent_workflow_doc` phân biệt active decision docs, active assignment docs, report cũ và archive. Khi có mâu thuẫn giữa report cũ và code mới, code hiện tại là truth source và report cần ghi conflict thay vì âm thầm suy đoán.
+
+Nhóm `docs/research` và các thư mục archive có giá trị tham khảo, nhưng không nên xem là runtime truth nếu mâu thuẫn với code hiện tại hoặc strategy/guide mới hơn. Điều này đặc biệt quan trọng trong các module AI vì ý tưởng nghiên cứu có thể đi trước implementation hoặc bị thay đổi sau benchmark. Khi viết báo cáo, nên dùng research để giải thích nền tảng, nhưng phải đối chiếu với service code, guide hiện hành và test evidence trước khi đưa ra kết luận.
+
+[BẢNG - Bảng 3.1: Taxonomy tài liệu FANG]
+
+Bảng này phân loại `docs/strategy`, `docs/guide`, `agent_workflow_doc`, `docs/research`, `archive` theo vai trò, câu hỏi trả lời, ví dụ nội dung và mức độ được xem là truth source. Mục tiêu của bảng là giúp người đọc hiểu tài liệu FANG không chỉ là ghi chú rời rạc, mà là một hệ thống hỗ trợ truy vết quyết định kỹ thuật.
+
+[SƠ ĐỒ - Hình 3.1: Traceability từ tài liệu đến kiểm thử]
+
+Sơ đồ cần thể hiện chuỗi: research/strategy định hướng quyết định, guide chuyển quyết định thành thao tác, code/service triển khai behavior, tests/Postman/Playwright kiểm chứng behavior, report ghi kết quả và residual risks. Đây là trục chính của Chương 3.
+
+3.2. Unit tests và smoke/E2E tests
+
+Testing guide của FANG chia kiểm thử thành hai nhóm lớn: unit tests và smoke/E2E tests. Unit tests kiểm tra logic cô lập, thường mock database hoặc provider để không phụ thuộc môi trường thật. Smoke/E2E tests kiểm tra luồng tích hợp thật hơn, có thể gọi API thật, database thật hoặc provider thật. Sự phân tầng này phù hợp với hệ thống AI Core vì mỗi tầng bắt một loại lỗi khác nhau.
+
+Unit tests giúp kiểm tra các logic có thể xác minh ổn định mà không cần chạy toàn bộ hệ thống. Ví dụ, `unit_test_chunking.py` kiểm tra cách sinh markdown, chia chunk và đưa global context vào chunk; `unit_test_parser_policy.py` kiểm tra chính sách 5-Tier Fallback Parser và ProTierGate; `unit_test_persistence.py` kiểm tra serialize vector và lưu dữ liệu chunk; `unit_test_chat_full_cv.py` kiểm tra guardrails, budget và behavior full-CV chat; các test JobPosting Agent kiểm tra runtime, route validation, persistence, structured filters, ranking labels và result preview.
+
+Giá trị của unit tests là tốc độ và tính cô lập. Khi một hàm scoring, policy parser hoặc tool helper thay đổi, unit test có thể phát hiện regression mà không cần khởi động server hoặc gọi LLM. Điều này đặc biệt quan trọng với AI workflow vì một lỗi nhỏ ở prompt assembly, budget check hoặc scope validation có thể không lộ ra ngay trong UI, nhưng lại ảnh hưởng trực tiếp đến grounding và an toàn dữ liệu.
+
+Smoke/E2E tests kiểm tra mức tích hợp cao hơn. Theo testing guide, các script trong `smoke_tests` có thể chạy parser trên file PDF mẫu, chạy ingestion pipeline, đọc `CVPARSED` từ database để chunking, hoặc gọi chat API theo luồng thực tế. Các test này yêu cầu môi trường đầy đủ hơn, thường cần `.env`, `DATABASE_URL`, API key provider và server FANG đang chạy. Vì vậy, chúng chậm hơn và dễ phụ thuộc môi trường hơn unit tests, nhưng lại có giá trị xác minh các điểm nối mà unit test không bao phủ.
+
+Một quy ước quan trọng trong testing guide là local DB hiện được xem như fixture ổn định. Không reset hoặc seed database trước khi chạy smoke test trừ khi có chỉ đạo riêng. Thay vào đó, test cần chọn sẵn các ID tồn tại như `hrId`, `jobAppId` có `CVPARSED` usable cho full-CV chat, `jobPostId` cho ranking/JobPosting Agent và `candidateId` cho candidate-side ranking. Cách làm này giảm rủi ro phá dữ liệu local đang dùng cho demo và QA.
+
+[BẢNG - Bảng 3.2: So sánh các tầng kiểm thử trong FANG]
+
+Bảng này so sánh unit tests, smoke/E2E scripts, Postman API verification, Playwright/Chrome DevTools full-app QA và AI-specific QA theo mục tiêu, phụ thuộc môi trường, loại lỗi bắt được, ví dụ evidence và giới hạn.
+
+[SƠ ĐỒ - Hình 3.2: Test pyramid áp dụng cho FANG]
+
+Sơ đồ nên thể hiện tầng đáy là unit tests, tầng giữa là smoke/E2E và Postman API verification, tầng trên là Playwright/Chrome DevTools full-app QA, và một lớp cắt ngang là AI-specific QA criteria. Lớp AI-specific QA cắt ngang vì grounding, scope, PII, provider stop và tool routing không chỉ thuộc một loại test duy nhất.
+
+Khi trình bày kết quả kiểm thử, cần tránh overclaim. Việc có unit tests và smoke tests không đồng nghĩa toàn bộ hệ thống đã đạt production readiness. Nó cho thấy nhóm đã có cơ chế kiểm chứng các luồng chính, biết phân loại lỗi và có known gaps. Testing guide cũng ghi nhận một số test suite còn thiếu hoặc được lên kế hoạch, ví dụ các test sâu hơn cho RAG orchestrator hoặc chat manager trong tài liệu cũ. Đây là bằng chứng tốt cho thái độ kỹ thuật thận trọng: nhận diện được phần đã test và phần chưa test.
+
+3.3. Postman API verification
+
+Postman API verification là lớp kiểm thử public API contract. Nếu unit tests kiểm tra logic nội bộ và smoke scripts kiểm tra một số luồng tích hợp, Postman matrix kiểm tra các endpoint FANG từ góc nhìn client/API consumer. Điều này phù hợp với kiến trúc API-first đã trình bày ở Chương 1: FANG phải có contract rõ cho frontend hoặc hệ thống bên ngoài gọi vào.
+
+`postman/FANG_V2_FULL_API_TEST_MATRIX.md` xác định các biến môi trường cần có như `base_url`, `hr_id`, `job_post_id`, `job_app_id_full_cv`, `job_app_id_missing_cv`, `candidate_id`, `conversation_id`, `agent_conversation_id`, `ingestion_job_id` và `cv_snap_url`. Việc định nghĩa biến rõ ràng giúp test API không phụ thuộc vào thao tác thủ công mơ hồ. Matrix cũng nhấn mạnh không reset hoặc seed DB trong quá trình test, vì local DB là fixture ổn định.
+
+Coverage của Postman matrix bao gồm nhiều nhóm endpoint. Nhóm system kiểm tra `/healthz`, `/v2/healthz` và `/docs`. Nhóm Chat full-CV kiểm tra happy path, missing CV, invalid model, list conversations, messages, summarize và branch-new; trong đó yêu cầu kiểm tra `topK=0` để xác nhận flow full-CV không dùng top-k chunk retrieval trong đường trả lời chính. Nhóm ingestion kiểm tra tạo job và xem trạng thái ingestion. Nhóm NMAIex kiểm tra master data, ranking candidates by job và jobs by candidate. Nhóm JobPosting Agent kiểm tra top candidates, language filter, CV drilldown, out-of-scope negative case, conversation list/messages, rename và archive.
+
+Giá trị của Postman matrix không chỉ nằm ở số lượng endpoint được gọi, mà ở pass/fail rules. Matrix yêu cầu phân biệt provider/quota/API-key exhaustion với backend bug. Nếu backend log cho thấy lỗi quota hoặc auth từ provider và HTTP error shape ổn định, đó là provider/environment issue. Nếu có schema mismatch, uncaught traceback, missing route hoặc 5xx không có nguyên nhân provider rõ, đó là backend bug. Cách phân loại này rất quan trọng trong hệ thống AI vì lỗi bên ngoài provider thường bị nhầm với lỗi logic ứng dụng.
+
+Prompt Tier 2 cho Postman còn yêu cầu tự chạy backend, đọc log, kiểm tra compile/pytest một số module chính, thiết lập environment variables, query DB để chọn fixture nếu ID drift, và ghi report có pass/fail summary, per-case table, captured IDs, bug cần Tier 1 xử lý, tool routing evidence và provider/environment issue tách riêng. Đây là quy trình QA có tính kiểm soát, không chỉ là "bấm Postman xem có trả 200 không".
+
+Trong báo cáo, Postman API verification nên được xem như bằng chứng rằng FANG có contract kiểm thử được ở lớp API. Nó không thay thế UI QA, vì API pass chưa chắc frontend render đúng. Nó cũng không thay thế AI-specific QA, vì response 200 chưa chắc câu trả lời grounded hoặc tool chọn đúng. Nhưng nó là lớp kiểm tra cần thiết cho một AI Core API-first.
+
+3.4. Playwright/Chrome DevTools full-app QA qua miCareer-mini
+
+`miCareer-mini` không phải sản phẩm chính, nhưng nó có vai trò quan trọng trong full-app QA vì nó mô phỏng cách một frontend thật gọi FANG. Kiểm thử UI qua `miCareer-mini` giúp xác nhận rằng API contract của FANG có thể được sử dụng trong workflow người dùng: HR đăng nhập, xem job, mở application detail, dùng full-CV chat, mở JobPosting Agent, xem tool trace; candidate đăng nhập, xem job list/job detail/apply page hoặc flow gợi ý job tùy phạm vi demo.
+
+Prompt Chrome DevTools/Playwright full-app QA yêu cầu chạy backend và frontend bằng venv, cấu hình `FANG_API_URL=http://localhost:8000/v2`, kiểm tra log backend/frontend, query DB fixture, và dùng fixture ổn định như candidate `nguyenhaihung`, `candidate_id=518`, `jobPostId=20`, `CVPARSED` usable. Các bước này giúp QA không phụ thuộc vào server mơ hồ hoặc dữ liệu không biết nguồn gốc. Khi test fail, agent/tester phải đọc log để phân loại lỗi thay vì đoán.
+
+Full-app QA có hai dạng bổ sung nhau. Chrome DevTools/manual QA dùng để quan sát trực tiếp UI, xác nhận navigation, layout, expander, working set, source chips, tool output và lỗi hiển thị. Playwright automation dùng để lặp lại các smoke case quan trọng bằng script, ví dụ HR login, job list render, application detail full-CV chat caption, JobPosting Agent prompts, mở nested tool output, rename/new/archive conversation và candidate login/job list smoke. Manual QA phát hiện vấn đề trải nghiệm; Playwright giúp bảo vệ các luồng chính khỏi regression.
+
+Điểm đáng chú ý trong prompt QA là provider stop rule. Với các case phụ thuộc LLM, mỗi prompt chính thức chỉ chạy tối đa một lần. Nếu gặp quota, API key, rate limit, context limit hoặc provider unavailable, tester phải dừng các case LLM-dependent còn lại, ghi rõ provider, prompt, HTTP/UI error và backend log evidence. Quy tắc này vừa kiểm soát chi phí API, vừa tránh spam request gây nhiễu kết quả. Các case non-LLM như navigation, render hoặc rename/archive có thể tiếp tục nếu an toàn.
+
+JobPosting Agent UI QA có thêm yêu cầu riêng vì Agent có tool-calling và working set. Tester phải mở expander "Bước ...", mở nested output, ghi nhận `toolName`, `args`, `resultPreview`, số lượng kết quả, warnings, và kiểm tra câu trả lời HR-facing có grounded hay không. Với các prompt như TOEIC filter, skill filter, seniority, location, salary hoặc education, QA không chỉ xem câu trả lời có chữ hay không, mà phải kiểm tra Agent có chọn đúng structured tool hay lại rơi về generic text search.
+
+[SƠ ĐỒ - Hình 3.3: Quy trình Tier 2 QA API và UI]
+
+Sơ đồ cần thể hiện quy trình: chuẩn bị fixture và env, chạy compile/pytest smoke, start backend/frontend có log, chạy Postman hoặc Chrome DevTools/Playwright, phân loại lỗi, ghi report và escalation cho Tier 1 nếu có bug hoặc quyết định vượt scope.
+
+3.5. Tiêu chí QA đặc thù cho hệ thống AI
+
+FANG là AI Core nên QA không thể chỉ dừng ở HTTP 200, UI render hoặc function return type. Một câu trả lời AI có thể trả về thành công về mặt kỹ thuật nhưng vẫn sai về mặt nghiệp vụ: hallucinate thông tin candidate, bỏ qua scope, tiết lộ PII, chọn sai tool, không trích evidence, hoặc dùng provider quá tốn chi phí. Vì vậy, Chương 3 cần trình bày các tiêu chí QA đặc thù cho hệ thống AI.
+
+Tiêu chí đầu tiên là grounding. JobApplication Chat phải trả lời dựa trên CV/JD/application context trong `jobAppId`; JobPosting Agent phải trả lời dựa trên tool results trong `jobPostId`. Nếu dữ liệu không có, hệ thống cần nói thiếu dữ liệu thay vì tự suy đoán. Grounding cũng yêu cầu câu trả lời có thể truy ngược về context, `score_breakdown`, tool result hoặc source/working set.
+
+Tiêu chí thứ hai là scope control. JobApplication Chat không được tự ý phân tích pool ứng viên ngoài một `jobAppId`. JobPosting Agent không được truy vấn application ngoài `jobPostId` đang xét. Các tool nhận `jobAppId` phải validate application thuộc job hiện tại. Đây là kiểm soát bảo mật và nghiệp vụ, không chỉ là kiểm tra tiện ích.
+
+Tiêu chí thứ ba là prompt injection và untrusted data. CV, JD, ATS feedback và email log đều có thể chứa text do người dùng hoặc nguồn bên ngoài cung cấp. Hệ thống cần coi các block này là dữ liệu, không phải instruction. Full-CV chat đã có chiến lược đánh dấu untrusted context; Agent QA cũng cần kiểm tra các prompt out-of-scope hoặc negative cases để đảm bảo model không bỏ qua policy.
+
+Tiêu chí thứ tư là PII masking và data minimization. Tool output và assistant answer không nên lộ raw email, số điện thoại, địa chỉ hoặc đoạn CV dài không cần thiết. JobPosting Agent có các helper PII masking và result preview đã sanitize; QA cần kiểm tra chúng không chỉ tồn tại trong code mà còn xuất hiện đúng trong tool trace và UI.
+
+Tiêu chí thứ năm là tool routing. Với Agent, chọn đúng tool là một phần của chất lượng. Nếu câu hỏi yêu cầu chứng chỉ tiếng Anh TOEIC, tool phù hợp là language certificate filter, không phải search text chung. Nếu câu hỏi yêu cầu skill gap, salary, education hoặc location, Agent nên dùng structured filter tương ứng. Tool routing sai có thể vẫn trả lời nghe hợp lý, nhưng làm mất tính kiểm chứng và giảm độ tin cậy của hệ thống.
+
+Tiêu chí thứ sáu là provider stop và cost control. Vì FANG dùng LLM/embedding provider, QA phải phân biệt lỗi app với lỗi quota/key/provider. Không nên retry vô hạn, không tự chuyển sang paid key và không stress test ngoài scope. Quy tắc này bảo vệ chi phí của người dùng và giúp report có giá trị kỹ thuật hơn.
+
+[BẢNG - Bảng 3.3: Tiêu chí QA đặc thù cho AI]
+
+Bảng này liệt kê các tiêu chí grounding, scope, prompt injection, PII masking, tool routing, provider stop/cost control, schema stability và reportability. Với mỗi tiêu chí, bảng cần nêu module liên quan, cách kiểm tra và ví dụ lỗi cần phân loại.
+
+3.6. Ý nghĩa của quy trình tài liệu và QA trong báo cáo
+
+Từ các phần trên, có thể thấy quy trình kỹ thuật của FANG không chỉ là tập hợp lệnh test. Nó là một chuỗi traceability: strategy giải thích vì sao chọn hướng thiết kế; guide chuyển quyết định thành thao tác; code triển khai behavior; unit/smoke/Postman/Playwright kiểm chứng behavior ở nhiều tầng; report ghi lại kết quả, lỗi, provider issue và residual risks. Chuỗi này giúp dự án tránh tình trạng "AI demo chạy được một lần" nhưng không có bằng chứng kiểm chứng hoặc hướng bàn giao.
+
+Quy trình này cũng giúp nhóm quản lý drift. Trong dự án AI, code, prompt, provider, dữ liệu fixture và UI có thể thay đổi nhanh. Nếu không có tài liệu current truth, test matrix và report, rất dễ xảy ra tình trạng tài liệu cũ nói một kiểu, code chạy một kiểu, còn demo lại phụ thuộc vào dữ liệu local không ai nhớ. FANG giảm rủi ro đó bằng cách phân biệt strategy, guide, workflow docs, archive và report.
+
+Một điểm mạnh khác là quy trình QA đã nhận diện rõ các giới hạn của AI. Ranking gain chỉ nên được xem là kết quả synthetic/LLM-judged benchmark. Full-CV chat phụ thuộc parse quality, prompt quality và token budget. JobPosting Agent có tool-calling, working set và PII masking, nhưng vẫn cần eval/hardening nếu production. Các caveat này không làm yếu báo cáo; ngược lại, chúng cho thấy nhóm hiểu giới hạn của hệ thống và không overclaim.
+
+Kết luận của Chương 3 là FANG có một quy trình kỹ thuật đủ rõ để hỗ trợ phát triển, kiểm thử và bàn giao: tài liệu có taxonomy, test có phân tầng, API có matrix, UI có full-app QA, và AI có tiêu chí kiểm chứng riêng. Đây là nền tảng cần thiết trước khi sang Chương 4, nơi báo cáo sẽ trình bày tổ chức mã nguồn và cách các module trong codebase được phân ranh theo trách nhiệm.
+
+[GHI CHÚ EVIDENCE]
+
+Các file/tài liệu/code dùng làm căn cứ chính cho Chương 3:
+
+1. `docs/testing_guide.md`: cấu trúc unit tests, smoke/E2E tests, lệnh chạy và lưu ý fixture ổn định.
+2. `docs/strategy/README.md`: định nghĩa vai trò strategy docs, trả lời câu hỏi "Tại sao chọn cách này?".
+3. `docs/guide/README.md`: định nghĩa vai trò guide docs, trả lời câu hỏi "Làm như thế nào?".
+4. `agent_workflow_doc/README.md`: quy tắc đọc tài liệu, active decision docs, active assignments, archive và truth source.
+5. `postman/FANG_V2_FULL_API_TEST_MATRIX.md`: API matrix, environment variables, coverage và pass/fail rules.
+6. `agent_workflow_doc/tier2/FANG_TIER2_POSTMAN_MCP_FULL_API_TEST_PROMPT.md`: quy trình Postman Tier 2, preflight, fixture, required API cases và report format.
+7. `agent_workflow_doc/tier2/MICAREER_TIER2_CHROME_DEVTOOLS_PLAYWRIGHT_FULL_APP_TEST_PROMPT.md`: quy trình full-app QA qua Chrome DevTools/Playwright và JobPosting Agent batch tools.
+8. `agent_workflow_doc/tier2/MICAREER_TIER2_FULL_SYSTEM_QA_ADDENDUM_PROMPT.md`: provider stop rule, cost control, parallel-safe rule và full-system QA matrix.
+9. `agent_workflow_doc/tier2/MICAREER_TIER2_JOBPOSTING_AGENT_QA_ADDENDUM_PROMPT.md`: QA riêng cho JobPosting Agent, tool step, working set, source chips và provider stop.
+10. `tests/unit/`: unit tests cho chunking, embedding, ingestion, parser policy, persistence, full-CV chat, NMAIex và JobPosting Agent.
+11. `smoke_tests/`: smoke/E2E scripts cho chat API, chunking, ingestion pipeline, parser và JobPosting Agent API.
+12. `postman/collections/`: request definitions cho System, Chat, Ingestion, NMAIex và JobPosting Agent APIs.
+13. `.understand-anything/knowledge-graph.json`: graph xác nhận framing repo FANG là FastAPI AI Core có parser, RAG chat, NMAIex ranking và C3 JobPosting Agent.

@@ -83,4 +83,9 @@ JobPosting Agent co guardrails/tool-calling/scope validation/PII masking, nhung 
 
 8. Kinh nghiem ve hinh va so do
 
-Voi cac hinh/so do render tu Mermaid, moi dong hien thi trong node hoac message khong nen vuot qua khoang 26 ky tu/chu. Neu label dai hon, chu dong xuong dong bang <br/> de tranh viec UI cat mat phan cuoi cua dong.
+Voi cac hinh/so do render tu Mermaid, moi dong hien thi trong node hoac message khong nen vuot qua khoang 26 ky tu/chu. Tuy nhien khong dung <br/> trong Mermaid vi VS Code Preview/DOCX export co the hien <br/> nhu text tho.
+
+Quy uoc Mermaid moi:
+- Flowchart: xuong dong label bang \n trong dau ngoac kep, vi du `A["Dong 1\nDong 2"]`.
+- SequenceDiagram: khong chen <br/> va khong co xuong dong that trong message; neu message qua dai thi tach thanh nhieu message ngan hoac rut gon text.
+- Trong label Mermaid, tranh viet `J->C` hoac `C->J` vi co the gay nham voi arrow syntax; dung `J→C`, `C→J`, hoac dien giai bang chu.
