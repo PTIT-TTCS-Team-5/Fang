@@ -51,11 +51,11 @@ class Settings(BaseSettings):
     jobposting_agent_enabled: bool = True
     jobposting_agent_model: str = "agent-lite"
     jobposting_agent_max_tool_steps: int = 8
-    jobposting_agent_max_full_cv_loads: int = 3
+    jobposting_agent_max_full_cv_loads: int = 5
     jobposting_agent_max_compare: int = 25
     jobposting_agent_default_top_n: int = 10
     jobposting_agent_hr_max_top_n: int = 25
-    jobposting_agent_max_turn_seconds: int = 60
+    jobposting_agent_max_turn_seconds: int = 80
     jobposting_agent_temperature: float = 0.2
     jobposting_agent_max_output_tokens: int = 4096
     jobposting_agent_max_tool_result_chars: int = 120000
