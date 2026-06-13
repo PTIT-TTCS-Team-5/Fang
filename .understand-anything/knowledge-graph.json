@@ -17,9 +17,9 @@
       "Pydantic",
       "pgvector"
     ],
-    "description": "AI layer for the miCareer ecosystem built on FastAPI. Implements a 5-Tier CV parser, 7-mode RAG chat pipeline, NMAIex bidirectional ranking, and the C3 JobPosting Agent runtime for job-scoped HR assistance.",
-    "analyzedAt": "2026-05-31T09:44:19.616Z",
-    "gitCommitHash": "2fd5d7b77411d2fb4d41ca22ba35f55bbae60da7"
+    "description": "AI layer for the miCareer ecosystem built on FastAPI. Implements a 5-Tier CV parser, 7-mode RAG chat pipeline, NMAIex bidirectional ranking, and the C3 JobPosting Agent runtime with structured batch filters and tool-result previews for job-scoped HR assistance.",
+    "analyzedAt": "2026-06-08T14:32:21.556170Z",
+    "gitCommitHash": "70ae91ffff5e0ac60a5e5292e06793cb0f203ff9"
   },
   "nodes": [
     {
@@ -521,11 +521,12 @@
       "type": "file",
       "name": "nmaiex_ranking_service.py",
       "filePath": "app/services/nmaiex_ranking_service.py",
-      "summary": "Calculates NMAIex ranking scores, scoring breakdowns, and bidirectional recommendation results.",
+      "summary": "Calculates NMAIex ranking scores and score breakdowns, including language bonus and penalty terms for bidirectional recommendation results.",
       "tags": [
         "service",
         "ranking",
-        "python"
+        "python",
+        "nmaiex"
       ],
       "complexity": "complex"
     },
@@ -1689,7 +1690,7 @@
       "type": "file",
       "name": "jobposting_agent.py",
       "filePath": "app/models/jobposting_agent.py",
-      "summary": "Defines the Pydantic request, response, and helper models used by the JobPosting Agent API and runtime state.",
+      "summary": "Defines the Pydantic request, response, and helper models used by the JobPosting Agent API, including tool result previews and working-set metadata.",
       "tags": [
         "data-model",
         "jobposting-agent",
@@ -1715,11 +1716,12 @@
       "type": "file",
       "name": "jobposting_agent_query.py",
       "filePath": "app/services/jobposting_agent_query.py",
-      "summary": "Validates JobPosting Agent requests, enforces job and HR scope, and coordinates persistence with the runtime.",
+      "summary": "Validates JobPosting Agent requests, enforces job and HR scope, persists tool-call previews, and coordinates runtime execution.",
       "tags": [
         "service",
         "jobposting-agent",
-        "python"
+        "python",
+        "persistence"
       ],
       "complexity": "complex"
     },
@@ -1728,12 +1730,13 @@
       "type": "file",
       "name": "jobposting_agent_runtime.py",
       "filePath": "app/services/jobposting_agent_runtime.py",
-      "summary": "Implements the Gemini tool-calling runtime for the JobPosting Agent, including model fallback, working-set-aware prompt construction, tool orchestration, and HR/compliance guardrails.",
+      "summary": "Implements the Gemini tool-calling runtime for the JobPosting Agent, including structured batch filters, working-set-aware prompts, tool orchestration, and compliance guardrails.",
       "tags": [
         "service",
         "jobposting-agent",
         "python",
-        "tool-calling"
+        "tool-calling",
+        "structured-filtering"
       ],
       "complexity": "complex"
     },
@@ -1742,11 +1745,13 @@
       "type": "file",
       "name": "jobposting_tools.py",
       "filePath": "app/services/jobposting_tools.py",
-      "summary": "Provides read-only JobPosting Agent tools for job context, candidate ranking, CV lookup, and scoped search over applications.",
+      "summary": "Provides read-only JobPosting Agent tools for job context, ranking, structured batch filters, and scoped application search.",
       "tags": [
         "service",
         "jobposting-agent",
-        "python"
+        "python",
+        "tool-calling",
+        "structured-filtering"
       ],
       "complexity": "complex"
     },
@@ -1846,7 +1851,7 @@
       "type": "file",
       "name": "unit_test_jobposting_agent_runtime.py",
       "filePath": "tests/unit/unit_test_jobposting_agent_runtime.py",
-      "summary": "Unit tests for the JobPosting Agent runtime, including tool execution limits and fallback behavior.",
+      "summary": "Unit tests for the JobPosting Agent runtime, covering tool execution limits, fallback behavior, and result-preview persistence.",
       "tags": [
         "test",
         "jobposting-agent",
@@ -1859,7 +1864,7 @@
       "type": "file",
       "name": "unit_test_jobposting_agent_tools.py",
       "filePath": "tests/unit/unit_test_jobposting_agent_tools.py",
-      "summary": "Unit tests for JobPosting Agent tool helpers, filtering logic, and candidate-ranking lookups.",
+      "summary": "Unit tests for JobPosting Agent tool helpers, structured filters, ranking labels, and candidate-ranking lookups.",
       "tags": [
         "test",
         "jobposting-agent",
@@ -2191,6 +2196,253 @@
         "jobposting-agent"
       ],
       "complexity": "simple"
+    },
+    {
+      "id": "config:app/core/config.py",
+      "type": "config",
+      "name": "config.py",
+      "filePath": "app/core/config.py",
+      "summary": "Centralizes runtime settings and JobPosting Agent limits, including tool-result truncation, retries, and RAG context budgets.",
+      "tags": [
+        "config",
+        "python",
+        "jobposting-agent"
+      ]
+    },
+    {
+      "id": "document:agent_workflow_doc/tier2/FANG_TIER2_POSTMAN_MCP_FULL_API_TEST_PROMPT.md",
+      "type": "document",
+      "name": "FANG_TIER2_POSTMAN_MCP_FULL_API_TEST_PROMPT.md",
+      "filePath": "agent_workflow_doc/tier2/FANG_TIER2_POSTMAN_MCP_FULL_API_TEST_PROMPT.md",
+      "summary": "Tier 2 execution prompt for the FANG full API verification run using Postman MCP and backend/frontend log capture.",
+      "tags": [
+        "documentation",
+        "qa",
+        "api",
+        "postman"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/tier2/MICAREER_TIER2_CHROME_DEVTOOLS_PLAYWRIGHT_FULL_APP_TEST_PROMPT.md",
+      "type": "document",
+      "name": "MICAREER_TIER2_CHROME_DEVTOOLS_PLAYWRIGHT_FULL_APP_TEST_PROMPT.md",
+      "filePath": "agent_workflow_doc/tier2/MICAREER_TIER2_CHROME_DEVTOOLS_PLAYWRIGHT_FULL_APP_TEST_PROMPT.md",
+      "summary": "Tier 2 UI test prompt for miCareer-mini using Chrome DevTools and Playwright against the JobPosting Agent flow.",
+      "tags": [
+        "documentation",
+        "qa",
+        "ui",
+        "playwright"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/tier2/MICAREER_TIER2_FULL_SYSTEM_QA_ADDENDUM_PROMPT.md",
+      "type": "document",
+      "name": "MICAREER_TIER2_FULL_SYSTEM_QA_ADDENDUM_PROMPT.md",
+      "filePath": "agent_workflow_doc/tier2/MICAREER_TIER2_FULL_SYSTEM_QA_ADDENDUM_PROMPT.md",
+      "summary": "Addendum prompt describing the miCareer-mini full-system QA checklist, fixtures, and provider stop rules.",
+      "tags": [
+        "documentation",
+        "qa",
+        "system-test",
+        "playwright"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/tier2/MICAREER_TIER2_JOBPOSTING_AGENT_QA_ADDENDUM_PROMPT.md",
+      "type": "document",
+      "name": "MICAREER_TIER2_JOBPOSTING_AGENT_QA_ADDENDUM_PROMPT.md",
+      "filePath": "agent_workflow_doc/tier2/MICAREER_TIER2_JOBPOSTING_AGENT_QA_ADDENDUM_PROMPT.md",
+      "summary": "Addendum prompt focused on JobPosting Agent QA cases, conversation management, and provider stop rules.",
+      "tags": [
+        "documentation",
+        "qa",
+        "jobposting-agent",
+        "playwright"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/tier2/full_api_test_walkthrough.md",
+      "type": "document",
+      "name": "full_api_test_walkthrough.md",
+      "filePath": "agent_workflow_doc/tier2/full_api_test_walkthrough.md",
+      "summary": "Walkthrough and final report for the FANG full API verification run, including pass/fail coverage and evidence.",
+      "tags": [
+        "documentation",
+        "qa",
+        "api",
+        "walkthrough"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/tier2/full_app_auto_test_hard_walkthrough.md",
+      "type": "document",
+      "name": "full_app_auto_test_hard_walkthrough.md",
+      "filePath": "agent_workflow_doc/tier2/full_app_auto_test_hard_walkthrough.md",
+      "summary": "Hard-mode integration walkthrough for miCareer-mini and FANG, covering JobPosting Agent UI verification and bug fixes.",
+      "tags": [
+        "documentation",
+        "qa",
+        "ui",
+        "walkthrough"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/tier2/full_app_auto_test_lite_walkthrough.md",
+      "type": "document",
+      "name": "full_app_auto_test_lite_walkthrough.md",
+      "filePath": "agent_workflow_doc/tier2/full_app_auto_test_lite_walkthrough.md",
+      "summary": "Lite integration walkthrough documenting manual and automated validation of the miCareer-mini and FANG stack.",
+      "tags": [
+        "documentation",
+        "qa",
+        "ui",
+        "walkthrough"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/tier2/monitoring_log.txt",
+      "type": "document",
+      "name": "monitoring_log.txt",
+      "filePath": "agent_workflow_doc/tier2/monitoring_log.txt",
+      "summary": "QA monitoring log tracking the progress, server status, and troubleshooting steps for the system test runs.",
+      "tags": [
+        "documentation",
+        "qa",
+        "log"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_BATCH_FILTER_IMPLEMENTATION_PLAN.md",
+      "type": "document",
+      "name": "JOBPOSTING_AGENT_BATCH_FILTER_IMPLEMENTATION_PLAN.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_BATCH_FILTER_IMPLEMENTATION_PLAN.md",
+      "summary": "Implementation plan describing the structured JobPosting Agent batch filters, ranking labels, and result-preview behavior.",
+      "tags": [
+        "documentation",
+        "jobposting-agent",
+        "implementation-plan"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_PROMPT_ENGINEERING_REVIEW.md",
+      "type": "document",
+      "name": "JOBPOSTING_AGENT_PROMPT_ENGINEERING_REVIEW.md",
+      "filePath": "agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_PROMPT_ENGINEERING_REVIEW.md",
+      "summary": "Prompt engineering review for the JobPosting Agent, capturing the structured routing rules and few-shot behaviors.",
+      "tags": [
+        "documentation",
+        "jobposting-agent",
+        "prompt-engineering",
+        "review"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/LEARNING_TOUR.md",
+      "type": "document",
+      "name": "LEARNING_TOUR.md",
+      "filePath": "docs/LEARNING_TOUR.md",
+      "summary": "Guided learning tour that walks developers through the FANG v2 architecture from entry point to JobPosting Agent documentation.",
+      "tags": [
+        "documentation",
+        "guide",
+        "learning-tour",
+        "jobposting-agent"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+      "type": "document",
+      "name": "LEARNING_TOUR_QUICK_REFERENCE.md",
+      "filePath": "docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+      "summary": "Quick-reference companion to the guided learning tour with concise navigation notes and file pointers.",
+      "tags": [
+        "documentation",
+        "guide",
+        "reference",
+        "learning-tour"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:docs/learning_tour.json",
+      "type": "config",
+      "name": "learning_tour.json",
+      "filePath": "docs/learning_tour.json",
+      "summary": "Structured learning-tour data used to render the guided tour and quick-reference navigation.",
+      "tags": [
+        "config",
+        "documentation",
+        "learning-tour"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/guide/integration_guide.md",
+      "type": "document",
+      "name": "integration_guide.md",
+      "filePath": "docs/guide/integration_guide.md",
+      "summary": "Explains how frontend clients integrate with the FANG v2 API, including chat, ingestion, and error-handling flows.",
+      "tags": [
+        "documentation",
+        "guide",
+        "integration",
+        "api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/guide/job_application_full_cv_chat_guide.md",
+      "type": "document",
+      "name": "job_application_full_cv_chat_guide.md",
+      "filePath": "docs/guide/job_application_full_cv_chat_guide.md",
+      "summary": "Documents the full-CV chat flow for a JobApplication, including budget checks, persistence, and data-source fallbacks.",
+      "tags": [
+        "documentation",
+        "guide",
+        "rag",
+        "chat"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/guide/embedding_guide.md",
+      "type": "document",
+      "name": "embedding_guide.md",
+      "filePath": "docs/guide/embedding_guide.md",
+      "summary": "Describes the embedding layer, configuration requirements, and persistence path used to store pgvector embeddings.",
+      "tags": [
+        "documentation",
+        "guide",
+        "embedding",
+        "database"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/guide/database_guide.md",
+      "type": "document",
+      "name": "database_guide.md",
+      "filePath": "docs/guide/database_guide.md",
+      "summary": "Provides a concise tour of the core PostgreSQL tables, chat persistence, and local fixture safeguards.",
+      "tags": [
+        "documentation",
+        "guide",
+        "database",
+        "persistence"
+      ],
+      "complexity": "moderate"
     }
   ],
   "edges": [
@@ -4505,6 +4757,454 @@
       "type": "configures",
       "weight": 0.6,
       "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR.md",
+      "target": "config:app/core/config.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR.md",
+      "target": "file:app/services/rag_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR.md",
+      "target": "file:app/services/jobposting_tools.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR.md",
+      "target": "file:app/services/nmaiex_ranking_service.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR.md",
+      "target": "document:docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR.md",
+      "target": "config:docs/learning_tour.json",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+      "target": "document:docs/LEARNING_TOUR.md",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+      "target": "file:app/services/rag_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+      "target": "file:app/services/jobposting_tools.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+      "target": "config:docs/learning_tour.json",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:docs/learning_tour.json",
+      "target": "document:docs/LEARNING_TOUR.md",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "config:docs/learning_tour.json",
+      "target": "document:docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_BATCH_FILTER_IMPLEMENTATION_PLAN.md",
+      "target": "file:app/services/jobposting_tools.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_BATCH_FILTER_IMPLEMENTATION_PLAN.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_BATCH_FILTER_IMPLEMENTATION_PLAN.md",
+      "target": "file:app/services/jobposting_agent_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_BATCH_FILTER_IMPLEMENTATION_PLAN.md",
+      "target": "file:app/models/jobposting_agent.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_BATCH_FILTER_IMPLEMENTATION_PLAN.md",
+      "target": "file:tests/unit/unit_test_jobposting_agent_tools.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_BATCH_FILTER_IMPLEMENTATION_PLAN.md",
+      "target": "file:tests/unit/unit_test_jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_PROMPT_ENGINEERING_REVIEW.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_PROMPT_ENGINEERING_REVIEW.md",
+      "target": "file:app/services/jobposting_tools.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/FANG_TIER2_POSTMAN_MCP_FULL_API_TEST_PROMPT.md",
+      "target": "file:app/services/jobposting_agent_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/FANG_TIER2_POSTMAN_MCP_FULL_API_TEST_PROMPT.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/FANG_TIER2_POSTMAN_MCP_FULL_API_TEST_PROMPT.md",
+      "target": "file:app/services/jobposting_tools.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/MICAREER_TIER2_CHROME_DEVTOOLS_PLAYWRIGHT_FULL_APP_TEST_PROMPT.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/MICAREER_TIER2_CHROME_DEVTOOLS_PLAYWRIGHT_FULL_APP_TEST_PROMPT.md",
+      "target": "file:app/services/jobposting_agent_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/MICAREER_TIER2_CHROME_DEVTOOLS_PLAYWRIGHT_FULL_APP_TEST_PROMPT.md",
+      "target": "file:app/services/jobposting_tools.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/MICAREER_TIER2_FULL_SYSTEM_QA_ADDENDUM_PROMPT.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/MICAREER_TIER2_FULL_SYSTEM_QA_ADDENDUM_PROMPT.md",
+      "target": "file:app/services/jobposting_agent_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/MICAREER_TIER2_FULL_SYSTEM_QA_ADDENDUM_PROMPT.md",
+      "target": "config:app/core/config.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/MICAREER_TIER2_JOBPOSTING_AGENT_QA_ADDENDUM_PROMPT.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/MICAREER_TIER2_JOBPOSTING_AGENT_QA_ADDENDUM_PROMPT.md",
+      "target": "file:app/services/jobposting_agent_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/MICAREER_TIER2_JOBPOSTING_AGENT_QA_ADDENDUM_PROMPT.md",
+      "target": "file:app/services/jobposting_tools.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/full_api_test_walkthrough.md",
+      "target": "file:app/services/jobposting_agent_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/full_api_test_walkthrough.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/full_api_test_walkthrough.md",
+      "target": "file:app/services/nmaiex_ranking_service.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/full_app_auto_test_hard_walkthrough.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/full_app_auto_test_hard_walkthrough.md",
+      "target": "file:app/services/jobposting_agent_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/full_app_auto_test_hard_walkthrough.md",
+      "target": "file:app/services/jobposting_tools.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/full_app_auto_test_lite_walkthrough.md",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/full_app_auto_test_lite_walkthrough.md",
+      "target": "file:app/services/jobposting_agent_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/full_app_auto_test_lite_walkthrough.md",
+      "target": "file:app/services/jobposting_tools.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/monitoring_log.txt",
+      "target": "file:app/services/jobposting_agent_runtime.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:agent_workflow_doc/tier2/monitoring_log.txt",
+      "target": "file:app/services/jobposting_agent_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/integration_guide.md",
+      "target": "file:app/services/rag_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/integration_guide.md",
+      "target": "file:app/api/routes_chat.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/integration_guide.md",
+      "target": "file:app/api/routes_ingestion.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/integration_guide.md",
+      "target": "file:app/api/routes_jobposting_agent.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/integration_guide.md",
+      "target": "file:app/main.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/job_application_full_cv_chat_guide.md",
+      "target": "file:app/services/rag_query.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/job_application_full_cv_chat_guide.md",
+      "target": "file:app/services/chat_persistence.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/job_application_full_cv_chat_guide.md",
+      "target": "config:app/core/config.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/job_application_full_cv_chat_guide.md",
+      "target": "file:app/api/routes_chat.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/embedding_guide.md",
+      "target": "file:app/services/embedding.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/embedding_guide.md",
+      "target": "file:app/services/persistence.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/embedding_guide.md",
+      "target": "config:app/core/config.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/embedding_guide.md",
+      "target": "file:app/core/nmaiex_config.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/database_guide.md",
+      "target": "table:database/schema_ai_core.sql",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/database_guide.md",
+      "target": "table:database/schema_web_core.sql",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/database_guide.md",
+      "target": "table:database/seed_data.sql",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
+    },
+    {
+      "source": "document:docs/guide/database_guide.md",
+      "target": "file:app/services/chat_persistence.py",
+      "type": "documents",
+      "weight": 0.5,
+      "direction": "forward"
     }
   ],
   "layers": [
@@ -4564,7 +5264,24 @@
         "document:agent_workflow_doc/assign_to_team/FANG_NEXT_PHASE_NMAIEX_RANKING_EXPLAINABILITY_ASSIGNMENT.md",
         "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_JOBPOSTING_AGENT_DECISION_ANALYSIS.md",
         "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_JOBPOSTING_OPTION_B_IMPLEMENTATION_ADVISORY.md",
-        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_UNASSIGNED_MEMBER_ASSIGNMENT_OPTIONS.md"
+        "document:agent_workflow_doc/current_workflow/FANG_NEXT_PHASE_UNASSIGNED_MEMBER_ASSIGNMENT_OPTIONS.md",
+        "document:docs/LEARNING_TOUR.md",
+        "document:docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+        "config:docs/learning_tour.json",
+        "document:agent_workflow_doc/tier2/FANG_TIER2_POSTMAN_MCP_FULL_API_TEST_PROMPT.md",
+        "document:agent_workflow_doc/tier2/MICAREER_TIER2_CHROME_DEVTOOLS_PLAYWRIGHT_FULL_APP_TEST_PROMPT.md",
+        "document:agent_workflow_doc/tier2/MICAREER_TIER2_FULL_SYSTEM_QA_ADDENDUM_PROMPT.md",
+        "document:agent_workflow_doc/tier2/MICAREER_TIER2_JOBPOSTING_AGENT_QA_ADDENDUM_PROMPT.md",
+        "document:agent_workflow_doc/tier2/full_api_test_walkthrough.md",
+        "document:agent_workflow_doc/tier2/full_app_auto_test_hard_walkthrough.md",
+        "document:agent_workflow_doc/tier2/full_app_auto_test_lite_walkthrough.md",
+        "document:agent_workflow_doc/tier2/monitoring_log.txt",
+        "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_BATCH_FILTER_IMPLEMENTATION_PLAN.md",
+        "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_PROMPT_ENGINEERING_REVIEW.md",
+        "document:docs/guide/integration_guide.md",
+        "document:docs/guide/job_application_full_cv_chat_guide.md",
+        "document:docs/guide/embedding_guide.md",
+        "document:docs/guide/database_guide.md"
       ]
     },
     {
@@ -4810,6 +5527,31 @@
         "file:smoke_tests/test_jobposting_agent_api.py",
         "file:tests/unit/unit_test_parser_policy.py"
       ]
+    },
+    {
+      "order": 10,
+      "title": "JobPosting Agent Documentation & QA Artifacts",
+      "description": "Review the learning-tour docs, prompt engineering notes, implementation plan, and QA walkthroughs that document the structured JobPosting Agent rollout and verification work.",
+      "nodeIds": [
+        "document:docs/LEARNING_TOUR.md",
+        "document:docs/LEARNING_TOUR_QUICK_REFERENCE.md",
+        "config:docs/learning_tour.json",
+        "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_BATCH_FILTER_IMPLEMENTATION_PLAN.md",
+        "document:agent_workflow_doc/try_hard_jobposting/JOBPOSTING_AGENT_PROMPT_ENGINEERING_REVIEW.md",
+        "document:agent_workflow_doc/tier2/FANG_TIER2_POSTMAN_MCP_FULL_API_TEST_PROMPT.md",
+        "document:agent_workflow_doc/tier2/MICAREER_TIER2_CHROME_DEVTOOLS_PLAYWRIGHT_FULL_APP_TEST_PROMPT.md",
+        "document:agent_workflow_doc/tier2/MICAREER_TIER2_FULL_SYSTEM_QA_ADDENDUM_PROMPT.md",
+        "document:agent_workflow_doc/tier2/MICAREER_TIER2_JOBPOSTING_AGENT_QA_ADDENDUM_PROMPT.md",
+        "document:agent_workflow_doc/tier2/full_api_test_walkthrough.md",
+        "document:agent_workflow_doc/tier2/full_app_auto_test_hard_walkthrough.md",
+        "document:agent_workflow_doc/tier2/full_app_auto_test_lite_walkthrough.md",
+        "document:agent_workflow_doc/tier2/monitoring_log.txt",
+        "document:docs/guide/integration_guide.md",
+        "document:docs/guide/job_application_full_cv_chat_guide.md",
+        "document:docs/guide/embedding_guide.md",
+        "document:docs/guide/database_guide.md"
+      ],
+      "languageLesson": "Documentation layers are useful for operational knowledge too: prompts, walkthroughs, and monitoring logs form a living record of how the system is tested and evolved."
     }
   ]
 }
