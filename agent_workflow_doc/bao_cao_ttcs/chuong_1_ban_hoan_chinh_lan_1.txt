@@ -1,16 +1,16 @@
-* NOTE: Một chỗ nào đó nên giải thích các khái niệm như FANG, miCareer-mini
+* NOTE: Một chỗ nào đó nên giải thích các khái niệm như FANG, miCareer-mini, JobPosting, JobApplication, Candidate, HR, workflow v.v Vì đây là các từ dùng riêng trong hệ thống
 
 CHƯƠNG 1. PHẠM VI DỰ ÁN VÀ KIẾN TRÚC FANG AI CORE
 
-Chương này trình bày ranh giới hệ thống và kiến trúc nền tảng của FANG. Trọng tâm của chương không phải là mô tả một giao diện tuyển dụng hoàn chỉnh, mà là làm rõ cách FANG được thiết kế như một AI Core độc lập, có thể được tích hợp vào các frontend hoặc hệ thống tuyển dụng khác thông qua API. Từ góc nhìn đó, `miCareer-mini` được sử dụng như một thin client phục vụ phát triển, kiểm thử và minh họa tích hợp, trong khi logic AI chính nằm tập trung ở FANG.
+Chương này trình bày ranh giới hệ thống và kiến trúc nền tảng của FANG. Trọng tâm của chương làm rõ cách FANG được thiết kế như một AI Core độc lập, có thể được tích hợp vào các frontend hoặc hệ thống tuyển dụng khác thông qua API. Từ góc nhìn đó, `miCareer-mini` được sử dụng như một thin client phục vụ phát triển, kiểm thử và minh họa tích hợp, còn logic AI chính nằm tập trung ở FANG.
 
 1.1. Phạm vi dự án và vai trò của FANG
 
-Trong phạm vi báo cáo này, FANG được xác định là sản phẩm chính của nhóm: một backend/AI Core phục vụ các workflow tuyển dụng có yếu tố AI. FANG không chỉ là một tập hợp endpoint rời rạc, mà là lớp xử lý trung tâm cho các tác vụ như ingestion CV, chuẩn hóa dữ liệu hồ sơ, tạo embedding, hỗ trợ ranking, cung cấp chat theo hồ sơ ứng tuyển và hỗ trợ agent theo tin tuyển dụng. Các năng lực này được thiết kế xoay quanh dữ liệu tuyển dụng có sẵn trong hệ sinh thái miCareer, đặc biệt là các thực thể như JobPosting, JobApplication, Candidate và HR.
+Trong phạm vi báo cáo này, FANG được xác định là sản phẩm chính của nhóm: một backend/AI Core phục vụ các workflow tuyển dụng có yếu tố AI. FANG là lớp xử lý trung tâm cho các tác vụ như xử lý CV ứng viên, chuẩn hóa dữ liệu hồ sơ ứng tuyển, tạo embedding vector, hỗ trợ ranking công việc (cho ứng viên) và đơn ứng tuyển (cho HR), cung cấp AI chat theo hồ sơ ứng tuyển và agent theo tin tuyển dụng. Các năng lực này được thiết kế xoay quanh dữ liệu tuyển dụng có sẵn trong hệ sinh thái miCareer, đặc biệt là các thực thể như JobPosting, JobApplication, Candidate và HR.
 
-Ngược lại, `miCareer-mini` không nên được hiểu là sản phẩm trung tâm của báo cáo. Đây là một frontend mỏng được xây dựng bằng Streamlit để kiểm chứng rằng một giao diện thực tế có thể gọi FANG qua REST API, upload hoặc truyền URL CV, polling trạng thái xử lý và hiển thị kết quả AI cho người dùng. Cách phân vai này quan trọng vì nó tránh làm lệch trọng tâm kỹ thuật: giá trị cốt lõi của nhóm nằm ở backend AI Core, còn giao diện chỉ là phương tiện chứng minh khả năng tích hợp.
+`miCareer-mini` không phải là sản phẩm chính. Đây là một frontend mỏng được xây dựng bằng Streamlit để kiểm chứng rằng một giao diện thực tế có thể gọi FANG qua REST API, upload hoặc truyền URL CV, kiểm tra trạng thái xử lý và hiển thị kết quả cho người dùng. Cách phân vai này quan trọng vì nó tránh làm lệch trọng tâm kỹ thuật: giá trị cốt lõi của nhóm nằm ở backend AI Core, còn giao diện chỉ là phương tiện chứng minh khả năng tích hợp.
 
-FANG hỗ trợ workflow tuyển dụng bằng cách tăng tốc và chuẩn hóa một số thao tác vốn tốn nhiều công sức thủ công: đọc CV, trích xuất thông tin chính, so sánh ứng viên với yêu cầu công việc, hỏi đáp về một hồ sơ cụ thể, hoặc phân tích nhóm ứng viên của một job. Tuy nhiên, FANG không thay thế quyết định tuyển dụng của HR. Hệ thống nên được trình bày như một lớp hỗ trợ ra quyết định, cung cấp bằng chứng và gợi ý có cấu trúc, còn quyết định cuối cùng vẫn thuộc về con người.
+FANG hỗ trợ workflow tuyển dụng bằng cách tăng tốc và chuẩn hóa một số thao tác vốn tốn nhiều công sức thủ công: đọc CV ứng viên, chuẩn hóa dữ liệu hồ sơ ứng tuyển, trích xuất thông tin chính, so sánh ứng viên với yêu cầu công việc hoặc phân tích nhóm ứng viên của một job. Tuy nhiên, FANG không thay thế quyết định tuyển dụng của HR. Hệ thống được trình bày như một lớp hỗ trợ ra quyết định, cung cấp bằng chứng và gợi ý có cấu trúc, còn quyết định cuối cùng vẫn thuộc về con người.
 
 [BẢNG - Ranh giới giữa FANG và miCareer-mini]
 
@@ -26,13 +26,13 @@ Cột đề xuất: Hạng mục | FANG AI Core | miCareer-mini
 
 Quan điểm kiến trúc quan trọng nhất của FANG là API-first. Điều này có nghĩa là FANG được tổ chức như một dịch vụ backend độc lập, giao tiếp với client bằng JSON API, thay vì phụ thuộc vào một frontend cụ thể. Trong code hiện tại, `app/main.py` khởi tạo FastAPI application, cấu hình CORS middleware và mount các router chính dưới prefix `/v2`, bao gồm ingestion, chat, JobPosting Agent và NMAIex. Endpoint `/v2/healthz` cung cấp health check cơ bản cho quá trình tích hợp.
 
-Với thiết kế này, client không cần biết FANG dùng model nào, embedding được tạo ra bằng cách nào, dữ liệu vector được lưu ra sao hoặc prompt được ghép như thế nào. Client chỉ cần thực hiện một số trách nhiệm tối thiểu: xác thực người dùng ở phía ứng dụng, hiển thị danh sách hoặc chi tiết job/application, upload hoặc chọn CV, gọi API FANG, polling trạng thái xử lý và render kết quả trả về. Đây là đúng tinh thần thin client: giao diện tập trung vào trải nghiệm người dùng, còn logic AI và quản lý trạng thái AI nằm ở backend.
+Với thiết kế này, client không cần biết chi tiết cách xử lý của FANG. Client chỉ cần thực hiện một số trách nhiệm tối thiểu: xác thực người dùng ở phía ứng dụng, hiển thị danh sách hoặc chi tiết job/application, upload hoặc chọn CV, gọi API FANG, kiểm tra trạng thái xử lý và render kết quả trả về. Đây là đúng tinh thần thin client: giao diện tập trung vào trải nghiệm người dùng, còn logic AI và quản lý trạng thái AI nằm ở backend.
 
-Thiết kế API-first cũng giúp FANG có khả năng tích hợp rộng hơn. `miCareer-mini` hiện là client thử nghiệm, nhưng về nguyên tắc một frontend khác như Java Servlet, Spring Boot, React hoặc một hệ thống ATS riêng vẫn có thể tích hợp nếu tuân thủ API contract. Điểm cần giữ ổn định là request/response contract: ví dụ ingestion nhận `jobAppId` và `cvSnapUrl`, chat nhận `jobAppId`, `hrId`, `prompt`, `modelMode`, còn JobPosting Agent nhận `jobPostId`, `hrId` và nội dung câu hỏi.
+Thiết kế API-first cũng giúp FANG có khả năng tích hợp rộng hơn. `miCareer-mini` hiện là client thử nghiệm, nhưng về nguyên tắc một frontend khác như Java Servlet, Spring Boot, React hoặc một hệ thống ATS riêng vẫn có thể tích hợp nếu tuân thủ API contract. Điểm cần giữ ổn định là request/response contract.
 
 Một lợi ích khác của API-first là giảm coupling giữa UI và AI backend. Khi cần điều chỉnh parser, thay đổi model provider, thêm fallback, tối ưu chunking hoặc cải thiện ranking, nhóm có thể triển khai chủ yếu trong FANG mà không buộc frontend phải hiểu chi tiết thuật toán. Ngược lại, khi thay đổi giao diện demo, nhóm không làm ảnh hưởng trực tiếp đến pipeline AI nếu API contract được giữ ổn định.
 
-Tuy nhiên, cần trình bày thận trọng rằng thiết kế API-first không đồng nghĩa với production-ready đầy đủ. Tài liệu integration hiện tại cho thấy authentication layer vẫn là phần cần hardening ở phase sau. Trong môi trường dev/test, API có thể mở để thuận tiện kiểm thử; khi triển khai thật, FANG cần cơ chế xác thực, phân quyền, rate limit, kiểm soát dữ liệu nhạy cảm và cấu hình CORS chặt chẽ hơn.
+Tuy nhiên, cần trình bày thận trọng rằng thiết kế API-first không đồng nghĩa với production-ready đầy đủ. Tài liệu integration hiện tại cho thấy authentication layer vẫn là phần cần tăng cường ở giai đoạn sau. Trong môi trường dev/test, API có thể mở để thuận tiện kiểm thử; khi triển khai thật, FANG cần cơ chế xác thực, phân quyền, rate limit, kiểm soát dữ liệu nhạy cảm và cấu hình CORS chặt chẽ hơn.
 
 [SƠ ĐỒ - Quan điểm API-first và thin client]
 
@@ -47,7 +47,7 @@ Service layer
 Data/model layer
     -> PostgreSQL/pgvector, web schema, AI schema, LLM/embedding providers
 
-Ý nghĩa của sơ đồ: frontend không chứa AI logic lõi; FANG là điểm tập trung xử lý AI, lưu vết dữ liệu và điều phối các pipeline.
+Ý nghĩa của sơ đồ: frontend không chứa logic AI; FANG là điểm tập trung xử lý AI, lưu vết dữ liệu và điều phối các pipeline.
 
 1.3. Kiến trúc tổng thể của FANG AI Core
 
@@ -55,7 +55,7 @@ Data/model layer
 
 API layer được xây dựng bằng FastAPI. Đây là lớp tiếp nhận request từ client, validate payload bằng Pydantic schema, gọi service tương ứng và trả response JSON. Các route quan trọng gồm `/v2/ingestion/jobs` cho ingestion CV, `/v2/chat/query` cho JobApplication Chat, `/v2/nmaiex/ranking/candidates/{job_id}` và `/v2/nmaiex/ranking/jobs/{candidate_id}` cho ranking hai chiều, cùng `/v2/agent/job-posting/query` cho JobPosting Agent. Việc mount route trong `app/main.py` cho thấy FANG không chỉ phục vụ chat, mà đã được tổ chức thành một AI Core đa module.
 
-Service layer là nơi chứa logic nghiệp vụ và AI workflow. Ví dụ, ingestion sử dụng các service tải CV, parse CV, build markdown, chunking, embedding và persistence. Chat sử dụng pipeline RAG/full-CV context để trả lời câu hỏi theo một `jobAppId`. Ranking sử dụng NMAIex service để tính điểm và trả danh sách ứng viên hoặc job phù hợp. JobPosting Agent dùng runtime và tools để phân tích một `jobPostId` với boundary rõ ràng. Cách chia này giúp mỗi năng lực AI có module chịu trách nhiệm riêng, tránh trộn lẫn logic của ranking, chat và agent.
+Service layer là nơi chứa logic nghiệp vụ và AI workflow. Ví dụ, ingestion sử dụng các service tải CV, parse CV, build markdown, chunking, embedding và persistence. Chat sử dụng pipeline RAG/full-CV context để trả lời câu hỏi theo một `jobAppId`. Ranking sử dụng NMAIex service để tính điểm và trả danh sách ứng viên hoặc job phù hợp. JobPosting Agent dùng runtime và tools để phân tích một `jobPostId` với ranh giới rõ ràng. Cách chia này giúp mỗi năng lực AI có module chịu trách nhiệm riêng, tránh trộn lẫn logic của ranking, chat và agent.
 
 Data layer dựa trên PostgreSQL và pgvector. Một phần dữ liệu thuộc web core như `JOBPOSTING`, `JOBAPPLICATION`, `CANDIDATE`, `HR`; phần còn lại thuộc AI core như `AIINDEXJOB`, `CVPARSED`, `AIDOCUMENTCHUNK`, `AICHATCONVERSATION`, `AICHATMESSAGE`, các bảng hội thoại/tool log của JobPosting Agent. Việc tách các bảng AI giúp FANG lưu lại kết quả parse, embedding, hội thoại và tool trace mà không làm mất liên kết với dữ liệu tuyển dụng gốc.
 
@@ -83,9 +83,9 @@ Luồng dữ liệu lõi có thể tóm tắt như sau:
 
 `cvSnapUrl -> FANG ingestion -> CVPARSED -> AIDOCUMENTCHUNK -> AIINDEXJOB -> ranking/chat/agent`
 
-Trong báo cáo, cần phân biệt rõ `cvSnapUrl` với ingestion. Cloudinary, local storage hoặc S3 chỉ là cơ chế lưu file bên ngoài để client có thể cung cấp URL CV. Phần quan trọng của FANG là khi đã nhận được URL đó, backend tự thực hiện parse, chunk, embedding và persistence. Vì vậy, Cloudinary không phải trung tâm kiến trúc FANG; nó chỉ là một lựa chọn storage trong demo tích hợp.
+Trong báo cáo, cần phân biệt rõ `cvSnapUrl` với ingestion. Cloudinary, local storage hoặc S3 chỉ là cơ chế lưu file bên ngoài để client có thể cung cấp URL CV. Phần quan trọng của FANG là khi đã nhận được URL đó, backend tự thực hiện parse, chunk, embedding và persistence. Vì vậy, Cloudinary không thuộc trung tâm kiến trúc FANG; nó chỉ là một lựa chọn storage trong demo tích hợp.
 
-Một điểm caveat quan trọng là `AIINDEXJOB.SUCCESS` chỉ nên được hiểu là pipeline ingestion chính đã hoàn thành: parse, chunk, embed và save. Trong code hiện tại, NMAIex candidate enrichment được chạy như một sidecar sau ingestion chính; nếu enrichment lỗi, lỗi này được ghi log nhưng không nhất thiết chặn trạng thái thành công của ingestion chính. Đối với full-CV chat, điều kiện quan trọng hơn là `CVPARSED` phải usable, vì chat cần nội dung CV đã parse để xây dựng context đầy đủ.
+Một điểm đáng lưu ý là `AIINDEXJOB.SUCCESS` chỉ nên được hiểu là pipeline ingestion chính đã hoàn thành: parse, chunk, embed và save. Trong code hiện tại, NMAIex candidate enrichment được chạy như một lớp phụ trợ sau ingestion chính; nếu enrichment lỗi, lỗi này được ghi log nhưng không nhất thiết chặn trạng thái thành công của ingestion chính. Đối với full-CV chat, điều kiện quan trọng hơn là `CVPARSED` phải sử dụng được, vì chat cần nội dung CV đã parse để xây dựng context đầy đủ.
 
 [SƠ ĐỒ - Luồng ingestion CV trong FANG]
 
@@ -95,7 +95,7 @@ Mô tả sơ đồ sequence:
 2. FANG tạo `AIINDEXJOB` và trả `indexJobId`.
 3. Background task tải CV từ URL.
 4. Parser chuyển CV thành raw text và parsed JSON.
-5. FANG lưu parsed result vào `CVPARSED`.
+5. FANG lưu kết quả parsed vào `CVPARSED`.
 6. FANG chuyển parsed JSON thành markdown, chia chunk và tạo embedding.
 7. FANG lưu chunk và vector vào `AIDOCUMENTCHUNK`.
 8. FANG cập nhật trạng thái ingestion job là `SUCCESS` hoặc `FAILED`.
@@ -106,7 +106,7 @@ Thiết kế dữ liệu của FANG có hai nhóm chính: dữ liệu web core v
 
 Dữ liệu AI core được tổ chức để bổ sung năng lực AI lên trên các thực thể nghiệp vụ đó. `AIINDEXJOB` ghi trạng thái xử lý ingestion theo `jobAppId`, gồm trạng thái, số lần retry, lỗi và timestamp. `CVPARSED` lưu raw text, parsed JSON, parser version và thời điểm parse cho từng `jobAppId`. `AIDOCUMENTCHUNK` lưu các đoạn nội dung đã chunk, metadata, token count và embedding vector để phục vụ truy xuất ngữ nghĩa. Các bảng chat như `AICHATCONVERSATION` và `AICHATMESSAGE` lưu hội thoại theo `jobAppId` và `hrId`. Các bảng JobPosting Agent như `AIJOBPOSTINGCHATCONVERSATION`, `AIJOBPOSTINGCHATMESSAGE`, `AIJOBPOSTINGCHATSTATE` và `AIJOBPOSTINGTOOLCALLLOG` lưu hội thoại, working set và tool trace theo `jobPostId`.
 
-Cách thiết kế này phản ánh rõ boundary nghiệp vụ của từng module. JobApplication Chat có scope là `jobAppId`, tức hỏi sâu về một hồ sơ ứng tuyển cụ thể. JobPosting Agent có scope là `jobPostId`, tức phân tích một tin tuyển dụng và tập ứng viên liên quan. NMAIex Ranking có hai hướng J->C và C->J, nhưng cả hai đều dựa trên dữ liệu job, candidate, application và dữ liệu AI đã chuẩn hóa. Ingestion đóng vai trò nền dữ liệu chung vì nó biến CV rời rạc thành dữ liệu có thể truy xuất và phân tích.
+Cách thiết kế này phản ánh rõ ranh giới nghiệp vụ của từng module. JobApplication Chat có phạm vi là `jobAppId`, tức hỏi sâu về một hồ sơ ứng tuyển cụ thể. JobPosting Agent có phạm vi là `jobPostId`, tức phân tích một tin tuyển dụng và tập ứng viên liên quan. NMAIex Ranking có hai hướng J->C (ranking ứng viên cho tin tuyển dụng) và C->J (ranking tin tuyển dụng cho ứng viên), nhưng cả hai đều dựa trên dữ liệu job, candidate, application và dữ liệu AI đã chuẩn hóa. Ingestion đóng vai trò nền dữ liệu chung vì nó biến CV rời rạc thành dữ liệu có thể truy xuất và phân tích.
 
 Việc sử dụng pgvector/embedding trong `AIDOCUMENTCHUNK` cho phép FANG tìm kiếm ngữ nghĩa trên nội dung CV thay vì chỉ dựa vào keyword thô. Tuy nhiên, cần trình bày cân bằng rằng embedding không tự đảm bảo câu trả lời hay ranking luôn đúng tuyệt đối. Chất lượng phụ thuộc vào dữ liệu đầu vào, parser, chunking, embedding model, prompt và cách service sử dụng context.
 
@@ -128,9 +128,9 @@ Cột đề xuất: Bảng | Scope | Vai trò
 
 Từ các phần trên, có thể tóm tắt các quyết định kiến trúc chính của FANG như sau.
 
-Thứ nhất, FANG được định vị là AI Core tập trung, không phải một frontend demo. Điều này giúp báo cáo giữ đúng trọng tâm kỹ thuật: ingestion, dữ liệu AI, ranking, chat và agent đều được xử lý ở backend.
+Thứ nhất, FANG được định vị là AI Core tập trung. Điều này giúp báo cáo giữ đúng trọng tâm kỹ thuật: ingestion, dữ liệu AI, ranking, chat và agent đều được xử lý ở backend.
 
-Thứ hai, hệ thống đi theo hướng API-first và thin client. Frontend chỉ cần gọi API, polling trạng thái và render kết quả; AI workflow, model provider, persistence và conversation management nằm trong FANG. Nhờ vậy, `miCareer-mini` có thể được thay bằng frontend khác nếu giữ đúng API contract.
+Thứ hai, hệ thống đi theo hướng API-first và thin client. Frontend chỉ cần gọi API, kiểm tra trạng thái và render kết quả; AI workflow, model provider, persistence và conversation management nằm trong FANG. Nhờ vậy, `miCareer-mini` có thể được thay bằng frontend khác nếu giữ đúng API contract.
 
 Thứ ba, kiến trúc runtime được chia thành các lớp tương đối rõ: API layer tiếp nhận request; service layer xử lý workflow; data layer lưu web data, AI data và vector; provider layer phục vụ LLM/embedding. Cách chia này giúp hệ thống dễ mở rộng hơn so với việc đặt AI logic trực tiếp trong UI.
 
@@ -138,7 +138,7 @@ Thứ tư, ingestion được xem là pipeline nền tảng. Nó chuyển CV t�
 
 Thứ năm, FANG tách scope nghiệp vụ bằng các khóa định danh rõ ràng: `jobAppId` cho JobApplication Chat, `jobPostId` cho JobPosting Agent, J->C và C->J cho NMAIex Ranking. Đây là một quyết định quan trọng vì nó giúp tránh nhầm lẫn giữa hỏi sâu một hồ sơ, phân tích một job, và xếp hạng nhiều đối tượng.
 
-Cuối cùng, các claim về AI cần được đặt trong giới hạn phù hợp. FANG có kiến trúc để hỗ trợ HR và candidate workflow, nhưng không nên được mô tả như một hệ thống tự động ra quyết định tuyển dụng hay đảm bảo ranking tuyệt đối chính xác. Chất lượng AI phụ thuộc vào dữ liệu, parser, model, prompt, benchmark và quy trình kiểm thử. Các chương tiếp theo sẽ đi sâu hơn vào từng năng lực AI chính và cách nhóm đánh giá chúng trong phạm vi dự án.
+Cuối cùng, các đánh giá về AI cần được đặt trong giới hạn phù hợp. FANG có kiến trúc để hỗ trợ HR và candidate workflow, nhưng không nên được mô tả như một hệ thống tự động ra quyết định tuyển dụng hay đảm bảo ranking tuyệt đối chính xác. Chất lượng AI phụ thuộc vào dữ liệu, parser, model, prompt, benchmark và quy trình kiểm thử. Các chương tiếp theo sẽ đi sâu hơn vào từng năng lực AI chính và cách nhóm đánh giá chúng trong phạm vi dự án.
 
 [GHI CHÚ EVIDENCE]
 

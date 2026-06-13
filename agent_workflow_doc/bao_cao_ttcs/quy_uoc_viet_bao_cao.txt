@@ -80,3 +80,7 @@ JobPosting Agent co guardrails/tool-calling/scope validation/PII masking, nhung 
 5. Viet Chuong 4 ve kien truc ma nguon.
 6. Viet Chuong 5 ve demo, danh gia, han che, huong phat trien.
 7. Viet phan mo dau va ket luan sau cung.
+
+8. Kinh nghiem ve hinh va so do
+
+Voi cac hinh/so do render tu Mermaid, moi dong hien thi trong node hoac message khong nen vuot qua khoang 26 ky tu/chu. Neu label dai hon, chu dong xuong dong bang <br/> de tranh viec UI cat mat phan cuoi cua dong.
