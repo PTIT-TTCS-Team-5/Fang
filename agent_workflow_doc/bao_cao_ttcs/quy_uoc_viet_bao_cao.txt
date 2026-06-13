@@ -1,0 +1,82 @@
+QUY UOC VIET BAO CAO TTCS - FANG AI CORE
+
+Muc dich
+File nay ghi lai cach viet noi dung bao cao trong cac chat tiep theo. Muc tieu la tao noi dung co the copy sang DOCX de bien tap tiep.
+
+1. Cach goi ban viet
+
+Khong goi la "nhap" theo nghia viet tam hoac viet so sai.
+
+Workflow dung:
+1. Viet ban hoan chinh lan 1 cho tung chuong hoac tung cum muc.
+2. Nguoi dung review ve giong van, do dai, muc chi tiet, cach dan evidence va cach goi FANG/miCareer-mini.
+3. Ghi nhan nhan xet do nhu style guide cho chuong sau.
+4. Sua chuong hien tai neu can, roi moi viet chuong tiep theo.
+
+2. Dinh dang dau ra
+
+Khi viet noi dung bao cao, uu tien tao file .txt hoac tra plain text.
+Khong viet noi dung chuong bang Markdown vi nguoi dung se copy sang DOCX.
+
+Duoc dung tieu de danh so kieu:
+CHUONG 1. PHAM VI DU AN VA KIEN TRUC FANG AI CORE
+1.1. Pham vi du an
+1.1.1. Vai tro cua FANG
+
+Khong dung Markdown heading (#, ##) trong ban noi dung chuong.
+Khong dung bullet qua nhieu trong phan van xuoi chinh, tru khi do la danh sach can dua vao bao cao.
+
+3. Cach danh dau bang, hinh, so do, evidence
+
+Vi DOCX can chen bang/hinh rieng, moi doi tuong khong phai van xuoi phai duoc danh dau ro:
+
+[BANG - Ten bang]
+Mo ta bang hoac noi dung bang. Neu bang co cot/hang, ghi ro cot nao.
+
+[HINH - Ten hinh]
+Mo ta anh can chen, ngu canh, man hinh demo nao, muc dich cua anh.
+
+[SO DO - Ten so do]
+Mo ta so do bang text hoac Mermaid neu can. Neu dung AI image model, viet prompt mo ta ro.
+
+[GHI CHU EVIDENCE]
+Ghi file/tai lieu/code/test dung lam can cu. Phan nay co the giu trong ban soan thao va loc bot khi dua vao DOCX.
+
+4. Yeu cau ve van phong
+
+Van phong hoc thuat, ro rang, co he thong.
+Khong marketing qua da.
+Khong viet chung chung neu co the dan code/tai lieu/test.
+Giai thich y nghia nghiep vu truoc, cong thuc/thuat toan sau, code reference cuoi.
+
+5. Cac dinh vi bat buoc
+
+FANG la san pham chinh: backend/AI Core.
+miCareer-mini la frontend mong/dev-test UI de chung minh tich hop API, khong phai san pham trung tam.
+FANG ho tro HR va candidate workflow, khong thay the quyet dinh tuyen dung cua HR.
+
+Ranking phai tach ro:
+- J->C: HR tim ung vien cho JobPosting.
+- C->J: Candidate tim job phu hop truoc khi apply.
+
+Chat/Agent phai tach ro:
+- JobApplication Chat co scope jobAppId.
+- JobPosting Agent co scope jobPostId.
+
+6. Caveat bat buoc
+
+Khong claim ranking chinh xac tuyet doi.
+Khong claim FANG san sang production neu chua co evidence.
+Neu nhac tuning/gain, phai ghi ro do la synthetic/LLM-judged benchmark.
+Full-CV chat phu thuoc parse quality, prompt quality va token budget.
+JobPosting Agent co guardrails/tool-calling/scope validation/PII masking, nhung van can eval va hardening neu dua len production.
+
+7. Thu tu viet khuyen nghi
+
+1. Viet ban hoan chinh lan 1 cho Chuong 1.
+2. Nguoi dung review va chot style.
+3. Viet Chuong 2 theo nhieu cum: ranking, synthetic/tuning, chat, agent.
+4. Viet Chuong 3 ve tai lieu va kiem thu.
+5. Viet Chuong 4 ve kien truc ma nguon.
+6. Viet Chuong 5 ve demo, danh gia, han che, huong phat trien.
+7. Viet phan mo dau va ket luan sau cung.
